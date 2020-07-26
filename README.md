@@ -13,7 +13,8 @@ BBDown <-i url> [-tv] [-hevc] [-info] [-cookie <string>]
         -tv             使用TV端解析模式(可以免费下载4K等网页会员清晰度,但不支持番剧)
         -hevc           下载hevc编码
         -info           仅解析不下载
-        -cookie         设置cookie以下载网页接口的会员内容(主要是)
+        -cookie         设置cookie以下载网页接口的会员内容
+                        (例如-cookie "SESSDATA=abcdefg", cookie在F12-Application-Cookie中可以找到)
 ```
 
 # 功能
