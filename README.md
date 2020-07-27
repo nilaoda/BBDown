@@ -14,9 +14,9 @@ BBDown <-i url> [-tv] [-hevc] [-info] [-cookie <string>] [-p page] [-help]
         -tv             使用TV端解析模式(可以免费下载4K等网页会员清晰度,但不支持番剧)
         -hevc           下载hevc编码
         -info           仅解析不下载
-        -p page         选择指定分p
+        -p <page>       选择指定分p
                         (例如-p 3表示只下载P3, -p 10-20表示只下载P10~P20的内容, -p 4,6,10表示只下载P4、P6和P10)
-        -cookie  c      设置cookie以下载网页接口的会员内容
+        -cookie <str>   设置cookie以下载网页接口的会员内容
                         (例如-cookie "SESSDATA=abcdefg", cookie在F12-Application-Cookie中可以找到)
 ```
 
