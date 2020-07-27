@@ -30,6 +30,7 @@ BBDown <-i url> [-tv] [-hevc] [-info] [-cookie <string>] [-p page] [-help]
 
 # TODO
 - [ ] 支持更多自定义选项
+- [ ] 支持旧flv资源解析
 - [ ] 其他的懒得写了
 
 # 更新日志
