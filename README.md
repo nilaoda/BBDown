@@ -7,7 +7,7 @@ https://github.com/nilaoda/BBDown/releases
 # 开始使用
 目前测试版的命令行参数支持情况
 ```
-BBDown <-i url> [-tv] [-hevc] [-info] [-cookie <string>] [-p page] [-help]
+BBDown <-i url> [-tv] [-hevc] [-info] [-cookie <string>] [-p <page>] [-help]
 
         -help           显示帮助
         -i url          输入视频地址
