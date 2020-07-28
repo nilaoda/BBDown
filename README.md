@@ -7,17 +7,25 @@ https://github.com/nilaoda/BBDown/releases
 # 开始使用
 目前测试版的命令行参数支持情况
 ```
-BBDown <-i url> [-tv] [-hevc] [-info] [-cookie <string>] [-p <page>] [-help]
+BBDown:
+  BBDown是一个免费且便捷高效的哔哩哔哩下载/解析软件.
 
-        -help           显示帮助
-        -i url          输入视频地址
-        -tv             使用TV端解析模式(可以免费下载4K等网页会员清晰度,但不支持番剧)
-        -hevc           下载hevc编码
-        -info           仅解析不下载
-        -p <page>       选择指定分p
-                        (例如-p 3表示只下载P3, -p 10-20表示只下载P10~P20的内容, -p 4,6,10表示只下载P4、P6和P10)
-        -cookie <str>   设置cookie以下载网页接口的会员内容
-                        (例如-cookie "SESSDATA=abcdefg", cookie在F12-Application-Cookie中可以找到)
+Usage:
+  BBDown [options] <url>
+
+Arguments:
+  <url>    视频地址 或 av|bv|BV|ep|ss
+
+Options:
+  -tv, --use-tv-api                  使用TV端解析模式(不支持版权内容)
+  -hevc, --only-hevc                 下载hevc编码
+  -info, --only-show-info            仅解析不下载
+  -hs, --hide-streams                不要显示所有可用音视频流
+  -ia, --interactive                 交互式选择清晰度
+  -p, --select-page <select-page>    选择指定分p或分p范围
+  -c, --cookie <cookie>              设置字符串cookie用以下载网页接口的会员内容
+  --version                          Show version information
+  -?, -h, --help                     Show help and usage information
 ```
 
 # 功能
@@ -25,6 +33,7 @@ BBDown <-i url> [-tv] [-hevc] [-info] [-cookie <string>] [-p <page>] [-help]
 - [x] 普通内容下载(Web|TV) `(TV接口可以下载部分UP主的无水印内容)`
 - [x] 多分P自动下载
 - [x] 选择指定分P进行下载
+- [x] 选择指定清晰度进行下载
 - [x] 下载外挂字幕并转换为srt格式
 - [x] 自动合并音频+视频流+字幕流
 
@@ -34,6 +43,12 @@ BBDown <-i url> [-tv] [-hevc] [-info] [-cookie <string>] [-p <page>] [-help]
 - [ ] 其他的懒得写了
 
 # 更新日志
+* 2020年7月28日 13:50  
+  继续优化最高清晰度的自动选择逻辑  
+  成为标准化的命令行程序  
+  支持bv小写链接  
+  支持ss链接解析  
+  
 * 2020年7月27日 22:49  
   优化最高清晰度寻找算法  
   支持选择分P下载  
@@ -54,7 +69,7 @@ BBDown <-i url> [-tv] [-hevc] [-info] [-cookie <string>] [-p <page>] [-help]
   发布公测
   
 # 演示
-![1](https://user-images.githubusercontent.com/20772925/88478847-fe263580-cf7d-11ea-8ad3-b37ceb99fb92.gif)
+![1](https://user-images.githubusercontent.com/20772925/88686407-a2001480-d129-11ea-8aac-97a0c71af115.gif)
 
 下载完毕后在当前目录查看MP4文件：
 
