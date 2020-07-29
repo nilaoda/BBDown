@@ -22,6 +22,7 @@ Options:
   -info, --only-show-info            仅解析不下载
   -hs, --hide-streams                不要显示所有可用音视频流
   -ia, --interactive                 交互式选择清晰度
+  -mt, --multi-thread                使用多线程下载
   -p, --select-page <select-page>    选择指定分p或分p范围
   -c, --cookie <cookie>              设置字符串cookie用以下载网页接口的会员内容
   --version                          Show version information
@@ -36,6 +37,7 @@ Options:
 - [x] 选择指定清晰度进行下载
 - [x] 下载外挂字幕并转换为srt格式
 - [x] 自动合并音频+视频流+字幕流
+- [x] **多线程下载**
 
 # TODO
 - [ ] 支持更多自定义选项
@@ -43,6 +45,11 @@ Options:
 - [ ] 其他的懒得写了
 
 # 更新日志
+* 2020年7月29日 21:32  
+	修复某些电影无法下载的问题  
+	临时文件存放至单独文件夹  
+	增加多线程下载逻辑  
+  
 * 2020年7月28日 13:50  
   继续优化最高清晰度的自动选择逻辑  
   成为标准化的命令行程序  
