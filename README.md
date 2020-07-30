@@ -11,7 +11,7 @@ BBDown:
   BBDown是一个免费且便捷高效的哔哩哔哩下载/解析软件.
 
 Usage:
-  BBDown [options] <url>
+  BBDown [options] <url> [command]
 
 Arguments:
   <url>    视频地址 或 av|bv|BV|ep|ss
@@ -27,6 +27,9 @@ Options:
   -c, --cookie <cookie>              设置字符串cookie用以下载网页接口的会员内容
   --version                          Show version information
   -?, -h, --help                     Show help and usage information
+
+Commands:
+  login    登录您的账号
 ```
 
 # 功能
