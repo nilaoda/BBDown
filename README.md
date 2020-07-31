@@ -29,7 +29,7 @@ Options:
   -?, -h, --help                     Show help and usage information
 
 Commands:
-  login    登录您的账号
+  login    通过APP扫描二维码以登录您的账号
 ```
 
 # 功能
@@ -49,6 +49,9 @@ Commands:
 - [ ] 其他的懒得写了
 
 # 更新日志
+* 2020年7月31日 19:07  
+  修复无法加载cookie的问题  
+  
 * 2020年7月31日 0:02  
   增加二维码登录并支持本地存储cookie
 
