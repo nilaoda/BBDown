@@ -160,7 +160,7 @@ namespace BBDown
         {
             Console.BackgroundColor = ConsoleColor.DarkBlue;
             Console.ForegroundColor = ConsoleColor.White;
-            Console.Write("BBDown version 20200809[RC2], Bilibili Downloader.\r\n");
+            Console.Write("BBDown version 20200810[RC2], Bilibili Downloader.\r\n");
             Console.ResetColor();
             Console.Write("请注意：这是一个测试版本，任何BUG请前往以下网址反馈：\r\n" +
                 "https://github.com/nilaoda/BBDown/issues\r\n");
@@ -312,7 +312,7 @@ namespace BBDown
                     JArray video = null;
 
                     //此处代码简直灾难，后续优化吧
-                    if (webJson.Contains("\"dash\":[")) //dash
+                    if (webJson.Contains("\"dash\":")) //dash
                     {
                         string nodeName = "data";
                         if (webJson.Contains("\"result\":{"))
