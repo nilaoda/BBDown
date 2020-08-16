@@ -225,9 +225,9 @@ namespace BBDown
         {
             Console.BackgroundColor = ConsoleColor.DarkBlue;
             Console.ForegroundColor = ConsoleColor.White;
-            Console.Write("BBDown version 20200816[RC3], Bilibili Downloader.\r\n");
+            Console.Write("BBDown version 1.0 20200816, Bilibili Downloader.\r\n");
             Console.ResetColor();
-            Console.Write("请注意：这是一个测试版本，任何BUG请前往以下网址反馈：\r\n" +
+            Console.Write("请注意：任何BUG请前往以下网址反馈：\r\n" +
                 "https://github.com/nilaoda/BBDown/issues\r\n");
             Console.WriteLine();
             try
@@ -377,13 +377,13 @@ namespace BBDown
                     string outPath = GetValidFileName(title + (pagesInfo.Count > 1 ? $"[P{p.index}.{p.title}].mp4" : ".mp4"));
                     //调用解析
                     string webJson = GetPlayJson(aid, p.cid, epId, tvApi, bangumi);
-                    //File.WriteAllText($"debug.json", JObject.Parse(webJson).ToString());
+                    //File.WriteAllText($"debug.json", webJson);
 
                     JArray audio = null;
                     JArray video = null;
 
                     //此处代码简直灾难，后续优化吧
-                    if (webJson.Contains("\"dash\":[")) //dash
+                    if (webJson.Contains("\"dash\":{")) //dash
                     {
                         string nodeName = "data";
                         if (webJson.Contains("\"result\":{"))
