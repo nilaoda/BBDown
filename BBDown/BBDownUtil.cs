@@ -6,13 +6,16 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Cache;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Web;
 using static BBDown.BBDownEntity;
 
 namespace BBDown
@@ -182,7 +185,8 @@ namespace BBDown
             {
                 long totalLength = -1;
                 WebClient client = new WebClient();
-                client.Headers.Add("Referer", "https://www.bilibili.com");
+                if (!url.Contains("platform=android_tv_yst"))
+                    client.Headers.Add("Referer", "https://www.bilibili.com");
                 client.Headers.Add("User-Agent", "Mozilla/5.0");
                 client.Headers.Add("Cookie", Program.COOKIE);
                 client.Credentials = CredentialCache.DefaultCredentials;
@@ -228,7 +232,8 @@ namespace BBDown
                             request.AllowAutoRedirect = true;
                             request.KeepAlive = false;
                             request.Method = "GET";
-                            request.Referer = "https://www.bilibili.com";
+                            if (!url.Contains("platform=android_tv_yst"))
+                                request.Referer = "https://www.bilibili.com";
                             request.UserAgent = "Mozilla/5.0";
                             request.Headers.Add("Cookie", Program.COOKIE);
                             if (clip.to != -1)
@@ -358,7 +363,8 @@ namespace BBDown
         private static long GetFileSize(string url)
         {
             WebClient webClient = new WebClient();
-            webClient.Headers.Add("Referer", "https://www.bilibili.com");
+            if (!url.Contains("platform=android_tv_yst"))
+                webClient.Headers.Add("Referer", "https://www.bilibili.com");
             webClient.Headers.Add("User-Agent", "Mozilla/5.0");
             webClient.OpenRead(url);
             long totalSizeBytes = Convert.ToInt64(webClient.ResponseHeaders["Content-Length"]);
@@ -440,6 +446,80 @@ namespace BBDown
         {
             //这个参数可以没有 所以此处就不写具体实现了
             throw new NotImplementedException();
+        }
+
+        public static string GetSign(string parms)
+        {
+            string toEncode = parms + "59b43e04ad6965f34319062b478f83dd";
+            MD5 md5 = MD5.Create();
+            byte[] bs = Encoding.UTF8.GetBytes(toEncode);
+            byte[] hs = md5.ComputeHash(bs);
+            StringBuilder sb = new StringBuilder();
+            foreach (byte b in hs)
+            {
+                sb.Append(b.ToString("x2"));
+            }
+            return sb.ToString();
+        }
+
+        public static string GetTimeStamp(bool bflag)
+        {
+            TimeSpan ts = DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, 0);
+            string ret = string.Empty;
+            if (bflag)
+                ret = Convert.ToInt64(ts.TotalSeconds).ToString();
+            else
+                ret = Convert.ToInt64(ts.TotalMilliseconds).ToString();
+
+            return ret;
+        }
+
+        //https://stackoverflow.com/questions/1344221/how-can-i-generate-random-alphanumeric-strings
+        private static Random random = new Random();
+        public static string GetRandomString(int length)
+        {
+            const string chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_0123456789";
+            return new string(Enumerable.Repeat(chars, length)
+              .Select(s => s[random.Next(s.Length)]).ToArray());
+        }
+
+        //https://stackoverflow.com/a/45088333
+        public static string ToQueryString(NameValueCollection nameValueCollection)
+        {
+            NameValueCollection httpValueCollection = HttpUtility.ParseQueryString(String.Empty);
+            httpValueCollection.Add(nameValueCollection);
+            return httpValueCollection.ToString();
+        }
+
+        public static NameValueCollection GetTVLoginParms()
+        {
+            NameValueCollection sb = new NameValueCollection();
+            DateTime now = DateTime.Now;
+            string deviceId = GetRandomString(20);
+            string buvid = GetRandomString(37);
+            string fingerprint = $"{now.ToString("yyyyMMddHHmmssfff")}{GetRandomString(45)}";
+            sb.Add("appkey","4409e2ce8ffd12b8");
+            sb.Add("auth_code", "");
+            sb.Add("bili_local_id", deviceId);
+            sb.Add("build", "102801");
+            sb.Add("buvid", buvid);
+            sb.Add("channel", "master");
+            sb.Add("device", "OnePlus");
+            sb.Add($"device_id", deviceId);
+            sb.Add("device_name", "OnePlus7TPro");
+            sb.Add("device_platform", "Android10OnePlusHD1910");
+            sb.Add($"fingerprint", fingerprint);
+            sb.Add($"guid", buvid);
+            sb.Add($"local_fingerprint", fingerprint);
+            sb.Add($"local_id", buvid);
+            sb.Add("mobi_app", "android_tv_yst");
+            sb.Add("networkstate", "wifi");
+            sb.Add("platform", "android");
+            sb.Add("sys_ver", "29");
+            sb.Add($"ts", GetTimeStamp(true));
+            sb.Add($"sign", GetSign(ToQueryString(sb)));
+
+            return sb;
         }
     }
 }

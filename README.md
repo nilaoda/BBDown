@@ -17,23 +17,25 @@ Arguments:
   <url>    视频地址 或 av|bv|BV|ep|ss
 
 Options:
-  -tv, --use-tv-api                  使用TV端解析模式(不支持版权内容)
-  -hevc, --only-hevc                 下载hevc编码
-  -info, --only-show-info            仅解析不下载
-  -hs, --hide-streams                不要显示所有可用音视频流
-  -ia, --interactive                 交互式选择清晰度
-  -mt, --multi-thread                使用多线程下载
-  -p, --select-page <select-page>    选择指定分p或分p范围
-  -c, --cookie <cookie>              设置字符串cookie用以下载网页接口的会员内容
-  --version                          Show version information
-  -?, -h, --help                     Show help and usage information
+  -tv, --use-tv-api                    使用TV端解析模式(不支持版权内容)
+  -hevc, --only-hevc                   下载hevc编码
+  -info, --only-show-info              仅解析不下载
+  -hs, --hide-streams                  不要显示所有可用音视频流
+  -ia, --interactive                   交互式选择清晰度
+  -mt, --multi-thread                  使用多线程下载
+  -p, --select-page <select-page>      选择指定分p或分p范围
+  -c, --cookie <cookie>                设置字符串cookie用以下载网页接口的会员内容
+  -a, --access-token <access-token>    设置access_token用以下载TV接口的会员内容
+  --version                            Show version information
+  -?, -h, --help                       Show help and usage information
 
 Commands:
-  login    通过APP扫描二维码以登录您的账号
+  login      通过APP扫描二维码以登录您的WEB账号
+  logintv    通过APP扫描二维码以登录您的TV账号
 ```
 
 # 功能
-- [x] 番剧下载(Web)
+- [x] 番剧下载(Web|TV)
 - [x] 普通内容下载(Web|TV) `(TV接口可以下载部分UP主的无水印内容)`
 - [x] 多分P自动下载
 - [x] 选择指定分P进行下载
@@ -48,6 +50,9 @@ Commands:
 - [ ] 其他的懒得写了
 
 # 更新日志
+* 2020年8月16日 0:04  
+  支持TV版番剧下载  
+  支持TV二维码登录  
 * 2020年8月10日 20:19  
   修复严重BUG  
 * 2020年8月9日 0:16  

@@ -16,12 +16,14 @@ using static BBDown.BBDownUtil;
 using static BBDown.BBDownParser;
 using static BBDown.BBDownLogger;
 using static BBDown.BBDownMuxer;
+using System.Text;
 
 namespace BBDown
 {
     class Program
     {
         public static string COOKIE = "";
+        public static string TOKEN = "";
         static Dictionary<string, string> qualitys = new Dictionary<string, string>() {
             {"120","超清 4K" }, {"116","高清 1080P60" },{"112","高清 1080P+" },
             {"80","高清 1080P" }, {"74","高清 720P60" },{"64","高清 720P" },
@@ -49,6 +51,7 @@ namespace BBDown
             public bool MultiThread { get; set; }
             public string SelectPage { get; set; }
             public string Cookie { get; set; }
+            public string AccessToken { get; set; }
         }
 
         public static int Main(params string[] args)
@@ -83,16 +86,24 @@ namespace BBDown
                     "选择指定分p或分p范围"),
                 new Option<string>(
                     new string[]{ "--cookie" ,"-c"},
-                    "设置字符串cookie用以下载网页接口的会员内容")
+                    "设置字符串cookie用以下载网页接口的会员内容"),
+                new Option<string>(
+                    new string[]{ "--access-token" ,"-a"},
+                    "设置access_token用以下载TV接口的会员内容")
             };
 
             Command loginCommand = new Command(
                 "login",
-                "通过APP扫描二维码以登录您的账号");
+                "通过APP扫描二维码以登录您的WEB账号");
             rootCommand.AddCommand(loginCommand);
+            Command loginTVCommand = new Command(
+                "logintv",
+                "通过APP扫描二维码以登录您的TV账号");
+            rootCommand.AddCommand(loginTVCommand);
             rootCommand.Description = "BBDown是一个免费且便捷高效的哔哩哔哩下载/解析软件.";
             rootCommand.TreatUnmatchedTokensAsErrors = true;
 
+            //WEB登录
             loginCommand.Handler = CommandHandler.Create(delegate
             {
                 try
@@ -147,6 +158,60 @@ namespace BBDown
                 catch (Exception e) { LogError(e.Message); }
             });
 
+            //TV登录
+            loginTVCommand.Handler = CommandHandler.Create(delegate
+            {
+                try
+                {
+                    string loginUrl = "https://passport.snm0516.aisee.tv/x/passport-tv-login/qrcode/auth_code";
+                    string pollUrl = "https://passport.bilibili.com/x/passport-tv-login/qrcode/poll";
+                    var parms = GetTVLoginParms();
+                    Log("获取登录地址...");
+                    WebClient webClient = new WebClient();
+                    byte[] responseArray = webClient.UploadValues(loginUrl, parms);
+                    string web = Encoding.UTF8.GetString(responseArray);
+                    string url = JObject.Parse(web)["data"]["url"].ToString();
+                    string authCode = JObject.Parse(web)["data"]["auth_code"].ToString();
+                    Log("生成二维码...");
+                    QRCodeGenerator qrGenerator = new QRCodeGenerator();
+                    QRCodeData qrCodeData = qrGenerator.CreateQrCode(url, QRCodeGenerator.ECCLevel.Q);
+                    QRCode qrCode = new QRCode(qrCodeData);
+                    Bitmap qrCodeImage = qrCode.GetGraphic(7);
+                    qrCodeImage.Save("qrcode.png", System.Drawing.Imaging.ImageFormat.Png);
+                    Log("生成二维码成功：qrcode.png, 请打开并扫描");
+                    parms.Set("auth_code", authCode);
+                    parms.Set("ts", GetTimeStamp(true));
+                    parms.Remove("sign");
+                    parms.Add("sign", GetSign(ToQueryString(parms)));
+                    while (true)
+                    {
+                        Thread.Sleep(1000);
+                        responseArray = webClient.UploadValues(pollUrl, parms);
+                        web = Encoding.UTF8.GetString(responseArray);
+                        string code = JObject.Parse(web)["code"].ToString();
+                        if (code == "86038")
+                        {
+                            LogColor("二维码已过期, 请重新执行登录指令.");
+                            break;
+                        }
+                        else if (code == "86039") //等待扫码
+                        {
+                            continue;
+                        }
+                        else
+                        {
+                            string cc = JObject.Parse(web)["data"]["access_token"].ToString();
+                            Log("登录成功: AccessToken=" + cc);
+                            //导出cookie
+                            File.WriteAllText(Path.Combine(AppContext.BaseDirectory, "BBDownTV.data"), "access_token=" + cc);
+                            File.Delete("qrcode.png");
+                            break;
+                        }
+                    }
+                }
+                catch (Exception e) { LogError(e.Message); }
+            });
+
             rootCommand.Handler = CommandHandler.Create<MyOption>(async (myOption) =>
             {
                 //Console.WriteLine(myOption.ToString());
@@ -160,7 +225,7 @@ namespace BBDown
         {
             Console.BackgroundColor = ConsoleColor.DarkBlue;
             Console.ForegroundColor = ConsoleColor.White;
-            Console.Write("BBDown version 20200810[RC2], Bilibili Downloader.\r\n");
+            Console.Write("BBDown version 20200816[RC3], Bilibili Downloader.\r\n");
             Console.ResetColor();
             Console.Write("请注意：这是一个测试版本，任何BUG请前往以下网址反馈：\r\n" +
                 "https://github.com/nilaoda/BBDown/issues\r\n");
@@ -177,17 +242,23 @@ namespace BBDown
                 string selectPage = myOption.SelectPage;
                 string aid = "";
                 COOKIE = myOption.Cookie;
+                TOKEN = myOption.AccessToken.Replace("access_token=", "");
                 List<string> selectedPages = null;
                 if (!string.IsNullOrEmpty(GetQueryString("p", input)))
                 {
                     selectedPages = new List<string>();
                     selectedPages.Add(GetQueryString("p", input));
                 }
-                
-                if (File.Exists(Path.Combine(AppContext.BaseDirectory, "BBDown.data")))
+
+                if (File.Exists(Path.Combine(AppContext.BaseDirectory, "BBDown.data")) && !tvApi) 
                 {
                     Log("加载本地cookie...");
                     COOKIE = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "BBDown.data"));
+                }
+                if (File.Exists(Path.Combine(AppContext.BaseDirectory, "BBDownTV.data")) && tvApi)
+                {
+                    Log("加载本地token...");
+                    TOKEN = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "BBDownTV.data"));
                 }
                 Log("获取aid...");
                 aid = await GetAvIdAsync(input);
@@ -312,7 +383,7 @@ namespace BBDown
                     JArray video = null;
 
                     //此处代码简直灾难，后续优化吧
-                    if (webJson.Contains("\"dash\":")) //dash
+                    if (webJson.Contains("\"dash\":[")) //dash
                     {
                         string nodeName = "data";
                         if (webJson.Contains("\"result\":{"))
