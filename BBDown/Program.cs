@@ -65,7 +65,7 @@ namespace BBDown
                     description: "视频地址 或 av|bv|BV|ep|ss"),
                 new Option<bool>(
                     new string[]{ "--use-tv-api" ,"-tv"},
-                    "使用TV端解析模式(不支持版权内容)"),
+                    "使用TV端解析模式"),
                 new Option<bool>(
                     new string[]{ "--only-hevc" ,"-hevc"},
                     "下载hevc编码"),
