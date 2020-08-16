@@ -453,18 +453,18 @@ namespace BBDown
                             {
                                 LogColor($"{index++}. [{a.codecs}] [{a.bandwith} kbps] [~{FormatFileSize(p.dur * a.bandwith * 1024 / 8)}]", false);
                             }
-                            if (infoMode) continue;
-                            if (interactMode)
-                            {
-                                Log("请选择一条视频流(输入序号): ", false);
-                                Console.ForegroundColor = ConsoleColor.Cyan;
-                                vIndex = Convert.ToInt32(Console.ReadLine());
-                                Console.ResetColor();
-                                Log("请选择一条音频流(输入序号): ", false);
-                                Console.ForegroundColor = ConsoleColor.Cyan;
-                                aIndex = Convert.ToInt32(Console.ReadLine());
-                                Console.ResetColor();
-                            }
+                        }
+                        if (infoMode) continue;
+                        if (interactMode && !hideStreams)
+                        {
+                            Log("请选择一条视频流(输入序号): ", false);
+                            Console.ForegroundColor = ConsoleColor.Cyan;
+                            vIndex = Convert.ToInt32(Console.ReadLine());
+                            Console.ResetColor();
+                            Log("请选择一条音频流(输入序号): ", false);
+                            Console.ForegroundColor = ConsoleColor.Cyan;
+                            aIndex = Convert.ToInt32(Console.ReadLine());
+                            Console.ResetColor();
                         }
                         if (File.Exists(outPath) && new FileInfo(outPath).Length != 0)
                         {
