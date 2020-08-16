@@ -242,7 +242,7 @@ namespace BBDown
                 string selectPage = myOption.SelectPage;
                 string aid = "";
                 COOKIE = myOption.Cookie;
-                TOKEN = myOption.AccessToken.Replace("access_token=", "");
+                TOKEN = myOption.AccessToken != null ? myOption.AccessToken.Replace("access_token=", "") : "";
                 List<string> selectedPages = null;
                 if (!string.IsNullOrEmpty(GetQueryString("p", input)))
                 {
