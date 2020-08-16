@@ -5,7 +5,7 @@
 https://github.com/nilaoda/BBDown/releases
 
 # 开始使用
-目前测试版的命令行参数支持情况
+目前命令行参数支持情况
 ```
 BBDown:
   BBDown是一个免费且便捷高效的哔哩哔哩下载/解析软件.
