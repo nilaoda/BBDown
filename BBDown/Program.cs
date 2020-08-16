@@ -225,7 +225,7 @@ namespace BBDown
         {
             Console.BackgroundColor = ConsoleColor.DarkBlue;
             Console.ForegroundColor = ConsoleColor.White;
-            Console.Write("BBDown version 1.0 20200816, Bilibili Downloader.\r\n");
+            Console.Write("BBDown version 1.1 20200816, Bilibili Downloader.\r\n");
             Console.ResetColor();
             Console.Write("请注意：任何BUG请前往以下网址反馈：\r\n" +
                 "https://github.com/nilaoda/BBDown/issues\r\n");
@@ -377,7 +377,7 @@ namespace BBDown
                     string outPath = GetValidFileName(title + (pagesInfo.Count > 1 ? $"[P{p.index}.{p.title}].mp4" : ".mp4"));
                     //调用解析
                     string webJson = GetPlayJson(aid, p.cid, epId, tvApi, bangumi);
-                    //File.WriteAllText($"debug.json", webJson);
+                    //File.WriteAllText($"debug.json", JObject.Parse(webJson).ToString());
 
                     JArray audio = null;
                     JArray video = null;
@@ -538,6 +538,7 @@ namespace BBDown
                     {
                         //重新解析最高清晰度
                         webJson = GetPlayJson(aid, p.cid, epId, tvApi, bangumi, "120");
+                        List<string> clips = new List<string>();
                         string quality = "";
                         string videoCodecid = "";
                         string url = "";
@@ -549,18 +550,26 @@ namespace BBDown
                             format = JObject.Parse(webJson)["data"]["format"].ToString();
                             quality = JObject.Parse(webJson)["data"]["quality"].ToString();
                             videoCodecid = JObject.Parse(webJson)["data"]["video_codecid"].ToString();
-                            url = JObject.Parse(webJson)["data"]["durl"][0]["url"].ToString();
-                            size = JObject.Parse(webJson)["data"]["durl"][0]["size"].Value<double>();
-                            length = JObject.Parse(webJson)["data"]["durl"][0]["length"].Value<double>();
+                            //获取所有分段
+                            foreach (JObject node in JArray.Parse(JObject.Parse(webJson)["data"]["durl"].ToString()))
+                            {
+                                clips.Add(node["url"].ToString());
+                                size += node["size"].Value<double>();
+                                length += node["length"].Value<double>();
+                            }
                         }
                         else
                         {
                             format = JObject.Parse(webJson)["format"].ToString();
                             quality = JObject.Parse(webJson)["quality"].ToString();
                             videoCodecid = JObject.Parse(webJson)["video_codecid"].ToString();
-                            url = JObject.Parse(webJson)["durl"][0]["url"].ToString();
-                            size = JObject.Parse(webJson)["durl"][0]["size"].Value<double>();
-                            length = JObject.Parse(webJson)["durl"][0]["length"].Value<double>();
+                            //获取所有分段
+                            foreach (JObject node in JArray.Parse(JObject.Parse(webJson)["durl"].ToString()))
+                            {
+                                clips.Add(node["url"].ToString());
+                                size += node["size"].Value<double>();
+                                length += node["length"].Value<double>();
+                            }
                         }
                         Video v1 = new Video();
                         v1.id = quality;
@@ -573,7 +582,7 @@ namespace BBDown
                         //降序
                         videoInfo.Sort(Compare);
 
-                        Log($"共计{videoInfo.Count}条流({format}).");
+                        Log($"共计{videoInfo.Count}条流({format}, 共有{clips.Count}个分段).");
                         int index = 0;
                         int vIndex = 0;
                         foreach (var v in videoInfo)
@@ -593,30 +602,39 @@ namespace BBDown
                             Log($"{outPath}已存在, 跳过下载...");
                             continue;
                         }
-
-                        if (multiThread && !videoInfo[0].baseUrl.Contains("-cmcc-"))
+                        var pad = string.Empty.PadRight(clips.Count.ToString().Length, '0');
+                        for (int i = 0; i < clips.Count; i++) 
                         {
-                            if (videoInfo.Count != 0)
+                            var link = clips[i];
+                            videoPath= $"{aid}/{aid}.P{p.index}.{p.cid}.{i.ToString(pad)}.mp4";
+                            if (multiThread && !link.Contains("-cmcc-"))
                             {
-                                Log($"开始多线程下载P{p.index}视频...");
-                                MultiThreadDownloadFile(videoInfo[vIndex].baseUrl, videoPath);
-                                Log("合并视频分片...");
-                                CombineMultipleFilesIntoSingleFile(GetFiles(Path.GetDirectoryName(videoPath), ".vclip"), videoPath);
+                                if (videoInfo.Count != 0)
+                                {
+                                    Log($"开始多线程下载P{p.index}视频, 片段({(i + 1).ToString(pad)}/{clips.Count})...");
+                                    MultiThreadDownloadFile(link, videoPath);
+                                    Log("合并视频分片...");
+                                    CombineMultipleFilesIntoSingleFile(GetFiles(Path.GetDirectoryName(videoPath), ".vclip"), videoPath);
+                                }
+                                Log("清理分片...");
+                                foreach (var file in new DirectoryInfo(Path.GetDirectoryName(videoPath)).EnumerateFiles("*.?clip")) file.Delete();
                             }
-                            Log("清理分片...");
-                            foreach (var file in new DirectoryInfo(Path.GetDirectoryName(videoPath)).EnumerateFiles("*.?clip")) file.Delete();
-                        }
-                        else
-                        {
-                            if (multiThread && videoInfo[vIndex].baseUrl.Contains("-cmcc-"))
-                                LogError("检测到cmcc域名cdn, 已经禁用多线程");
-                            if (videoInfo.Count != 0)
+                            else
                             {
-                                Log($"开始下载P{p.index}视频...");
-                                await DownloadFile(videoInfo[vIndex].baseUrl, videoPath);
+                                if (multiThread && link.Contains("-cmcc-"))
+                                    LogError("检测到cmcc域名cdn, 已经禁用多线程");
+                                if (videoInfo.Count != 0)
+                                {
+                                    Log($"开始下载P{p.index}视频, 片段({(i + 1).ToString(pad)}/{clips.Count})...");
+                                    await DownloadFile(link, videoPath);
+                                }
                             }
                         }
                         Log($"下载P{p.index}完毕");
+                        Log("开始合并分段...");
+                        var files = GetFiles(Path.GetDirectoryName(videoPath), ".mp4");
+                        videoPath = $"{aid}/{aid}.P{p.index}.{p.cid}.mp4";
+                        MergeFLV(files, videoPath);
                         Log("开始混流视频" + (subtitleInfo.Count > 0 ? "和字幕" : "") + "...");
                         int code = MuxAV(videoPath, "", outPath,
                             desc.Replace("\"", ""),

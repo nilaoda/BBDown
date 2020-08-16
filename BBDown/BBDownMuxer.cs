@@ -4,13 +4,37 @@ using System.Diagnostics;
 using System.Text;
 using System.Text.RegularExpressions;
 using static BBDown.BBDownEntity;
+using static BBDown.BBDownUtil;
 using static BBDown.BBDownSubUtil;
 using static BBDown.BBDownLogger;
+using System.IO;
 
 namespace BBDown
 {
     class BBDownMuxer
     {
+        public static int ffmpeg(string parms)
+        {
+            int code = 0;
+            Process p = new Process();
+            p.StartInfo.FileName = "ffmpeg";
+            p.StartInfo.Arguments = parms;
+            p.StartInfo.UseShellExecute = false;
+            p.StartInfo.RedirectStandardError = true;
+            p.StartInfo.CreateNoWindow = false;
+            p.ErrorDataReceived += delegate (object sendProcess, DataReceivedEventArgs output) {
+                if (!string.IsNullOrWhiteSpace(output.Data))
+                    Log(output.Data);
+            };
+            p.StartInfo.StandardErrorEncoding = Encoding.UTF8;
+            p.Start();
+            p.BeginErrorReadLine();
+            p.WaitForExit();
+            p.Close();
+            p.Dispose();
+            return code;
+        }
+
         public static int MuxAV(string videoPath, string audioPath, string outPath, string desc = "", string title = "", string episodeId = "", string pic = "", List<Subtitle> subs = null)
         {
             //----分析并生成-i参数
@@ -39,31 +63,35 @@ namespace BBDown
             }
 
             //----分析完毕
-            int code = 0;
-            Process p = new Process();
-            p.StartInfo.FileName = "ffmpeg";
-            p.StartInfo.Arguments = $"-loglevel warning -y " +
-                inputArg.ToString() + metaArg.ToString() + $" -metadata title=\"" + (episodeId == "" ? title : episodeId) + "\" " +
-                $"-metadata description=\"{desc}\" " +
-                (episodeId == "" ? "" : $"-metadata album=\"{title}\" ") +
-                $"-c copy " +
-                (subs != null ? " -c:s mov_text " : "") +
-                $"\"{outPath}\"";
-            p.StartInfo.UseShellExecute = false;
-            p.StartInfo.RedirectStandardError = true;
-            p.StartInfo.CreateNoWindow = false;
-            p.ErrorDataReceived += delegate (object sendProcess, DataReceivedEventArgs output) {
-                if (!string.IsNullOrWhiteSpace(output.Data))
-                    Log(output.Data);
-            };
-            p.StartInfo.StandardErrorEncoding = Encoding.UTF8;
-            p.Start();
-            p.BeginErrorReadLine();
-            p.WaitForExit();
-            p.Close();
-            p.Dispose();
-            return code;
+            var arguments = $"-loglevel warning -y " +
+                 inputArg.ToString() + metaArg.ToString() + $" -metadata title=\"" + (episodeId == "" ? title : episodeId) + "\" " +
+                 $"-metadata description=\"{desc}\" " +
+                 (episodeId == "" ? "" : $"-metadata album=\"{title}\" ") +
+                 $"-c copy " +
+                 (subs != null ? " -c:s mov_text " : "") +
+                 $"\"{outPath}\"";
+            return ffmpeg(arguments);
         }
 
+        public static void MergeFLV(string[] files, string outPath)
+        {
+            if (files.Length == 1)
+            {
+                File.Move(files[0], outPath); 
+            }
+            else
+            {
+                foreach (var file in files)
+                {
+                    var tmpFile = Path.Combine(Path.GetDirectoryName(file), Path.GetFileNameWithoutExtension(file) + ".ts");
+                    var arguments = $"-loglevel warning -y -i \"{file}\" -map 0 -c copy -f mpegts -bsf:v h264_mp4toannexb \"{tmpFile}\"";
+                    ffmpeg(arguments);
+                    File.Delete(file);
+                }
+                var f = GetFiles(Path.GetDirectoryName(files[0]), ".ts");
+                CombineMultipleFilesIntoSingleFile(f, outPath);
+                foreach (var s in f) File.Delete(s);
+            }
+        }
     }
 }
