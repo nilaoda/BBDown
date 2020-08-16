@@ -17,7 +17,7 @@ Arguments:
   <url>    视频地址 或 av|bv|BV|ep|ss
 
 Options:
-  -tv, --use-tv-api                    使用TV端解析模式(不支持版权内容)
+  -tv, --use-tv-api                    使用TV端解析模式
   -hevc, --only-hevc                   下载hevc编码
   -info, --only-show-info              仅解析不下载
   -hs, --hide-streams                  不要显示所有可用音视频流
