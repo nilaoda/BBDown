@@ -14,6 +14,7 @@ using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
 using static BBDown.BBDownEntity;
@@ -204,7 +205,28 @@ namespace BBDown
             }
         }
 
-        public static void MultiThreadDownloadFile(string url, string path)
+        //https://stackoverflow.com/a/25877042
+        public static async Task RunWithMaxDegreeOfConcurrency<T>(
+            int maxDegreeOfConcurrency, IEnumerable<T> collection, Func<T, Task> taskFactory)
+        {
+            var activeTasks = new List<Task>(maxDegreeOfConcurrency);
+            foreach (var task in collection.Select(taskFactory))
+            {
+                activeTasks.Add(task);
+                if (activeTasks.Count == maxDegreeOfConcurrency)
+                {
+                    await Task.WhenAny(activeTasks.ToArray());
+                    //observe exceptions here
+                    activeTasks.RemoveAll(t => t.IsCompleted);
+                }
+            }
+            await Task.WhenAll(activeTasks.ToArray()).ContinueWith(t =>
+            {
+                //observe exceptions in a manner consistent with the above   
+            });
+        }
+
+        public static async Task MultiThreadDownloadFileAsync(string url, string path)
         {
             long fileSize = GetFileSize(url);
             List<Clip> allClips = GetAllClips(url, fileSize);
@@ -213,20 +235,66 @@ namespace BBDown
             using (var progress = new ProgressBar())
             {
                 progress.Report(0);
-                //多线程设置
+                await RunWithMaxDegreeOfConcurrency(8, allClips, async clip =>
+                 {
+                 string tmp = Path.Combine(Path.GetDirectoryName(path), clip.index.ToString("00000") + "_" + Path.GetFileNameWithoutExtension(path) + (Path.GetExtension(path).EndsWith(".mp4") ? ".vclip" : ".aclip"));
+                     if (!(File.Exists(tmp) && new FileInfo(tmp).Length == clip.to - clip.from + 1))
+                     {
+                     reDown:
+                         try
+                         {
+                             using (var client = new HttpClient())
+                             {
+                                 client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0");
+                                 client.DefaultRequestHeaders.Add("Cookie", Program.COOKIE);
+                                 if (clip.to != -1)
+                                     client.DefaultRequestHeaders.Add("Range", $"bytes={clip.from}-{clip.to}");
+                                 else
+                                     client.DefaultRequestHeaders.Add("Range", $"bytes={clip.from}-");
+                                 if (!url.Contains("platform=android_tv_yst"))
+                                     client.DefaultRequestHeaders.Referrer = new Uri("https://www.bilibili.com");
+
+                                 var response = await client.GetAsync(url);
+
+                                 using (var stream = await response.Content.ReadAsStreamAsync())
+                                 {
+                                     using (var fileStream = new FileStream(tmp, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true))
+                                     {
+                                         var buffer = new byte[8192];
+                                         int bytesRead;
+                                         while ((bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+                                         {
+                                             await fileStream.WriteAsync(buffer, 0, bytesRead);
+                                             done += bytesRead;
+                                             progress.Report((double)done / fileSize);
+                                         }
+                                         //await stream.CopyToAsync(fileStream);
+                                     }
+                                 }
+                             }
+                         }
+                         catch { goto reDown; }
+                     }
+                     else
+                     {
+                         done += new FileInfo(tmp).Length;
+                         progress.Report((double)done / fileSize);
+                     }
+                 });
+                /*//多线程设置
                 ParallelOptions parallelOptions = new ParallelOptions
                 {
                     MaxDegreeOfParallelism = 8
                 };
-                Parallel.ForEach(allClips, parallelOptions, clip =>
+                Parallel.ForEach(allClips, parallelOptions, async clip =>
                 {
                     string tmp = Path.Combine(Path.GetDirectoryName(path), clip.index.ToString("00000") + "_" + Path.GetFileNameWithoutExtension(path) + (Path.GetExtension(path).EndsWith(".mp4") ? ".vclip" : ".aclip"));
                     if (!(File.Exists(tmp) && new FileInfo(tmp).Length == clip.to - clip.from + 1))
                     {
-                        reDown:
+                    reDown:
                         try
                         {
-                            HttpWebRequest request = WebRequest.Create(url) as HttpWebRequest;
+                            *//*HttpWebRequest request = WebRequest.Create(url) as HttpWebRequest;
                             request.Timeout = 30000;
                             request.ReadWriteTimeout = 30000; //重要
                             request.AllowAutoRedirect = true;
@@ -257,7 +325,7 @@ namespace BBDown
                                         }
                                     }
                                 }
-                            }
+                            }*//*
                         }
                         catch { goto reDown; }
                     }
@@ -266,7 +334,7 @@ namespace BBDown
                         done += new FileInfo(tmp).Length;
                         progress.Report((double)done / fileSize);
                     }
-                });
+                });*/
             }
         }
 

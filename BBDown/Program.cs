@@ -225,7 +225,7 @@ namespace BBDown
         {
             Console.BackgroundColor = ConsoleColor.DarkBlue;
             Console.ForegroundColor = ConsoleColor.White;
-            Console.Write("BBDown version 1.1 20200816, Bilibili Downloader.\r\n");
+            Console.Write("BBDown version 1.2 20200817, Bilibili Downloader.\r\n");
             Console.ResetColor();
             Console.Write("请注意：任何BUG请前往以下网址反馈：\r\n" +
                 "https://github.com/nilaoda/BBDown/issues\r\n");
@@ -483,14 +483,14 @@ namespace BBDown
                             if (video != null)
                             {
                                 Log($"开始多线程下载P{p.index}视频...");
-                                MultiThreadDownloadFile(videoInfo[vIndex].baseUrl, videoPath);
+                                await MultiThreadDownloadFileAsync(videoInfo[vIndex].baseUrl, videoPath);
                                 Log("合并视频分片...");
                                 CombineMultipleFilesIntoSingleFile(GetFiles(Path.GetDirectoryName(videoPath), ".vclip"), videoPath);
                             }
                             if (audio != null)
                             {
                                 Log($"开始多线程下载P{p.index}音频...");
-                                MultiThreadDownloadFile(audioInfo[aIndex].baseUrl, audioPath);
+                                await MultiThreadDownloadFileAsync(audioInfo[aIndex].baseUrl, audioPath);
                                 Log("合并音频分片...");
                                 CombineMultipleFilesIntoSingleFile(GetFiles(Path.GetDirectoryName(audioPath), ".aclip"), audioPath);
                             }
@@ -612,7 +612,7 @@ namespace BBDown
                                 if (videoInfo.Count != 0)
                                 {
                                     Log($"开始多线程下载P{p.index}视频, 片段({(i + 1).ToString(pad)}/{clips.Count})...");
-                                    MultiThreadDownloadFile(link, videoPath);
+                                    await MultiThreadDownloadFileAsync(link, videoPath);
                                     Log("合并视频分片...");
                                     CombineMultipleFilesIntoSingleFile(GetFiles(Path.GetDirectoryName(videoPath), ".vclip"), videoPath);
                                 }
