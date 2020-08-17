@@ -62,43 +62,43 @@ namespace BBDown
             {
                 new Argument<string>(
                     "url",
-                    description: "视频地址 或 av|bv|BV|ep|ss"),
+                    description: "视频地址 或 av,bv,BV,ep,ss"),
                 new Option<bool>(
                     new string[]{ "--use-tv-api" ,"-tv"},
-                    "使用TV端解析模式"),
+                    "使用TV端API解析"),
                 new Option<bool>(
                     new string[]{ "--only-hevc" ,"-hevc"},
-                    "下载hevc编码"),
+                    "选择HEVC编码"),
                 new Option<bool>(
                     new string[]{ "--only-show-info" ,"-info"},
-                    "仅解析不下载"),
+                    "仅解析流信息"),
                 new Option<bool>(
                     new string[]{ "--hide-streams", "-hs"},
-                    "不要显示所有可用音视频流"),
+                    "不显示可用音视频流"),
                 new Option<bool>(
                     new string[]{ "--interactive", "-ia"},
-                    "交互式选择清晰度"),
+                    "交互选择流"),
                 new Option<bool>(
                     new string[]{ "--multi-thread", "-mt"},
-                    "使用多线程下载"),
+                    "多线程下载"),
                 new Option<string>(
                     new string[]{ "--select-page" ,"-p"},
-                    "选择指定分p或分p范围"),
+                    "指定分p或分p范围"),
                 new Option<string>(
                     new string[]{ "--cookie" ,"-c"},
-                    "设置字符串cookie用以下载网页接口的会员内容"),
+                    "设置cookie以访问会员内容"),
                 new Option<string>(
                     new string[]{ "--access-token" ,"-a"},
-                    "设置access_token用以下载TV接口的会员内容")
+                    "设置access_token以访问TV端会员内容")
             };
 
             Command loginCommand = new Command(
                 "login",
-                "通过APP扫描二维码以登录您的WEB账号");
+                "扫描二维码登录WEB账号");
             rootCommand.AddCommand(loginCommand);
             Command loginTVCommand = new Command(
                 "logintv",
-                "通过APP扫描二维码以登录您的TV账号");
+                "扫描二维码登录TV账号");
             rootCommand.AddCommand(loginTVCommand);
             rootCommand.Description = "BBDown是一个免费且便捷高效的哔哩哔哩下载/解析软件.";
             rootCommand.TreatUnmatchedTokensAsErrors = true;
