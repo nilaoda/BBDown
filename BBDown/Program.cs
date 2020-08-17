@@ -22,6 +22,7 @@ namespace BBDown
 {
     class Program
     {
+        public static string BB_VERSION = "1.2.1";
         public static string COOKIE = "";
         public static string TOKEN = "";
         static Dictionary<string, string> qualitys = new Dictionary<string, string>() {
@@ -225,7 +226,7 @@ namespace BBDown
         {
             Console.BackgroundColor = ConsoleColor.DarkBlue;
             Console.ForegroundColor = ConsoleColor.White;
-            Console.Write("BBDown version 1.2.0, Bilibili Downloader.\r\n");
+            Console.Write($"BBDown version {BB_VERSION}, Bilibili Downloader.\r\n");
             Console.ResetColor();
             Console.Write("请注意：任何BUG请前往以下网址反馈：\r\n" +
                 "https://github.com/nilaoda/BBDown/issues\r\n");
@@ -302,7 +303,7 @@ namespace BBDown
                 string pic = infoJson["data"]["pic"].ToString();
                 string pubTime = infoJson["data"]["pubdate"].ToString();
                 LogColor("视频标题: " + title);
-                Log("发布时间: " + new DateTime(1970, 1, 1, 0, 0, 0, 0).AddSeconds(Convert.ToDouble(pubTime)));
+                Log("发布时间: " + new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc).AddSeconds(Convert.ToDouble(pubTime)).ToLocalTime());
                 JArray subs = JArray.Parse(infoJson["data"]["subtitle"]["list"].ToString());
                 JArray pages = JArray.Parse(infoJson["data"]["pages"].ToString());
                 List<Page> pagesInfo = new List<Page>();
