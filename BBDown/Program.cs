@@ -576,7 +576,7 @@ namespace BBDown
                         v1.dfn = qualitys[quality];
                         v1.baseUrl = url;
                         v1.codecs = videoCodecid == "12" ? "HEVC" : "AVC";
-                        if (hevc && v1.codecs == "AVC") ;
+                        if (hevc && v1.codecs == "AVC") { }
                         else videoInfo.Add(v1);
 
                         //降序
