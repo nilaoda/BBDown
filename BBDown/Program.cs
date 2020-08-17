@@ -587,7 +587,7 @@ namespace BBDown
                         int vIndex = 0;
                         foreach (var v in videoInfo)
                         {
-                            LogColor($"{index++}. [{v.dfn}] [{v.res}] [{v.codecs}] [{v.fps}] [~{(size / 1024 / (length / 1000) * 8).ToString("00")} kbps] [{FormatFileSize(size)}]".Replace("[] ", ""), false);
+                            LogColor($"{index++}. [{v.dfn}] [{v.res}] [{v.codecs}] [{v.fps} fps] [~{(size / 1024 / (length / 1000) * 8).ToString("00")} kbps] [{FormatFileSize(size)}]".Replace("[] ", ""), false);
                         }
                         if (infoMode) continue;
                         if (interactMode)
