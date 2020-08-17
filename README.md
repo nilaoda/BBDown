@@ -50,6 +50,9 @@ Commands:
 - [ ] 其他的懒得写了
 
 # 更新日志
+<details>
+<summary>点击查看详情</summary>
+
 * 2020年8月17日 22:46  
   修复`-hs`和`-info`逻辑问题  
   重写多线程下载实现,提高稳定性  
@@ -118,7 +121,9 @@ Commands:
   
 * 2020年7月26日 19:50  
   发布公测
-  
+
+</details>
+
 # 演示
 ![1](https://user-images.githubusercontent.com/20772925/88686407-a2001480-d129-11ea-8aac-97a0c71af115.gif)
 
