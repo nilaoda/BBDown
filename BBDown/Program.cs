@@ -225,7 +225,7 @@ namespace BBDown
         {
             Console.BackgroundColor = ConsoleColor.DarkBlue;
             Console.ForegroundColor = ConsoleColor.White;
-            Console.Write("BBDown version 1.2 20200817, Bilibili Downloader.\r\n");
+            Console.Write("BBDown version 1.2.0, Bilibili Downloader.\r\n");
             Console.ResetColor();
             Console.Write("请注意：任何BUG请前往以下网址反馈：\r\n" +
                 "https://github.com/nilaoda/BBDown/issues\r\n");
