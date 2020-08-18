@@ -16,8 +16,9 @@ namespace BBDown
         {
             Console.Write(DateTime.Now.ToString("[yyyy-MM-dd HH:mm:ss.fff]") + " - ");
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine(text);
+            Console.Write(text);
             Console.ResetColor();
+            Console.WriteLine();
         }
 
         public static void LogColor(string text, bool time = true)
@@ -26,10 +27,11 @@ namespace BBDown
                 Console.Write(DateTime.Now.ToString("[yyyy-MM-dd HH:mm:ss.fff]") + " - ");
             Console.ForegroundColor = ConsoleColor.Cyan;
             if (time)
-                Console.WriteLine(text);
+                Console.Write(text);
             else
-                Console.WriteLine("                            " + text);
+                Console.Write("                            " + text);
             Console.ResetColor();
+            Console.WriteLine();
         }
     }
 }

@@ -57,6 +57,10 @@ namespace BBDown
         public static int Main(params string[] args)
         {
             ServicePointManager.DefaultConnectionLimit = 2048;
+            ServicePointManager.ServerCertificateValidationCallback = delegate
+            {
+                return true;
+            };
 
             var rootCommand = new RootCommand
             {
@@ -225,7 +229,8 @@ namespace BBDown
         {
             Console.BackgroundColor = ConsoleColor.DarkBlue;
             Console.ForegroundColor = ConsoleColor.White;
-            Console.Write("BBDown version 1.2 20200817, Bilibili Downloader.\r\n");
+            var ver = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+            Console.Write($"BBDown version {ver.Major}.{ver.Minor}.{ver.Build}, Bilibili Downloader.\r\n");
             Console.ResetColor();
             Console.Write("请注意：任何BUG请前往以下网址反馈：\r\n" +
                 "https://github.com/nilaoda/BBDown/issues\r\n");
@@ -302,7 +307,7 @@ namespace BBDown
                 string pic = infoJson["data"]["pic"].ToString();
                 string pubTime = infoJson["data"]["pubdate"].ToString();
                 LogColor("视频标题: " + title);
-                Log("发布时间: " + new DateTime(1970, 1, 1, 0, 0, 0, 0).AddSeconds(Convert.ToDouble(pubTime)));
+                Log("发布时间: " + new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc).AddSeconds(Convert.ToDouble(pubTime)).ToLocalTime());
                 JArray subs = JArray.Parse(infoJson["data"]["subtitle"]["list"].ToString());
                 JArray pages = JArray.Parse(infoJson["data"]["pages"].ToString());
                 List<Page> pagesInfo = new List<Page>();
@@ -446,12 +451,14 @@ namespace BBDown
                             foreach (var v in videoInfo)
                             {
                                 LogColor($"{index++}. [{v.dfn}] [{v.res}] [{v.codecs}] [{v.fps}] [{v.bandwith} kbps] [~{FormatFileSize(p.dur * v.bandwith * 1024 / 8)}]".Replace("[] ", ""), false);
+                                if (infoMode) Console.WriteLine(v.baseUrl);
                             }
                             Log($"共计{audioInfo.Count}条音频流.");
                             index = 0;
                             foreach (var a in audioInfo)
                             {
                                 LogColor($"{index++}. [{a.codecs}] [{a.bandwith} kbps] [~{FormatFileSize(p.dur * a.bandwith * 1024 / 8)}]", false);
+                                if (infoMode) Console.WriteLine(a.baseUrl);
                             }
                         }
                         if (infoMode) continue;
@@ -460,10 +467,12 @@ namespace BBDown
                             Log("请选择一条视频流(输入序号): ", false);
                             Console.ForegroundColor = ConsoleColor.Cyan;
                             vIndex = Convert.ToInt32(Console.ReadLine());
+                            if (vIndex > videoInfo.Count || vIndex < 0) vIndex = 0;
                             Console.ResetColor();
                             Log("请选择一条音频流(输入序号): ", false);
                             Console.ForegroundColor = ConsoleColor.Cyan;
                             aIndex = Convert.ToInt32(Console.ReadLine());
+                            if (aIndex > audioInfo.Count || aIndex < 0) aIndex = 0;
                             Console.ResetColor();
                         }
                         if (File.Exists(outPath) && new FileInfo(outPath).Length != 0)
@@ -536,9 +545,10 @@ namespace BBDown
                     }
                     else if (webJson.Contains("\"durl\":["))  //flv
                     {
-                        //重新解析最高清晰度
-                        webJson = GetPlayJson(aid, p.cid, epId, tvApi, bangumi, "120");
+                        bool flag = false;
+                    reParse:
                         List<string> clips = new List<string>();
+                        List<string> dfns = new List<string>();
                         string quality = "";
                         string videoCodecid = "";
                         string url = "";
@@ -557,6 +567,11 @@ namespace BBDown
                                 size += node["size"].Value<double>();
                                 length += node["length"].Value<double>();
                             }
+                            //获取可用清晰度
+                            foreach(JObject node in JArray.Parse(JObject.Parse(webJson)["data"]["qn_extras"].ToString()))
+                            {
+                                dfns.Add(node["qn"].ToString());
+                            }
                         }
                         else
                         {
@@ -570,33 +585,50 @@ namespace BBDown
                                 size += node["size"].Value<double>();
                                 length += node["length"].Value<double>();
                             }
+                            //获取可用清晰度
+                            foreach (JObject node in JArray.Parse(JObject.Parse(webJson)["qn_extras"].ToString()))
+                            {
+                                dfns.Add(node["qn"].ToString());
+                            }
                         }
                         Video v1 = new Video();
                         v1.id = quality;
                         v1.dfn = qualitys[quality];
                         v1.baseUrl = url;
                         v1.codecs = videoCodecid == "12" ? "HEVC" : "AVC";
-                        if (hevc && v1.codecs == "AVC") ;
+                        if (hevc && v1.codecs == "AVC") { }
                         else videoInfo.Add(v1);
 
                         //降序
                         videoInfo.Sort(Compare);
 
+                        if (interactMode && !flag) 
+                        {
+                            int i = 0;
+                            dfns.ForEach(delegate (string key) { LogColor($"{i++}.{qualitys[key]}"); });
+                            Log("请选择最想要的清晰度(输入序号): ", false);
+                            Console.ForegroundColor = ConsoleColor.Cyan;
+                            var vIndex = Convert.ToInt32(Console.ReadLine());
+                            if (vIndex > dfns.Count || vIndex < 0) vIndex = 0;
+                            Console.ResetColor();
+                            //重新解析
+                            webJson = GetPlayJson(aid, p.cid, epId, tvApi, bangumi, dfns[vIndex]);
+                            flag = true;
+                            videoInfo.Clear();
+                            goto reParse;
+                        }
+
                         Log($"共计{videoInfo.Count}条流({format}, 共有{clips.Count}个分段).");
                         int index = 0;
-                        int vIndex = 0;
                         foreach (var v in videoInfo)
                         {
                             LogColor($"{index++}. [{v.dfn}] [{v.res}] [{v.codecs}] [{v.fps}] [~{(size / 1024 / (length / 1000) * 8).ToString("00")} kbps] [{FormatFileSize(size)}]".Replace("[] ", ""), false);
+                            if (infoMode)
+                            {
+                                clips.ForEach(delegate (string c) { Console.WriteLine(c); });
+                            }
                         }
                         if (infoMode) continue;
-                        if (interactMode)
-                        {
-                            Log("请选择一条流(输入序号): ", false);
-                            Console.ForegroundColor = ConsoleColor.Cyan;
-                            vIndex = Convert.ToInt32(Console.ReadLine());
-                            Console.ResetColor();
-                        }
                         if (File.Exists(outPath) && new FileInfo(outPath).Length != 0)
                         {
                             Log($"{outPath}已存在, 跳过下载...");
@@ -665,8 +697,9 @@ namespace BBDown
             {
                 Console.BackgroundColor = ConsoleColor.Red;
                 Console.ForegroundColor = ConsoleColor.White;
-                Console.WriteLine(e.Message);
+                Console.Write(e.Message);
                 Console.ResetColor();
+                Console.WriteLine();
                 Thread.Sleep(1);
             }
         }
