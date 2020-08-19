@@ -57,7 +57,7 @@ namespace BBDown
         public static int Main(params string[] args)
         {
             ServicePointManager.DefaultConnectionLimit = 2048;
-            ServicePointManager.ServerCertificateValidationCallback = delegate
+            ServicePointManager.ServerCertificateValidationCallback = (sender, certificate, chain, errors) =>
             {
                 return true;
             };
@@ -546,6 +546,8 @@ namespace BBDown
                     else if (webJson.Contains("\"durl\":["))  //flv
                     {
                         bool flag = false;
+                        //默认以最高清晰度解析
+                        webJson = GetPlayJson(aid, p.cid, epId, tvApi, bangumi, "120");
                     reParse:
                         List<string> clips = new List<string>();
                         List<string> dfns = new List<string>();
