@@ -396,6 +396,9 @@ namespace BBDown
                             nodeName = "result";
                         }
 
+                        bool reParse = false;
+                    reParse:
+                        if (reParse) webJson = GetPlayJson(aid, p.cid, epId, tvApi, bangumi, "120");
                         try { video = JArray.Parse(!tvApi ? JObject.Parse(webJson)[nodeName]["dash"]["video"].ToString() : JObject.Parse(webJson)["dash"]["video"].ToString()); } catch { }
                         try { audio = JArray.Parse(!tvApi ? JObject.Parse(webJson)[nodeName]["dash"]["audio"].ToString() : JObject.Parse(webJson)["dash"]["audio"].ToString()); } catch { }
                         if (video != null)
@@ -413,8 +416,15 @@ namespace BBDown
                                     v.fps = node["frame_rate"].ToString();
                                 }
                                 if (hevc && v.codecs == "AVC") continue;
-                                videoInfo.Add(v);
+                                if (!videoInfo.Contains(v)) videoInfo.Add(v);
                             }
+
+                        //此处处理免二压视频，需要单独再请求一次
+                        if (!reParse)
+                        {
+                            reParse = true;
+                            goto reParse;
+                        }
 
                         if (audio != null)
                             foreach (JObject node in audio)

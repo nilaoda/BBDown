@@ -33,6 +33,22 @@ namespace BBDown
             public string fps;
             public string codecs;
             public long bandwith;
+
+            public override bool Equals(object obj)
+            {
+                return obj is Video video &&
+                       id == video.id &&
+                       dfn == video.dfn &&
+                       res == video.res &&
+                       fps == video.fps &&
+                       codecs == video.codecs &&
+                       bandwith == video.bandwith;
+            }
+
+            public override int GetHashCode()
+            {
+                return HashCode.Combine(id, dfn, res, fps, codecs, bandwith);
+            }
         }
 
         public struct Audio
@@ -42,6 +58,20 @@ namespace BBDown
             public string baseUrl;
             public string codecs;
             public long bandwith;
+
+            public override bool Equals(object obj)
+            {
+                return obj is Audio audio &&
+                       id == audio.id &&
+                       dfn == audio.dfn &&
+                       codecs == audio.codecs &&
+                       bandwith == audio.bandwith;
+            }
+
+            public override int GetHashCode()
+            {
+                return HashCode.Combine(id, dfn, codecs, bandwith);
+            }
         }
 
         public struct Subtitle
