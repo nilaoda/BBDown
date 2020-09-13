@@ -35,7 +35,7 @@ namespace BBDown
             return code;
         }
 
-        public static int MuxAV(string videoPath, string audioPath, string outPath, string desc = "", string title = "", string episodeId = "", string pic = "", List<Subtitle> subs = null)
+        public static int MuxAV(string videoPath, string audioPath, string outPath, string desc = "", string title = "", string episodeId = "", string pic = "", List<Subtitle> subs = null, bool audioOnly = false, bool videoOnly = false)
         {
             //----分析并生成-i参数
             StringBuilder inputArg = new StringBuilder();
@@ -67,9 +67,11 @@ namespace BBDown
                  inputArg.ToString() + metaArg.ToString() + $" -metadata title=\"" + (episodeId == "" ? title : episodeId) + "\" " +
                  $"-metadata description=\"{desc}\" " +
                  (episodeId == "" ? "" : $"-metadata album=\"{title}\" ") +
+                 (audioOnly ? " -vn " : "") + (videoOnly ? " -an " : "") +
                  $"-c copy " +
                  (subs != null ? " -c:s mov_text " : "") +
                  $"\"{outPath}\"";
+            LogDebug("ffmpeg命令：{0}", arguments);
             return ffmpeg(arguments);
         }
 
@@ -85,6 +87,7 @@ namespace BBDown
                 {
                     var tmpFile = Path.Combine(Path.GetDirectoryName(file), Path.GetFileNameWithoutExtension(file) + ".ts");
                     var arguments = $"-loglevel warning -y -i \"{file}\" -map 0 -c copy -f mpegts -bsf:v h264_mp4toannexb \"{tmpFile}\"";
+                    LogDebug("ffmpeg命令：{0}", arguments);
                     ffmpeg(arguments);
                     File.Delete(file);
                 }

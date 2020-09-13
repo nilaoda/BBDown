@@ -25,9 +25,9 @@ namespace BBDown
         public static string COOKIE = "";
         public static string TOKEN = "";
         static Dictionary<string, string> qualitys = new Dictionary<string, string>() {
-            {"120","超清 4K" }, {"116","高清 1080P60" },{"112","高清 1080P+" },
-            {"80","高清 1080P" }, {"74","高清 720P60" },{"64","高清 720P" },
-            {"48","高清 720P" }, {"32","清晰 480P" },{"16","流畅 360P" }
+            {"120","4K 超清" }, {"116","1080P60 高帧率" },{"112","1080P 高码率" },
+            {"80","1080P 高清" }, {"74","720P60 高帧率" },{"64","720P 高清" },
+            {"48","720P 高清" }, {"32","480P 清晰" },{"16","360P 流畅" }
         };
 
         private static int Compare(Video r1, Video r2)
@@ -49,9 +49,17 @@ namespace BBDown
             public bool Interactive { get; set; }
             public bool HideStreams { get; set; }
             public bool MultiThread { get; set; }
+            public bool VideoOnly { get; set; }
+            public bool AudioOnly { get; set; }
+            public bool Debug { get; set; }
             public string SelectPage { get; set; }
             public string Cookie { get; set; }
             public string AccessToken { get; set; }
+
+            public override string ToString()
+            {
+                return $"{{Input={Url}, {nameof(UseTvApi)}={UseTvApi.ToString()}, {nameof(OnlyHevc)}={OnlyHevc.ToString()}, {nameof(OnlyShowInfo)}={OnlyShowInfo.ToString()}, {nameof(Interactive)}={Interactive.ToString()}, {nameof(HideStreams)}={HideStreams.ToString()}, {nameof(MultiThread)}={MultiThread.ToString()}, {nameof(VideoOnly)}={VideoOnly.ToString()}, {nameof(AudioOnly)}={AudioOnly.ToString()}, {nameof(Debug)}={Debug.ToString()}, {nameof(SelectPage)}={SelectPage}, {nameof(Cookie)}={Cookie}, {nameof(AccessToken)}={AccessToken}}}";
+            }
         }
 
         public static int Main(params string[] args)
@@ -88,6 +96,15 @@ namespace BBDown
                 new Option<string>(
                     new string[]{ "--select-page" ,"-p"},
                     "选择指定分p或分p范围"),
+                /*new Option<bool>(
+                    new string[]{ "--audio-only" ,"-vn"},
+                    "仅下载音频"),
+                new Option<bool>(
+                    new string[]{ "--video-only" ,"-an"},
+                    "仅下载视频"),*/
+                new Option<bool>(
+                    new string[]{ "--debug"},
+                    "输出调试日志"),
                 new Option<string>(
                     new string[]{ "--cookie" ,"-c"},
                     "设置字符串cookie用以下载网页接口的会员内容"),
@@ -218,7 +235,6 @@ namespace BBDown
 
             rootCommand.Handler = CommandHandler.Create<MyOption>(async (myOption) =>
             {
-                //Console.WriteLine(myOption.ToString());
                 await DoWorkAsync(myOption);
             });
 
@@ -243,11 +259,22 @@ namespace BBDown
                 bool hevc = myOption.OnlyHevc;
                 bool hideStreams = myOption.HideStreams;
                 bool multiThread = myOption.MultiThread;
+                bool audioOnly = myOption.AudioOnly;
+                bool videoOnly = myOption.VideoOnly;
+                DEBUG_LOG = myOption.Debug;
                 string input = myOption.Url;
                 string selectPage = myOption.SelectPage;
                 string aid = "";
                 COOKIE = myOption.Cookie;
                 TOKEN = myOption.AccessToken != null ? myOption.AccessToken.Replace("access_token=", "") : "";
+                
+                //audioOnly和videoOnly同时开启则全部忽视
+                if (audioOnly && videoOnly)
+                {
+                    audioOnly = false;
+                    videoOnly = false;
+                }
+                
                 List<string> selectedPages = null;
                 if (!string.IsNullOrEmpty(GetQueryString("p", input)))
                 {
@@ -255,14 +282,17 @@ namespace BBDown
                     selectedPages.Add(GetQueryString("p", input));
                 }
 
+                LogDebug("运行参数：{0}", myOption);
                 if (File.Exists(Path.Combine(AppContext.BaseDirectory, "BBDown.data")) && !tvApi) 
                 {
                     Log("加载本地cookie...");
+                    LogDebug("文件路径：{0}", Path.Combine(AppContext.BaseDirectory, "BBDown.data"));
                     COOKIE = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "BBDown.data"));
                 }
                 if (File.Exists(Path.Combine(AppContext.BaseDirectory, "BBDownTV.data")) && tvApi)
                 {
                     Log("加载本地token...");
+                    LogDebug("文件路径：{0}", Path.Combine(AppContext.BaseDirectory, "BBDownTV.data"));
                     TOKEN = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "BBDownTV.data"));
                 }
                 Log("获取aid...");
@@ -299,9 +329,9 @@ namespace BBDown
 
                 if (string.IsNullOrEmpty(aid)) throw new Exception("输入有误");
                 string api = $"https://api.bilibili.com/x/web-interface/view?aid={aid}";
+                Log("获取视频信息...");
                 string json = GetWebSource(api);
                 JObject infoJson = JObject.Parse(json);
-                Log("获取视频信息...");
                 string title = infoJson["data"]["title"].ToString();
                 string desc = infoJson["data"]["desc"].ToString();
                 string pic = infoJson["data"]["pic"].ToString();
@@ -331,10 +361,12 @@ namespace BBDown
                         Directory.CreateDirectory(aid);
                     }
                     Log("下载封面...");
+                    LogDebug("下载：{0}", pic);
                     new WebClient().DownloadFile(pic, $"{aid}/{aid}.jpg");
                     foreach (Subtitle s in subtitleInfo)
                     {
                         Log($"下载字幕 {s.lan}...");
+                        LogDebug("下载：{0}", s.url);
                         BBDownSubUtil.SaveSubtitle(s.url, s.path);
                     }
                 }
@@ -344,7 +376,11 @@ namespace BBDown
                     if (infoJson["data"]["redirect_url"].ToString().Contains("bangumi"))
                     {
                         bangumi = true;
+                        LogDebug("获取epId...");
                         epId = Regex.Match(infoJson["data"]["redirect_url"].ToString(), "ep(\\d+)").Groups[1].Value;
+                        //番剧内容通常不会有分P，如果有分P则不需要epId参数
+                        if (pages.Count > 1) epId = "";
+                        LogDebug("获取epId结束: {0}", epId);
                     }
                 }
                 catch { }
@@ -700,6 +736,7 @@ namespace BBDown
                     else
                     {
                         LogError("解析此分P失败");
+                        LogDebug("{0}", webJson);
                         continue;
                     }
                 }

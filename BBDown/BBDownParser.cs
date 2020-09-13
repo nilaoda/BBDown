@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 using static BBDown.BBDownUtil;
+using static BBDown.BBDownLogger;
 
 namespace BBDown
 {
@@ -10,6 +11,7 @@ namespace BBDown
     {
         public static string GetPlayJson(string aid, string cid, string epId, bool tvApi, bool bangumi, string qn = "0")
         {
+            LogDebug("aid={0},cid={1},epId={2},tvApi={3},bangumi={4},qn={5}", aid, cid, epId, tvApi, bangumi, qn);
             string prefix = tvApi ? (bangumi ? "api.snm0516.aisee.tv/pgc/player/api/playurltv" : "api.snm0516.aisee.tv/x/tv/ugc/playurl")
                         : (bangumi ? "api.bilibili.com/pgc/player/web/playurl" : "api.bilibili.com/x/player/playurl");
             string api = $"https://{prefix}?avid={aid}&cid={cid}&qn={qn}&type=&otype=json" + (tvApi ? "" : "&fourk=1") +

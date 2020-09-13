@@ -18,6 +18,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
 using static BBDown.BBDownEntity;
+using static BBDown.BBDownLogger;
 
 namespace BBDown
 {
@@ -131,6 +132,7 @@ namespace BBDown
             webRequest.CachePolicy = new HttpRequestCachePolicy(HttpRequestCacheLevel.NoCacheNoStore);
             webRequest.KeepAlive = false;
             webRequest.AllowAutoRedirect = true;  //自动跳转
+            LogDebug("获取网页内容：Url: {0}, Headers: {1}", url, webRequest.Headers);
 
             HttpWebResponse webResponse = (HttpWebResponse)webRequest.GetResponse();
             if (webResponse.ContentEncoding != null
@@ -229,8 +231,10 @@ namespace BBDown
         public static async Task MultiThreadDownloadFileAsync(string url, string path)
         {
             long fileSize = GetFileSize(url);
+            LogDebug("文件大小：{0} bytes", fileSize);
             List<Clip> allClips = GetAllClips(url, fileSize);
             int total = allClips.Count;
+            LogDebug("分段数量：{0}", total);
             long done = 0;
             using (var progress = new ProgressBar())
             {
