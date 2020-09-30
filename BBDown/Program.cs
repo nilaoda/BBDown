@@ -17,6 +17,7 @@ using static BBDown.BBDownParser;
 using static BBDown.BBDownLogger;
 using static BBDown.BBDownMuxer;
 using System.Text;
+using System.Linq;
 
 namespace BBDown
 {
@@ -25,9 +26,9 @@ namespace BBDown
         public static string COOKIE = "";
         public static string TOKEN = "";
         static Dictionary<string, string> qualitys = new Dictionary<string, string>() {
-            {"120","4K 超清" }, {"116","1080P60 高帧率" },{"112","1080P 高码率" },
-            {"80","1080P 高清" }, {"74","720P60 高帧率" },{"64","720P 高清" },
-            {"48","720P 高清" }, {"32","480P 清晰" },{"16","360P 流畅" }
+            {"125","HDR 真彩" }, {"120","4K 超清" }, {"116","1080P60 高帧率" },
+            {"112","1080P 高码率" }, {"80","1080P 高清" }, {"74","720P60 高帧率" },
+            {"64","720P 高清" }, {"48","720P 高清" }, {"32","480P 清晰" }, {"16","360P 流畅" }
         };
 
         private static int Compare(Video r1, Video r2)
@@ -328,31 +329,31 @@ namespace BBDown
                 }
 
                 if (string.IsNullOrEmpty(aid)) throw new Exception("输入有误");
-                string api = $"https://api.bilibili.com/x/web-interface/view?aid={aid}";
-                Log("获取视频信息...");
-                string json = GetWebSource(api);
-                JObject infoJson = JObject.Parse(json);
-                string title = infoJson["data"]["title"].ToString();
-                string desc = infoJson["data"]["desc"].ToString();
-                string pic = infoJson["data"]["pic"].ToString();
-                string pubTime = infoJson["data"]["pubdate"].ToString();
-                LogColor("视频标题: " + title);
-                Log("发布时间: " + new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc).AddSeconds(Convert.ToDouble(pubTime)).ToLocalTime());
-                JArray subs = JArray.Parse(infoJson["data"]["subtitle"]["list"].ToString());
-                JArray pages = JArray.Parse(infoJson["data"]["pages"].ToString());
-                List<Page> pagesInfo = new List<Page>();
-                List<Subtitle> subtitleInfo = new List<Subtitle>();
-                foreach (JObject sub in subs)
+                IFetcher fetcher = new BBDownNormalInfoFetcher();
+                string cheeseId = "";
+                if (aid.StartsWith("cheese"))
                 {
-                    Subtitle subtitle = new Subtitle();
-                    subtitle.url = sub["subtitle_url"].ToString();
-                    subtitle.lan = sub["lan"].ToString();
-                    subtitle.path = $"{aid}/{aid}.{subtitle.lan}.srt";
-                    subtitleInfo.Add(subtitle);
+                    cheeseId = aid.Substring(7);
+                    fetcher = new BBDownCheeseInfoFetcher();
                 }
+                var vInfo = fetcher.Fetch(cheeseId != "" ? cheeseId : aid);
+                //如果用户没有选择分P，根据epid来确定某一集
+                if (selectedPages == null && !string.IsNullOrEmpty(vInfo.Index)) 
+                {
+                    selectedPages = new List<string> { vInfo.Index };
+                }
+                Log("获取视频信息...");
+                string title = vInfo.Title;
+                string desc = vInfo.Desc;
+                string pic = vInfo.Pic;
+                string pubTime = vInfo.PubTime;
+                LogColor("视频标题: " + title);
+                Log("发布时间: " + pubTime);
+                List<Page> pagesInfo = vInfo.PagesInfo;
+                List<Subtitle> subtitleInfo = vInfo.Subtitles;
                 bool more = false;
-                bool bangumi = false;
-                string epId = "";
+                bool bangumi = vInfo.IsBangumi;
+                bool cheese = vInfo.IsCheese;
 
                 if (!infoMode)
                 {
@@ -371,28 +372,10 @@ namespace BBDown
                     }
                 }
 
-                try
+                foreach (Page p in pagesInfo)
                 {
-                    if (infoJson["data"]["redirect_url"].ToString().Contains("bangumi"))
-                    {
-                        bangumi = true;
-                        LogDebug("获取epId...");
-                        epId = Regex.Match(infoJson["data"]["redirect_url"].ToString(), "ep(\\d+)").Groups[1].Value;
-                        //番剧内容通常不会有分P，如果有分P则不需要epId参数
-                        if (pages.Count > 1) epId = "";
-                        LogDebug("获取epId结束: {0}", epId);
-                    }
-                }
-                catch { }
-                foreach (JObject page in pages)
-                {
-                    Page p = new Page(page["page"].Value<int>(),
-                        page["cid"].ToString(), page["part"].ToString(),
-                        page["duration"].Value<int>(), page["dimension"]["width"] + "x" + page["dimension"]["height"]);
-                    pagesInfo.Add(p);
-
                     if (more) continue;
-                    if (Convert.ToInt32(page["page"].ToString()) > 5)
+                    if (p.index > 5)
                     {
                         Log("P...");
                         Log("分P太多, 已经省略部分...");
@@ -404,20 +387,21 @@ namespace BBDown
                     }
                 }
                 Log($"共计 {pagesInfo.Count} 个分P, 已选择：" + (selectedPages == null ? "ALL" : string.Join(",", selectedPages)));
-                
+
+                //过滤不需要的分P
+                if (selectedPages != null)
+                    pagesInfo = pagesInfo.Where(p => selectedPages.Contains(p.index.ToString())).ToList();
+
                 foreach (Page p in pagesInfo)
                 {
-                    //跳过不需要的分P
-                    if (selectedPages != null && !selectedPages.Contains(p.index.ToString())) continue;
-
                     Log($"开始解析P{p.index}...");
                     List<Video> videoInfo = new List<Video>();
                     List<Audio> audioInfo = new List<Audio>();
-                    string videoPath = $"{aid}/{aid}.P{p.index}.{p.cid}.mp4";
-                    string audioPath = $"{aid}/{aid}.P{p.index}.{p.cid}.m4a";
-                    string outPath = GetValidFileName(title + (pagesInfo.Count > 1 ? $"[P{p.index}.{p.title}].mp4" : ".mp4"));
+                    string videoPath = $"{p.aid}/{p.aid}.P{p.index}.{p.cid}.mp4";
+                    string audioPath = $"{p.aid}/{p.aid}.P{p.index}.{p.cid}.m4a";
+                    string outPath = title + (pagesInfo.Count > 1 ? $"/[P{p.index}]{p.title}.mp4" : ".mp4");
                     //调用解析
-                    string webJson = GetPlayJson(aid, p.cid, epId, tvApi, bangumi);
+                    string webJson = GetPlayJson(p.aid, p.cid, p.epid, tvApi, bangumi, cheese);
                     //File.WriteAllText($"debug.json", JObject.Parse(webJson).ToString());
 
                     JArray audio = null;
@@ -434,7 +418,7 @@ namespace BBDown
 
                         bool reParse = false;
                     reParse:
-                        if (reParse) webJson = GetPlayJson(aid, p.cid, epId, tvApi, bangumi, "120");
+                        if (reParse) webJson = GetPlayJson(p.aid, p.cid, p.epid, tvApi, bangumi, cheese, "125");
                         try { video = JArray.Parse(!tvApi ? JObject.Parse(webJson)[nodeName]["dash"]["video"].ToString() : JObject.Parse(webJson)["dash"]["video"].ToString()); } catch { }
                         try { audio = JArray.Parse(!tvApi ? JObject.Parse(webJson)[nodeName]["dash"]["audio"].ToString() : JObject.Parse(webJson)["dash"]["audio"].ToString()); } catch { }
                         if (video != null)
@@ -574,8 +558,8 @@ namespace BBDown
                         int code = MuxAV(videoPath, audioPath, outPath,
                             desc.Replace("\"", ""),
                             title.Replace("\"", ""),
-                            pagesInfo.Count > 1 ? GetValidFileName($"P{p.index}.{p.title}") : "",
-                            File.Exists($"{aid}/{aid}.jpg") ? $"{aid}/{aid}.jpg" : "",
+                            pagesInfo.Count > 1 ? ($"P{p.index}.{p.title}") : "",
+                            File.Exists($"{p.aid}/{p.aid}.jpg") ? $"{p.aid}/{p.aid}.jpg" : "",
                             subtitleInfo);
                         if (code != 0 || !File.Exists(outPath) || new FileInfo(outPath).Length == 0)
                         {
@@ -586,14 +570,14 @@ namespace BBDown
                         if (audio != null) File.Delete(audioPath);
                         foreach (var s in subtitleInfo) File.Delete(s.path);
                         if (pagesInfo.Count == 1 || p.index == pagesInfo.Count)
-                            File.Delete($"{aid}/{aid}.jpg");
-                        if (Directory.Exists(aid) && Directory.GetFiles(aid).Length == 0) Directory.Delete(aid, true);
+                            File.Delete($"{p.aid}/{p.aid}.jpg");
+                        if (Directory.Exists(p.aid) && Directory.GetFiles(p.aid).Length == 0) Directory.Delete(p.aid, true);
                     }
                     else if (webJson.Contains("\"durl\":["))  //flv
                     {
                         bool flag = false;
                         //默认以最高清晰度解析
-                        webJson = GetPlayJson(aid, p.cid, epId, tvApi, bangumi, "120");
+                        webJson = GetPlayJson(p.aid, p.cid, p.epid, tvApi, bangumi, cheese, "125");
                     reParse:
                         List<string> clips = new List<string>();
                         List<string> dfns = new List<string>();
@@ -650,7 +634,7 @@ namespace BBDown
                         //降序
                         videoInfo.Sort(Compare);
 
-                        if (interactMode && !flag) 
+                        if (interactMode && !flag)
                         {
                             int i = 0;
                             dfns.ForEach(delegate (string key) { LogColor($"{i++}.{qualitys[key]}"); });
@@ -660,7 +644,7 @@ namespace BBDown
                             if (vIndex > dfns.Count || vIndex < 0) vIndex = 0;
                             Console.ResetColor();
                             //重新解析
-                            webJson = GetPlayJson(aid, p.cid, epId, tvApi, bangumi, dfns[vIndex]);
+                            webJson = GetPlayJson(p.aid, p.cid, p.epid, tvApi, bangumi, cheese, dfns[vIndex]);
                             flag = true;
                             videoInfo.Clear();
                             goto reParse;
@@ -686,7 +670,7 @@ namespace BBDown
                         for (int i = 0; i < clips.Count; i++) 
                         {
                             var link = clips[i];
-                            videoPath= $"{aid}/{aid}.P{p.index}.{p.cid}.{i.ToString(pad)}.mp4";
+                            videoPath= $"{p.aid}/{p.aid}.P{p.index}.{p.cid}.{i.ToString(pad)}.mp4";
                             if (multiThread && !link.Contains("-cmcc-"))
                             {
                                 if (videoInfo.Count != 0)
@@ -713,14 +697,14 @@ namespace BBDown
                         Log($"下载P{p.index}完毕");
                         Log("开始合并分段...");
                         var files = GetFiles(Path.GetDirectoryName(videoPath), ".mp4");
-                        videoPath = $"{aid}/{aid}.P{p.index}.{p.cid}.mp4";
+                        videoPath = $"{p.aid}/{p.aid}.P{p.index}.{p.cid}.mp4";
                         MergeFLV(files, videoPath);
                         Log("开始混流视频" + (subtitleInfo.Count > 0 ? "和字幕" : "") + "...");
                         int code = MuxAV(videoPath, "", outPath,
                             desc.Replace("\"", ""),
                             title.Replace("\"", ""),
-                            pagesInfo.Count > 1 ? GetValidFileName($"P{p.index}.{p.title}") : "",
-                            File.Exists($"{aid}/{aid}.jpg") ? $"{aid}/{aid}.jpg" : "",
+                            pagesInfo.Count > 1 ? ($"P{p.index}.{p.title}") : "",
+                            File.Exists($"{p.aid}/{p.aid}.jpg") ? $"{p.aid}/{p.aid}.jpg" : "",
                             subtitleInfo);
                         if (code != 0 || !File.Exists(outPath) || new FileInfo(outPath).Length == 0)
                         {
@@ -730,8 +714,8 @@ namespace BBDown
                         if (videoInfo.Count != 0) File.Delete(videoPath);
                         foreach (var s in subtitleInfo) File.Delete(s.path);
                         if (pagesInfo.Count == 1 || p.index == pagesInfo.Count)
-                            File.Delete($"{aid}/{aid}.jpg");
-                        if (Directory.Exists(aid) && Directory.GetFiles(aid).Length == 0) Directory.Delete(aid, true);
+                            File.Delete($"{p.aid}/{p.aid}.jpg");
+                        if (Directory.Exists(p.aid) && Directory.GetFiles(p.aid).Length == 0) Directory.Delete(p.aid, true);
                     }
                     else
                     {

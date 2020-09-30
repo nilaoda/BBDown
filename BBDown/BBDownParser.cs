@@ -9,13 +9,13 @@ namespace BBDown
 {
     class BBDownParser
     {
-        public static string GetPlayJson(string aid, string cid, string epId, bool tvApi, bool bangumi, string qn = "0")
+        public static string GetPlayJson(string aid, string cid, string epId, bool tvApi, bool bangumi, bool cheese, string qn = "0")
         {
-            LogDebug("aid={0},cid={1},epId={2},tvApi={3},bangumi={4},qn={5}", aid, cid, epId, tvApi, bangumi, qn);
+            LogDebug("aid={0},cid={1},epId={2},tvApi={3},bangumi={4},cheese={5},qn={6}", aid, cid, epId, tvApi, bangumi, cheese, qn);
             string prefix = tvApi ? (bangumi ? "api.snm0516.aisee.tv/pgc/player/api/playurltv" : "api.snm0516.aisee.tv/x/tv/ugc/playurl")
                         : (bangumi ? "api.bilibili.com/pgc/player/web/playurl" : "api.bilibili.com/x/player/playurl");
             string api = $"https://{prefix}?avid={aid}&cid={cid}&qn={qn}&type=&otype=json" + (tvApi ? "" : "&fourk=1") +
-                "&fnver=0&fnval=16" + (tvApi ? "&device=android&platform=android" +
+                $"&fnver=0&fnval=80" + (tvApi ? "&device=android&platform=android" +
                 "&mobi_app=android_tv_yst&npcybs=0&force_host=0&build=102801" +
                 (Program.TOKEN != "" ? $"&access_key={GetQueryString("access_token", Program.TOKEN)}" : "") : "") +
                 (bangumi ? $"&module=bangumi&ep_id={epId}&fourk=1" + "&session=" : "");
@@ -24,12 +24,16 @@ namespace BBDown
                 api = (Program.TOKEN != "" ? $"access_key={GetQueryString("access_token", Program.TOKEN)}&" : "") +
                     $"aid={aid}&appkey=4409e2ce8ffd12b8&build=102801" +
                     $"&cid={cid}&device=android&ep_id={epId}&expire=0" +
-                    $"&fnval=16&fnver=0&fourk=1" +
+                    $"&fnval=80&fnver=0&fourk=1" +
                     $"&mid=0&mobi_app=android_tv_yst" +
                     $"&module=bangumi&npcybs=0&otype=json&platform=android" +
                     $"&qn={qn}&ts={GetTimeStamp(true)}";
                 api = $"https://{prefix}?" + api + (bangumi ? $"&sign={GetSign(api)}" : "");
             }
+
+            //课程接口
+            if (cheese) api = api.Replace("/pgc/", "/pugv/");
+
             //Console.WriteLine(api);
             string webJson = GetWebSource(api);
             //以下情况从网页源代码尝试解析

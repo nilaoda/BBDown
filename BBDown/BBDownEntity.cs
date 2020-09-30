@@ -9,15 +9,19 @@ namespace BBDown
         public struct Page
         {
             public int index;
+            public string aid;
             public string cid;
+            public string epid;
             public string title;
             public int dur;
             public string res;
 
-            public Page(int index, string cid, string title, int dur, string res)
+            public Page(int index, string aid, string cid, string epid, string title, int dur, string res)
             {
+                this.aid = aid;
                 this.index = index;
                 this.cid = cid;
+                this.epid = epid;
                 this.title = title;
                 this.dur = dur;
                 this.res = res;
