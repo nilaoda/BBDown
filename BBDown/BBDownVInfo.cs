@@ -36,11 +36,6 @@ namespace BBDown
         private bool isCheese;
 
         /// <summary>
-        /// 视频CC字幕
-        /// </summary>
-        private List<Subtitle> subtitles;
-
-        /// <summary>
         /// 视频分P信息
         /// </summary>
         private List<Page> pagesInfo;
@@ -52,7 +47,6 @@ namespace BBDown
         public bool IsBangumi { get => isBangumi; set => isBangumi = value; }
         public bool IsCheese { get => isCheese; set => isCheese = value; }
         public string Index { get => index; set => index = value; }
-        internal List<Subtitle> Subtitles { get => subtitles; set => subtitles = value; }
         internal List<Page> PagesInfo { get => pagesInfo; set => pagesInfo = value; }
     }
 }

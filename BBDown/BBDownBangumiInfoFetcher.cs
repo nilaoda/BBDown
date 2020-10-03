@@ -7,33 +7,41 @@ using static BBDown.BBDownUtil;
 
 namespace BBDown
 {
-    class BBDownCheeseInfoFetcher : IFetcher
+    class BBDownBangumiInfoFetcher : IFetcher
     {
         public BBDownVInfo Fetch(string id)
         {
-            id = id.Substring(7);
+            id = id.Substring(3);
             string index = "";
-            string api = $"https://api.bilibili.com/pugv/view/web/season?ep_id={id}";
+            string api = $"https://api.bilibili.com/pgc/view/web/season?ep_id={id}";
             string json = GetWebSource(api);
             JObject infoJson = JObject.Parse(json);
-            string cover = infoJson["data"]["cover"].ToString();
-            string title = infoJson["data"]["title"].ToString();
-            string desc = infoJson["data"]["subtitle"].ToString();
-            JArray pages = JArray.Parse(infoJson["data"]["episodes"].ToString());
+            string cover = infoJson["result"]["cover"].ToString();
+            string title = infoJson["result"]["title"].ToString();
+            string desc = infoJson["result"]["evaluate"].ToString();
+            string pubTime = infoJson["result"]["publish"]["pub_time"].ToString();
+            JArray pages = JArray.Parse(infoJson["result"]["episodes"].ToString());
             List<Page> pagesInfo = new List<Page>();
+            int i = 1;
             foreach (JObject page in pages)
             {
-                Page p = new Page(page["index"].Value<int>(),
+                string res = "";
+                try
+                {
+                    res = page["dimension"]["width"].ToString() + "x" + page["dimension"]["height"].ToString();
+                }
+                catch (Exception) { }
+                string _title = page["long_title"].ToString();
+                if(string.IsNullOrEmpty(_title)) _title = page["title"].ToString();
+                Page p = new Page(i++,
                     page["aid"].ToString(),
                     page["cid"].ToString(),
                     page["id"].ToString(),
-                    GetValidFileName(page["title"].ToString()),
-                    page["duration"].Value<int>(), "");
+                    GetValidFileName(_title),
+                    0, res);
                 if (p.epid == id) index = p.index.ToString();
                 pagesInfo.Add(p);
             }
-            string pubTime = pagesInfo.Count > 0 ? pages[0]["release_date"].ToString() : "";
-            pubTime = pubTime != "" ? (new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc).AddSeconds(Convert.ToDouble(pubTime)).ToLocalTime().ToString()) : "";
 
             var info = new BBDownVInfo();
             info.Title = GetValidFileName(title).Trim();

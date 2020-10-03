@@ -9,8 +9,10 @@ namespace BBDown
 {
     class BBDownParser
     {
-        public static string GetPlayJson(string aid, string cid, string epId, bool tvApi, bool bangumi, bool cheese, string qn = "0")
+        public static string GetPlayJson(string aidOri, string aid, string cid, string epId, bool tvApi, string qn = "0")
         {
+            bool cheese = aidOri.StartsWith("cheese:");
+            bool bangumi = cheese || aidOri.StartsWith("ep:");
             LogDebug("aid={0},cid={1},epId={2},tvApi={3},bangumi={4},cheese={5},qn={6}", aid, cid, epId, tvApi, bangumi, cheese, qn);
             string prefix = tvApi ? (bangumi ? "api.snm0516.aisee.tv/pgc/player/api/playurltv" : "api.snm0516.aisee.tv/x/tv/ugc/playurl")
                         : (bangumi ? "api.bilibili.com/pgc/player/web/playurl" : "api.bilibili.com/x/player/playurl");

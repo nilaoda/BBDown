@@ -3,12 +3,78 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using static BBDown.BBDownEntity;
 using static BBDown.BBDownUtil;
+using static BBDown.BBDownLogger;
+using System.Text.RegularExpressions;
 
 namespace BBDown
 {
     class BBDownSubUtil
     {
+        public static List<Subtitle> GetSubtitles(string aid, string cid)
+        {
+            List<Subtitle> subtitles = new List<Subtitle>();
+            try
+            {
+                string api = $"https://api.bilibili.com/x/web-interface/view?aid={aid}&cid={cid}";
+                string json = GetWebSource(api);
+                JObject infoJson = JObject.Parse(json);
+                JArray subs = JArray.Parse(infoJson["data"]["subtitle"]["list"].ToString());
+                foreach (JObject sub in subs)
+                {
+                    Subtitle subtitle = new Subtitle();
+                    subtitle.url = sub["subtitle_url"].ToString();
+                    subtitle.lan = sub["lan"].ToString();
+                    subtitle.path = $"{aid}/{aid}.{cid}.{subtitle.lan}.srt";
+                    subtitles.Add(subtitle);
+                }
+                return subtitles;
+            }
+            catch (Exception)
+            {
+                try
+                {
+                    //grpc调用接口 protobuf
+                    string api = "https://app.biliapi.net/bilibili.community.service.dm.v1.DM/DmView";
+                    int _aid = Convert.ToInt32(aid);
+                    int _cid = Convert.ToInt32(cid);
+                    int _type = 1;
+                    byte[] data = new byte[18];
+                    data[0] = 0x0; data[1] = 0x0; data[2] = 0x0; data[3] = 0x0; data[4] = 0xD; //先固定死了
+                    int i = 5;
+                    data[i++] = Convert.ToByte(1 << 3 | 0); // index=1
+                    while ((_aid & -128) != 0)
+                    {
+                        data[i++] = Convert.ToByte((_aid & 127) | 128);
+                        _aid = _aid >> 7;
+                    }
+                    data[i++] = Convert.ToByte(_aid);
+                    data[i++] = Convert.ToByte(2 << 3 | 0); // index=2
+                    while ((_cid & -128) != 0)
+                    {
+                        data[i++] = Convert.ToByte((_cid & 127) | 128);
+                        _cid = _cid >> 7;
+                    }
+                    data[i++] = Convert.ToByte(_cid);
+                    data[i++] = Convert.ToByte(3 << 3 | 0); // index=3
+                    data[i++] = Convert.ToByte(_type);
+                    string t = GetPostResponse(api, data);
+                    Regex reg = new Regex("(zh-Han[st]).*?(http.*?\\.json)");
+                    foreach(Match m in reg.Matches(t))
+                    {
+                        Subtitle subtitle = new Subtitle();
+                        subtitle.url = m.Groups[2].Value;
+                        subtitle.lan = m.Groups[1].Value;
+                        subtitle.path = $"{aid}/{aid}.{cid}.{subtitle.lan}.srt";
+                        subtitles.Add(subtitle);
+                    }
+                    return subtitles;
+                }
+                catch (Exception) { return subtitles; } //返回空列表
+            }
+        }
+
         public static void SaveSubtitle(string url, string path)
         {
             File.WriteAllText(path, ConvertSubFromJson(GetWebSource(url)), new UTF8Encoding());

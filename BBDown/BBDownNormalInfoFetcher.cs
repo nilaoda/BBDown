@@ -22,17 +22,6 @@ namespace BBDown
             pubTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc).AddSeconds(Convert.ToDouble(pubTime)).ToLocalTime().ToString();
             bool bangumi = false;
 
-            JArray subs = JArray.Parse(infoJson["data"]["subtitle"]["list"].ToString());
-            List<Subtitle> subtitleInfo = new List<Subtitle>();
-            foreach (JObject sub in subs)
-            {
-                Subtitle subtitle = new Subtitle();
-                subtitle.url = sub["subtitle_url"].ToString();
-                subtitle.lan = sub["lan"].ToString();
-                subtitle.path = $"{id}/{id}.{subtitle.lan}.srt";
-                subtitleInfo.Add(subtitle);
-            }
-
             JArray pages = JArray.Parse(infoJson["data"]["pages"].ToString());
             List<Page> pagesInfo = new List<Page>();
             foreach (JObject page in pages)
@@ -63,11 +52,10 @@ namespace BBDown
             catch { }
 
             var info = new BBDownVInfo();
-            info.Title = GetValidFileName(title);
-            info.Desc = GetValidFileName(desc);
+            info.Title = GetValidFileName(title).Trim();
+            info.Desc = GetValidFileName(desc).Trim();
             info.Pic = pic;
             info.PubTime = pubTime;
-            info.Subtitles = subtitleInfo;
             info.PagesInfo = pagesInfo;
             info.IsBangumi = bangumi;
 

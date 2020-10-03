@@ -8,7 +8,6 @@ using System.CommandLine.Parsing;
 using System.Drawing;
 using System.IO;
 using System.Net;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using static BBDown.BBDownEntity;
@@ -252,6 +251,11 @@ namespace BBDown
             Console.Write("请注意：任何BUG请前往以下网址反馈：\r\n" +
                 "https://github.com/nilaoda/BBDown/issues\r\n");
             Console.WriteLine();
+            //检测更新
+            new Thread(async () =>
+            {
+                await CheckUpdateAsync();
+            }).Start();
             try
             {
                 bool interactMode = myOption.Interactive;
@@ -265,7 +269,7 @@ namespace BBDown
                 DEBUG_LOG = myOption.Debug;
                 string input = myOption.Url;
                 string selectPage = myOption.SelectPage;
-                string aid = "";
+                string aidOri = ""; //原始aid
                 COOKIE = myOption.Cookie;
                 TOKEN = myOption.AccessToken != null ? myOption.AccessToken.Replace("access_token=", "") : "";
                 
@@ -297,10 +301,10 @@ namespace BBDown
                     TOKEN = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "BBDownTV.data"));
                 }
                 Log("获取aid...");
-                aid = await GetAvIdAsync(input);
-                Log("获取aid结束: " + aid);
+                aidOri = await GetAvIdAsync(input);
+                Log("获取aid结束: " + aidOri);
                 //-p的优先级大于URL中的自带p参数，所以先清空selectedPages
-                if (!string.IsNullOrEmpty(selectPage)) 
+                if (!string.IsNullOrEmpty(selectPage) && selectPage != "ALL") 
                 {
                     selectedPages = new List<string>();
                     try
@@ -328,21 +332,18 @@ namespace BBDown
                     catch { LogError("解析分P参数时失败了~"); selectedPages = null; };
                 }
 
-                if (string.IsNullOrEmpty(aid)) throw new Exception("输入有误");
+                if (string.IsNullOrEmpty(aidOri)) throw new Exception("输入有误");
+                Log("获取视频信息...");
                 IFetcher fetcher = new BBDownNormalInfoFetcher();
-                string cheeseId = "";
-                if (aid.StartsWith("cheese"))
+                if (aidOri.StartsWith("cheese"))
                 {
-                    cheeseId = aid.Substring(7);
                     fetcher = new BBDownCheeseInfoFetcher();
                 }
-                var vInfo = fetcher.Fetch(cheeseId != "" ? cheeseId : aid);
-                //如果用户没有选择分P，根据epid来确定某一集
-                if (selectedPages == null && !string.IsNullOrEmpty(vInfo.Index)) 
+                else if (aidOri.StartsWith("ep")) 
                 {
-                    selectedPages = new List<string> { vInfo.Index };
+                    fetcher = new BBDownBangumiInfoFetcher();
                 }
-                Log("获取视频信息...");
+                var vInfo = fetcher.Fetch(aidOri);
                 string title = vInfo.Title;
                 string desc = vInfo.Desc;
                 string pic = vInfo.Pic;
@@ -350,35 +351,23 @@ namespace BBDown
                 LogColor("视频标题: " + title);
                 Log("发布时间: " + pubTime);
                 List<Page> pagesInfo = vInfo.PagesInfo;
-                List<Subtitle> subtitleInfo = vInfo.Subtitles;
+                List<Subtitle> subtitleInfo = new List<Subtitle>();
                 bool more = false;
                 bool bangumi = vInfo.IsBangumi;
                 bool cheese = vInfo.IsCheese;
 
                 if (!infoMode)
                 {
-                    if (!Directory.Exists(aid))
-                    {
-                        Directory.CreateDirectory(aid);
-                    }
-                    Log("下载封面...");
-                    LogDebug("下载：{0}", pic);
-                    new WebClient().DownloadFile(pic, $"{aid}/{aid}.jpg");
-                    foreach (Subtitle s in subtitleInfo)
-                    {
-                        Log($"下载字幕 {s.lan}...");
-                        LogDebug("下载：{0}", s.url);
-                        BBDownSubUtil.SaveSubtitle(s.url, s.path);
-                    }
+                    
                 }
 
+                //打印分P信息
                 foreach (Page p in pagesInfo)
                 {
-                    if (more) continue;
-                    if (p.index > 5)
+                    if (more && p.index != pagesInfo.Count) continue;
+                    if (!more && p.index > 5) 
                     {
-                        Log("P...");
-                        Log("分P太多, 已经省略部分...");
+                        Log("......");
                         more = true;
                     }
                     else
@@ -386,6 +375,14 @@ namespace BBDown
                         Log($"P{p.index}: [{p.cid}] [{p.title}] [{FormatTime(p.dur)}]");
                     }
                 }
+
+                //如果用户没有选择分P，根据epid来确定某一集
+                if (selectedPages == null && selectPage != "ALL" && !string.IsNullOrEmpty(vInfo.Index)) 
+                {
+                    selectedPages = new List<string> { vInfo.Index };
+                    Log("程序已自动选择你输入的集数，如果要下载其他集数请自行指定分P(可使用参数ALL代表全部)");
+                }
+
                 Log($"共计 {pagesInfo.Count} 个分P, 已选择：" + (selectedPages == null ? "ALL" : string.Join(",", selectedPages)));
 
                 //过滤不需要的分P
@@ -395,13 +392,34 @@ namespace BBDown
                 foreach (Page p in pagesInfo)
                 {
                     Log($"开始解析P{p.index}...");
+                    if (!infoMode)
+                    {
+                        if (!Directory.Exists(p.aid))
+                        {
+                            Directory.CreateDirectory(p.aid);
+                        }
+                        if (!File.Exists($"{p.aid}/{p.aid}.jpg"))
+                        {
+                            Log("下载封面...");
+                            LogDebug("下载：{0}", pic);
+                            new WebClient().DownloadFile(pic, $"{p.aid}/{p.aid}.jpg");
+                        }
+                        LogDebug("获取字幕...");
+                        subtitleInfo = BBDownSubUtil.GetSubtitles(p.aid, p.cid);
+                        foreach (Subtitle s in subtitleInfo)
+                        {
+                            Log($"下载字幕 {s.lan} => {BBDownSubUtil.SubDescDic[s.lan]}...");
+                            LogDebug("下载：{0}", s.url);
+                            BBDownSubUtil.SaveSubtitle(s.url, s.path);
+                        }
+                    }
                     List<Video> videoInfo = new List<Video>();
                     List<Audio> audioInfo = new List<Audio>();
                     string videoPath = $"{p.aid}/{p.aid}.P{p.index}.{p.cid}.mp4";
                     string audioPath = $"{p.aid}/{p.aid}.P{p.index}.{p.cid}.m4a";
-                    string outPath = title + (pagesInfo.Count > 1 ? $"/[P{p.index}]{p.title}.mp4" : ".mp4");
+                    string outPath = title + (pagesInfo.Count > 1 ? $"/[P{p.index}]{p.title}.mp4" : $"[P{p.index}]{p.title}.mp4");
                     //调用解析
-                    string webJson = GetPlayJson(p.aid, p.cid, p.epid, tvApi, bangumi, cheese);
+                    string webJson = GetPlayJson(aidOri, p.aid, p.cid, p.epid, tvApi);
                     //File.WriteAllText($"debug.json", JObject.Parse(webJson).ToString());
 
                     JArray audio = null;
@@ -416,9 +434,20 @@ namespace BBDown
                             nodeName = "result";
                         }
 
+                        int pDur = p.dur;
+                        //处理未获取到视频时长的情况
+                        if (p.dur == 0)
+                        {
+                            try { pDur = !tvApi ? JObject.Parse(webJson)[nodeName]["dash"]["duration"].Value<int>() : JObject.Parse(webJson)["dash"]["duration"].Value<int>(); } catch { }
+                        }
+                        if (pDur == 0)
+                        {
+                            try { pDur = !tvApi ? JObject.Parse(webJson)[nodeName]["timelength"].Value<int>() / 1000 : JObject.Parse(webJson)["timelength"].Value<int>() / 1000; } catch { }
+                        }
+
                         bool reParse = false;
                     reParse:
-                        if (reParse) webJson = GetPlayJson(p.aid, p.cid, p.epid, tvApi, bangumi, cheese, "125");
+                        if (reParse) webJson = GetPlayJson(aidOri, p.aid, p.cid, p.epid, tvApi, "125");
                         try { video = JArray.Parse(!tvApi ? JObject.Parse(webJson)[nodeName]["dash"]["video"].ToString() : JObject.Parse(webJson)["dash"]["video"].ToString()); } catch { }
                         try { audio = JArray.Parse(!tvApi ? JObject.Parse(webJson)[nodeName]["dash"]["audio"].ToString() : JObject.Parse(webJson)["dash"]["audio"].ToString()); } catch { }
                         if (video != null)
@@ -480,14 +509,14 @@ namespace BBDown
                             int index = 0;
                             foreach (var v in videoInfo)
                             {
-                                LogColor($"{index++}. [{v.dfn}] [{v.res}] [{v.codecs}] [{v.fps}] [{v.bandwith} kbps] [~{FormatFileSize(p.dur * v.bandwith * 1024 / 8)}]".Replace("[] ", ""), false);
+                                LogColor($"{index++}. [{v.dfn}] [{v.res}] [{v.codecs}] [{v.fps}] [{v.bandwith} kbps] [~{FormatFileSize(pDur * v.bandwith * 1024 / 8)}]".Replace("[] ", ""), false);
                                 if (infoMode) Console.WriteLine(v.baseUrl);
                             }
                             Log($"共计{audioInfo.Count}条音频流.");
                             index = 0;
                             foreach (var a in audioInfo)
                             {
-                                LogColor($"{index++}. [{a.codecs}] [{a.bandwith} kbps] [~{FormatFileSize(p.dur * a.bandwith * 1024 / 8)}]", false);
+                                LogColor($"{index++}. [{a.codecs}] [{a.bandwith} kbps] [~{FormatFileSize(pDur * a.bandwith * 1024 / 8)}]", false);
                                 if (infoMode) Console.WriteLine(a.baseUrl);
                             }
                         }
@@ -513,9 +542,9 @@ namespace BBDown
 
                         Log($"已选择的流:");
                         if (video != null)
-                            LogColor($"[视频] [{videoInfo[vIndex].dfn}] [{videoInfo[vIndex].res}] [{videoInfo[vIndex].codecs}] [{videoInfo[vIndex].fps}] [{videoInfo[vIndex].bandwith} kbps] [~{FormatFileSize(p.dur * videoInfo[vIndex].bandwith * 1024 / 8)}]".Replace("[] ", ""), false);
+                            LogColor($"[视频] [{videoInfo[vIndex].dfn}] [{videoInfo[vIndex].res}] [{videoInfo[vIndex].codecs}] [{videoInfo[vIndex].fps}] [{videoInfo[vIndex].bandwith} kbps] [~{FormatFileSize(pDur * videoInfo[vIndex].bandwith * 1024 / 8)}]".Replace("[] ", ""), false);
                         if (audio != null)
-                            LogColor($"[音频] [{audioInfo[aIndex].codecs}] [{audioInfo[aIndex].bandwith} kbps] [~{FormatFileSize(p.dur * audioInfo[aIndex].bandwith * 1024 / 8)}]", false);
+                            LogColor($"[音频] [{audioInfo[aIndex].codecs}] [{audioInfo[aIndex].bandwith} kbps] [~{FormatFileSize(pDur * audioInfo[aIndex].bandwith * 1024 / 8)}]", false);
 
                         if (multiThread && !videoInfo[vIndex].baseUrl.Contains("-cmcc-"))
                         {
@@ -569,7 +598,7 @@ namespace BBDown
                         if (video != null) File.Delete(videoPath);
                         if (audio != null) File.Delete(audioPath);
                         foreach (var s in subtitleInfo) File.Delete(s.path);
-                        if (pagesInfo.Count == 1 || p.index == pagesInfo.Count)
+                        if (pagesInfo.Count == 1 || p.index == pagesInfo.Last().index || p.aid != pagesInfo.Last().aid) 
                             File.Delete($"{p.aid}/{p.aid}.jpg");
                         if (Directory.Exists(p.aid) && Directory.GetFiles(p.aid).Length == 0) Directory.Delete(p.aid, true);
                     }
@@ -577,7 +606,7 @@ namespace BBDown
                     {
                         bool flag = false;
                         //默认以最高清晰度解析
-                        webJson = GetPlayJson(p.aid, p.cid, p.epid, tvApi, bangumi, cheese, "125");
+                        webJson = GetPlayJson(aidOri, p.aid, p.cid, p.epid, tvApi, "125");
                     reParse:
                         List<string> clips = new List<string>();
                         List<string> dfns = new List<string>();
@@ -644,7 +673,7 @@ namespace BBDown
                             if (vIndex > dfns.Count || vIndex < 0) vIndex = 0;
                             Console.ResetColor();
                             //重新解析
-                            webJson = GetPlayJson(p.aid, p.cid, p.epid, tvApi, bangumi, cheese, dfns[vIndex]);
+                            webJson = GetPlayJson(aidOri, p.aid, p.cid, p.epid, tvApi, dfns[vIndex]);
                             flag = true;
                             videoInfo.Clear();
                             goto reParse;
@@ -713,13 +742,21 @@ namespace BBDown
                         Log("清理临时文件...");
                         if (videoInfo.Count != 0) File.Delete(videoPath);
                         foreach (var s in subtitleInfo) File.Delete(s.path);
-                        if (pagesInfo.Count == 1 || p.index == pagesInfo.Count)
+                        if (pagesInfo.Count == 1 || p.index == pagesInfo.Last().index || p.aid != pagesInfo.Last().aid)
                             File.Delete($"{p.aid}/{p.aid}.jpg");
                         if (Directory.Exists(p.aid) && Directory.GetFiles(p.aid).Length == 0) Directory.Delete(p.aid, true);
                     }
                     else
                     {
-                        LogError("解析此分P失败");
+                        if (webJson.Contains("平台不可观看"))
+                        {
+                            throw new Exception("当前(WEB)平台不可观看，请尝试使用TV API解析。");
+                        }
+                        else if (webJson.Contains("地区不可观看") || webJson.Contains("地区不支持")) 
+                        {
+                            throw new Exception("当前地区不可观看，请尝试使用代理解析。");
+                        }
+                        LogError("解析此分P失败(使用--debug查看详细信息)");
                         LogDebug("{0}", webJson);
                         continue;
                     }

@@ -4,7 +4,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -14,7 +13,6 @@ using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
 using static BBDown.BBDownEntity;
@@ -24,6 +22,25 @@ namespace BBDown
 {
     class BBDownUtil
     {
+        public static async Task CheckUpdateAsync()
+        {
+            try
+            {
+                var ver = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+                string nowVer = $"{ver.Major}.{ver.Minor}.{ver.Build}";
+                string redirctUrl = await Get302("https://github.com/nilaoda/BBDown/releases/latest");
+                string latestVer = redirctUrl.Replace("https://github.com/nilaoda/BBDown/releases/tag/", "");
+                if (nowVer != latestVer && !latestVer.StartsWith("https"))
+                {
+                    Console.Title = $"发现新版本：{latestVer}";
+                }
+            }
+            catch (Exception)
+            {
+                ;
+            }
+        }
+
         public static async Task<string> GetAvIdAsync(string input)
         {
             if (input.StartsWith("http"))
@@ -44,21 +61,29 @@ namespace BBDown
                 }
                 else if (input.Contains("/cheese/"))
                 {
-                    string epId = Regex.Match(input, "ep(\\d{1,})").Groups[1].Value;
+                    string epId = "";
+                    if (input.Contains("/ep"))
+                    {
+                        epId = Regex.Match(input, "/ep(\\d{1,})").Groups[1].Value;
+                    }
+                    else if(input.Contains("/ss"))
+                    {
+                        epId = GetEpidBySSId(Regex.Match(input, "/ss(\\d{1,})").Groups[1].Value);
+                    }
                     return $"cheese:{epId}";
+                }
+                else if (input.Contains("/ep"))
+                {
+                    string epId = Regex.Match(input, "/ep(\\d{1,})").Groups[1].Value;
+                    return $"ep:{epId}";
                 }
                 else
                 {
                     string web = GetWebSource(input);
                     Regex regex = new Regex("window.__INITIAL_STATE__=([\\s\\S].*?);\\(function\\(\\)");
                     string json = regex.Match(web).Groups[1].Value;
-                    string aid = JObject.Parse(json)["epInfo"]["aid"].ToString();
-                    string cid = JObject.Parse(json)["epInfo"]["cid"].ToString();
-                    if (aid == "-1" || cid == "-1")  //重新获取
-                    {
-                        aid = JObject.Parse(json)["epList"][0]["aid"].ToString();
-                    }
-                    return aid;
+                    string epId = JObject.Parse(json)["epList"][0]["id"].ToString();
+                    return $"ep:{epId}";
                 }
             }
             else if (input.StartsWith("BV"))
@@ -73,18 +98,18 @@ namespace BBDown
             {
                 return input.ToLower().Replace("av", "");
             }
-            else if (input.StartsWith("ep") || input.StartsWith("ss"))
+            else if (input.StartsWith("ep"))
+            {
+                string epId = Regex.Match(input, "ep(\\d{1,})").Groups[1].Value;
+                return $"ep:{epId}";
+            }
+            else if (input.StartsWith("ss"))
             {
                 string web = GetWebSource("https://www.bilibili.com/bangumi/play/" + input);
                 Regex regex = new Regex("window.__INITIAL_STATE__=([\\s\\S].*?);\\(function\\(\\)");
                 string json = regex.Match(web).Groups[1].Value;
-                string aid = JObject.Parse(json)["epInfo"]["aid"].ToString();
-                string cid = JObject.Parse(json)["epInfo"]["cid"].ToString();
-                if (aid == "-1" || cid == "-1")  //重新获取
-                {
-                    aid = JObject.Parse(json)["epList"][0]["aid"].ToString();
-                }
-                return aid;
+                string epId = JObject.Parse(json)["epList"][0]["id"].ToString();
+                return $"ep:{epId}";
             }
             else
             {
@@ -178,12 +203,70 @@ namespace BBDown
             return htmlCode;
         }
 
+        public static string GetPostResponse(string Url, byte[] postData)
+        {
+            string htmlCode = string.Empty;
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(Url);
+            request.Method = "POST";
+            request.ContentType = "application/grpc";
+            request.ContentLength = postData.Length;
+            request.UserAgent = "Dalvik/2.1.0 (Linux; U; Android 6.0.1; oneplus a5010 Build/V417IR) 6.10.0 os/android model/oneplus a5010 mobi_app/android build/6100500 channel/bili innerVer/6100500 osVer/6.0.1 network/2";
+            request.Headers.Add("Cookie", Program.COOKIE);
+            Stream myRequestStream = request.GetRequestStream();
+            myRequestStream.Write(postData);
+            myRequestStream.Close();
+            HttpWebResponse webResponse = (HttpWebResponse)request.GetResponse();
+            if (webResponse.ContentEncoding != null
+                && webResponse.ContentEncoding.ToLower() == "gzip") //如果使用了GZip则先解压
+            {
+                using (Stream streamReceive = webResponse.GetResponseStream())
+                {
+                    using (var zipStream =
+                        new GZipInputStream(streamReceive))
+                    {
+                        using (StreamReader sr = new StreamReader(zipStream, Encoding.UTF8))
+                        {
+                            htmlCode = sr.ReadToEnd();
+                        }
+                    }
+                }
+            }
+            else
+            {
+                using (Stream streamReceive = webResponse.GetResponseStream())
+                {
+                    using (StreamReader sr = new StreamReader(streamReceive, Encoding.UTF8))
+                    {
+                        htmlCode = sr.ReadToEnd();
+                    }
+                }
+            }
+
+            if (webResponse != null)
+            {
+                webResponse.Close();
+            }
+            if (request != null)
+            {
+                request.Abort();
+            }
+            return htmlCode;
+        }
+
         public static string GetAidByBV(string bv)
         {
             string api = $"https://api.bilibili.com/x/web-interface/archive/stat?bvid={bv}";
             string json = GetWebSource(api);
             string aid = JObject.Parse(json)["data"]["aid"].ToString();
             return aid;
+        }
+
+        public static string GetEpidBySSId(string ssid)
+        {
+            string api = $"https://api.bilibili.com/pugv/view/web/season?season_id={ssid}";
+            string json = GetWebSource(api);
+            string epId = JObject.Parse(json)["data"]["episodes"][0]["id"].ToString();
+            return epId;
         }
 
         public static async Task DownloadFile(string url, string path)
