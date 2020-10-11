@@ -417,7 +417,7 @@ namespace BBDown
                     List<Audio> audioInfo = new List<Audio>();
                     string videoPath = $"{p.aid}/{p.aid}.P{p.index}.{p.cid}.mp4";
                     string audioPath = $"{p.aid}/{p.aid}.P{p.index}.{p.cid}.m4a";
-                    string outPath = title + (pagesInfo.Count > 1 ? $"/[P{p.index}]{p.title}.mp4" : $"[P{p.index}]{p.title}.mp4");
+                    string outPath = title + (pagesInfo.Count > 1 ? $"/[P{p.index}]{p.title}" : (vInfo.PagesInfo.Count > 1 ? $"[P{p.index}]{p.title}" : "")) + ".mp4";
                     //调用解析
                     string webJson = GetPlayJson(aidOri, p.aid, p.cid, p.epid, tvApi);
                     //File.WriteAllText($"debug.json", JObject.Parse(webJson).ToString());
@@ -587,7 +587,7 @@ namespace BBDown
                         int code = MuxAV(videoPath, audioPath, outPath,
                             desc.Replace("\"", ""),
                             title.Replace("\"", ""),
-                            pagesInfo.Count > 1 ? ($"P{p.index}.{p.title}") : "",
+                            vInfo.PagesInfo.Count > 1 ? ($"P{p.index}.{p.title}") : "",
                             File.Exists($"{p.aid}/{p.aid}.jpg") ? $"{p.aid}/{p.aid}.jpg" : "",
                             subtitleInfo);
                         if (code != 0 || !File.Exists(outPath) || new FileInfo(outPath).Length == 0)
@@ -732,7 +732,7 @@ namespace BBDown
                         int code = MuxAV(videoPath, "", outPath,
                             desc.Replace("\"", ""),
                             title.Replace("\"", ""),
-                            pagesInfo.Count > 1 ? ($"P{p.index}.{p.title}") : "",
+                            vInfo.PagesInfo.Count > 1 ? ($"P{p.index}.{p.title}") : "",
                             File.Exists($"{p.aid}/{p.aid}.jpg") ? $"{p.aid}/{p.aid}.jpg" : "",
                             subtitleInfo);
                         if (code != 0 || !File.Exists(outPath) || new FileInfo(outPath).Length == 0)
