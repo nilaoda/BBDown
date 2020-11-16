@@ -31,21 +31,21 @@ namespace BBDown
                     res = page["dimension"]["width"].ToString() + "x" + page["dimension"]["height"].ToString();
                 }
                 catch (Exception) { }
-                string _title = page["long_title"].ToString();
+                string _title = page["long_title"].ToString().Trim();
                 if(string.IsNullOrEmpty(_title)) _title = page["title"].ToString();
                 Page p = new Page(i++,
                     page["aid"].ToString(),
                     page["cid"].ToString(),
                     page["id"].ToString(),
-                    GetValidFileName(_title),
+                    _title,
                     0, res);
                 if (p.epid == id) index = p.index.ToString();
                 pagesInfo.Add(p);
             }
 
             var info = new BBDownVInfo();
-            info.Title = GetValidFileName(title).Trim();
-            info.Desc = GetValidFileName(desc).Trim();
+            info.Title = title.Trim();
+            info.Desc = desc.Trim();
             info.Pic = cover;
             info.PubTime = pubTime;
             info.PagesInfo = pagesInfo;

@@ -35,8 +35,16 @@ namespace BBDown
             return code;
         }
 
+        private static string EscapeString(string str)
+        {
+            return str.Replace("\"", "'");
+        }
+
         public static int MuxAV(string videoPath, string audioPath, string outPath, string desc = "", string title = "", string episodeId = "", string pic = "", List<Subtitle> subs = null, bool audioOnly = false, bool videoOnly = false)
         {
+            desc = EscapeString(desc);
+            title = EscapeString(title);
+
             if (outPath.Contains("/") && ! Directory.Exists(Path.GetDirectoryName(outPath)))
                 Directory.CreateDirectory(Path.GetDirectoryName(outPath));
             //----分析并生成-i参数

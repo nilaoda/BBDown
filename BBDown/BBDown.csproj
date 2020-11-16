@@ -3,7 +3,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
-    <Version>1.3.1</Version>
+    <Version>1.3.5</Version>
     <Description>BBDown是一个免费且便捷高效的哔哩哔哩下载/解析软件.</Description>
     <PackageProjectUrl>https://github.com/nilaoda/BBDown</PackageProjectUrl>
   </PropertyGroup>
@@ -12,7 +12,7 @@
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
     <PackageReference Include="Microsoft.DotNet.ILCompiler" Version="1.0.0-alpha-*" />
     <PackageReference Include="QRCoder" Version="1.3.9" />
-    <PackageReference Include="SharpZipLib" Version="1.2.0" />
+    <PackageReference Include="SharpZipLib" Version="1.3.0" />
     <PackageReference Include="System.CommandLine" Version="2.0.0-beta1.20371.2" />
   </ItemGroup>
 </Project>

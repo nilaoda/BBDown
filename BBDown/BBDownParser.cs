@@ -19,11 +19,11 @@ namespace BBDown
             string api = $"https://{prefix}?avid={aid}&cid={cid}&qn={qn}&type=&otype=json" + (tvApi ? "" : "&fourk=1") +
                 $"&fnver=0&fnval=80" + (tvApi ? "&device=android&platform=android" +
                 "&mobi_app=android_tv_yst&npcybs=0&force_host=0&build=102801" +
-                (Program.TOKEN != "" ? $"&access_key={GetQueryString("access_token", Program.TOKEN)}" : "") : "") +
+                (Program.TOKEN != "" ? $"&access_key={Program.TOKEN}" : "") : "") +
                 (bangumi ? $"&module=bangumi&ep_id={epId}&fourk=1" + "&session=" : "");
             if (tvApi && bangumi)
             {
-                api = (Program.TOKEN != "" ? $"access_key={GetQueryString("access_token", Program.TOKEN)}&" : "") +
+                api = (Program.TOKEN != "" ? $"access_key={Program.TOKEN}&" : "") +
                     $"aid={aid}&appkey=4409e2ce8ffd12b8&build=102801" +
                     $"&cid={cid}&device=android&ep_id={epId}&expire=0" +
                     $"&fnval=80&fnver=0&fourk=1" +

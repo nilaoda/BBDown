@@ -27,7 +27,7 @@ namespace BBDown
                     page["aid"].ToString(),
                     page["cid"].ToString(),
                     page["id"].ToString(),
-                    GetValidFileName(page["title"].ToString()),
+                    page["title"].ToString().Trim(),
                     page["duration"].Value<int>(), "");
                 if (p.epid == id) index = p.index.ToString();
                 pagesInfo.Add(p);
@@ -36,8 +36,8 @@ namespace BBDown
             pubTime = pubTime != "" ? (new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc).AddSeconds(Convert.ToDouble(pubTime)).ToLocalTime().ToString()) : "";
 
             var info = new BBDownVInfo();
-            info.Title = GetValidFileName(title).Trim();
-            info.Desc = GetValidFileName(desc).Trim();
+            info.Title = title.Trim();
+            info.Desc = desc.Trim();
             info.Pic = cover;
             info.PubTime = pubTime;
             info.PagesInfo = pagesInfo;

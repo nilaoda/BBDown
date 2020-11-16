@@ -77,6 +77,11 @@ namespace BBDown
                     string epId = Regex.Match(input, "/ep(\\d{1,})").Groups[1].Value;
                     return $"ep:{epId}";
                 }
+                else if (input.Contains("/space.bilibili.com/"))
+                {
+                    string mid = Regex.Match(input, "space.bilibili.com/(\\d{1,})").Groups[1].Value;
+                    return $"mid:{mid}";
+                }
                 else
                 {
                     string web = GetWebSource(input);
@@ -205,6 +210,7 @@ namespace BBDown
 
         public static string GetPostResponse(string Url, byte[] postData)
         {
+            LogDebug("Post to: {0}, data: {1}", Url, Convert.ToBase64String(postData));
             string htmlCode = string.Empty;
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(Url);
             request.Method = "POST";
@@ -269,8 +275,17 @@ namespace BBDown
             return epId;
         }
 
-        public static async Task DownloadFile(string url, string path)
+        public static async Task DownloadFile(string url, string path, bool aria2c)
         {
+            LogDebug("Start downloading: {0}", url);
+            if (aria2c)
+            {
+                BBDownAria2c.DownloadFileByAria2c(url, path);
+                if (File.Exists(path + ".aria2") || !File.Exists(path))
+                    throw new Exception("aria2下载可能存在错误");
+                Console.WriteLine();
+                return;
+            }
             string tmpName = Path.Combine(Path.GetDirectoryName(path), Path.GetFileNameWithoutExtension(path) + ".tmp");
             using (var progress = new ProgressBar())
             {
@@ -316,8 +331,16 @@ namespace BBDown
             });
         }
 
-        public static async Task MultiThreadDownloadFileAsync(string url, string path)
+        public static async Task MultiThreadDownloadFileAsync(string url, string path, bool aria2c)
         {
+            if (aria2c)
+            {
+                BBDownAria2c.DownloadFileByAria2c(url, path);
+                if (File.Exists(path + ".aria2") || !File.Exists(path))
+                    throw new Exception("aria2下载可能存在错误");
+                Console.WriteLine();
+                return;
+            }
             long fileSize = GetFileSize(url);
             LogDebug("文件大小：{0} bytes", fileSize);
             List<Clip> allClips = GetAllClips(url, fileSize);

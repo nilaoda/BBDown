@@ -30,7 +30,7 @@ namespace BBDown
                     id,
                     page["cid"].ToString(),
                     "", //epid
-                    GetValidFileName(page["part"].ToString()),
+                    page["part"].ToString().Trim(),
                     page["duration"].Value<int>(),
                     page["dimension"]["width"] + "x" + page["dimension"]["height"]);
                 pagesInfo.Add(p);
@@ -52,8 +52,8 @@ namespace BBDown
             catch { }
 
             var info = new BBDownVInfo();
-            info.Title = GetValidFileName(title).Trim();
-            info.Desc = GetValidFileName(desc).Trim();
+            info.Title = title.Trim();
+            info.Desc = desc.Trim();
             info.Pic = pic;
             info.PubTime = pubTime;
             info.PagesInfo = pagesInfo;
