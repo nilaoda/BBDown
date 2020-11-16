@@ -70,6 +70,9 @@ BBDown login
 ```
 BBDown logintv
 ```
+ 
+*PS: 如果登录报错`The type initializer for 'Gdip' threw an exception`，请参考 [#37](https://github.com/nilaoda/BBDown/issues/37) 解决*
+
 手动加载网页cookie：
 ```
 BBDown -c "SESSDATA=******" "https://www.bilibili.com/video/BV1qt4y1X7TW"
