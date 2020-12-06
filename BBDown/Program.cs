@@ -301,14 +301,14 @@ namespace BBDown
                 string aidOri = ""; //原始aid
                 COOKIE = myOption.Cookie;
                 TOKEN = myOption.AccessToken.Replace("access_token=", "");
-                
+
                 //audioOnly和videoOnly同时开启则全部忽视
                 if (audioOnly && videoOnly)
                 {
                     audioOnly = false;
                     videoOnly = false;
                 }
-                
+
                 List<string> selectedPages = null;
                 if (!string.IsNullOrEmpty(GetQueryString("p", input)))
                 {
@@ -317,7 +317,7 @@ namespace BBDown
                 }
 
                 LogDebug("运行参数：{0}", myOption);
-                if (string.IsNullOrEmpty(COOKIE) && File.Exists(Path.Combine(AppContext.BaseDirectory, "BBDown.data")) && !tvApi) 
+                if (string.IsNullOrEmpty(COOKIE) && File.Exists(Path.Combine(AppContext.BaseDirectory, "BBDown.data")) && !tvApi)
                 {
                     Log("加载本地cookie...");
                     LogDebug("文件路径：{0}", Path.Combine(AppContext.BaseDirectory, "BBDown.data"));
@@ -334,7 +334,7 @@ namespace BBDown
                 aidOri = await GetAvIdAsync(input);
                 Log("获取aid结束: " + aidOri);
                 //-p的优先级大于URL中的自带p参数，所以先清空selectedPages
-                if (!string.IsNullOrEmpty(selectPage) && selectPage != "ALL") 
+                if (!string.IsNullOrEmpty(selectPage) && selectPage != "ALL")
                 {
                     selectedPages = new List<string>();
                     try
@@ -370,7 +370,7 @@ namespace BBDown
                 {
                     fetcher = new BBDownCheeseInfoFetcher();
                 }
-                else if (aidOri.StartsWith("ep")) 
+                else if (aidOri.StartsWith("ep"))
                 {
                     fetcher = new BBDownBangumiInfoFetcher();
                 }
@@ -395,7 +395,7 @@ namespace BBDown
                 foreach (Page p in pagesInfo)
                 {
                     if (!showAll && more && p.index != pagesInfo.Count) continue;
-                    if (!showAll && !more && p.index > 5) 
+                    if (!showAll && !more && p.index > 5)
                     {
                         Log("......");
                         more = true;
@@ -407,7 +407,7 @@ namespace BBDown
                 }
 
                 //如果用户没有选择分P，根据epid来确定某一集
-                if (selectedPages == null && selectPage != "ALL" && !string.IsNullOrEmpty(vInfo.Index)) 
+                if (selectedPages == null && selectPage != "ALL" && !string.IsNullOrEmpty(vInfo.Index))
                 {
                     selectedPages = new List<string> { vInfo.Index };
                     Log("程序已自动选择你输入的集数，如果要下载其他集数请自行指定分P(如可使用-p ALL代表全部)");
@@ -450,7 +450,7 @@ namespace BBDown
                     string audioPath = $"{p.aid}/{p.aid}.P{indexStr}.{p.cid}.m4a";
                     //处理文件夹以.结尾导致的异常情况
                     if (title.EndsWith(".")) title += "_fix";
-                    string outPath = GetValidFileName(title)+ (pagesInfo.Count > 1 ? $"/[P{indexStr}]{GetValidFileName(p.title)}" : (vInfo.PagesInfo.Count > 1 ? $"[P{indexStr}]{GetValidFileName(p.title)}" : "")) + ".mp4";
+                    string outPath = GetValidFileName(title) + (pagesInfo.Count > 1 ? $"/[P{indexStr}]{GetValidFileName(p.title)}" : (vInfo.PagesInfo.Count > 1 ? $"[P{indexStr}]{GetValidFileName(p.title)}" : "")) + ".mp4";
                     //调用解析
                     string webJson = GetPlayJson(aidOri, p.aid, p.cid, p.epid, tvApi);
                     //File.WriteAllText($"debug.json", JObject.Parse(webJson).ToString());
@@ -583,9 +583,9 @@ namespace BBDown
                         if (videoOnly) audioTracks.Clear();
 
                         Log($"已选择的流:");
-                        if (videoTracks.Count > 0) 
+                        if (videoTracks.Count > 0)
                             LogColor($"[视频] [{videoTracks[vIndex].dfn}] [{videoTracks[vIndex].res}] [{videoTracks[vIndex].codecs}] [{videoTracks[vIndex].fps}] [{videoTracks[vIndex].bandwith} kbps] [~{FormatFileSize(pDur * videoTracks[vIndex].bandwith * 1024 / 8)}]".Replace("[] ", ""), false);
-                        if (audioTracks.Count > 0) 
+                        if (audioTracks.Count > 0)
                             LogColor($"[音频] [{audioTracks[aIndex].codecs}] [{audioTracks[aIndex].bandwith} kbps] [~{FormatFileSize(pDur * audioTracks[aIndex].bandwith * 1024 / 8)}]", false);
 
                         if (multiThread && !videoTracks[vIndex].baseUrl.Contains("-cmcc-"))
@@ -641,7 +641,7 @@ namespace BBDown
                         if (videoTracks.Count > 0) File.Delete(videoPath);
                         if (audioTracks.Count > 0) File.Delete(audioPath);
                         foreach (var s in subtitleInfo) File.Delete(s.path);
-                        if (pagesInfo.Count == 1 || p.index == pagesInfo.Last().index || p.aid != pagesInfo.Last().aid) 
+                        if (pagesInfo.Count == 1 || p.index == pagesInfo.Last().index || p.aid != pagesInfo.Last().aid)
                             File.Delete($"{p.aid}/{p.aid}.jpg");
                         if (Directory.Exists(p.aid) && Directory.GetFiles(p.aid).Length == 0) Directory.Delete(p.aid, true);
                     }
@@ -672,27 +672,59 @@ namespace BBDown
                                 length += node["length"].Value<double>();
                             }
                             //获取可用清晰度
-                            foreach(JObject node in JArray.Parse(JObject.Parse(webJson)["data"]["qn_extras"].ToString()))
+                            foreach (JObject node in JArray.Parse(JObject.Parse(webJson)["data"]["qn_extras"].ToString()))
                             {
                                 dfns.Add(node["qn"].ToString());
                             }
                         }
                         else
                         {
-                            format = JObject.Parse(webJson)["format"].ToString();
-                            quality = JObject.Parse(webJson)["quality"].ToString();
-                            videoCodecid = JObject.Parse(webJson)["video_codecid"].ToString();
+                            string nodeinfo = webJson;
+                            //如果获取数据失败，尝试从result和data获取数据
+                            if (JObject.Parse(nodeinfo)["format"] != null)
+                            {
+                                nodeinfo = JObject.Parse(nodeinfo)["format"].ToString();
+                            }
+                            else if (JObject.Parse(webJson)["result"] != null)
+                            {
+                                nodeinfo = JObject.Parse(webJson)["result"].ToString();
+                            }
+                            else if (JObject.Parse(webJson)["data"] != null)
+                            {
+                                nodeinfo = JObject.Parse(webJson)["data"].ToString();
+                            }
+                            else
+                            {
+                                LogDebug("解析数据错误，未发现 有用的信息");
+                                //TODO 显示信息
+                                break;
+                            }
+                            format = JObject.Parse(nodeinfo)["format"].ToString();
+                            quality = JObject.Parse(nodeinfo)["quality"].ToString();
+                            videoCodecid = JObject.Parse(nodeinfo)["video_codecid"].ToString();
                             //获取所有分段
-                            foreach (JObject node in JArray.Parse(JObject.Parse(webJson)["durl"].ToString()))
+                            foreach (JObject node in JArray.Parse(JObject.Parse(nodeinfo)["durl"].ToString()))
                             {
                                 clips.Add(node["url"].ToString());
                                 size += node["size"].Value<double>();
                                 length += node["length"].Value<double>();
                             }
-                            //获取可用清晰度
-                            foreach (JObject node in JArray.Parse(JObject.Parse(webJson)["qn_extras"].ToString()))
+                            if (JObject.Parse(nodeinfo)["qn_extras"] != null)//TV模式可用清晰度
+                                //获取可用清晰度
+                                foreach (JObject node in JArray.Parse(JObject.Parse(nodeinfo)["qn_extras"].ToString()))
+                                {
+                                    dfns.Add(node["qn"].ToString());
+                                }
+                            else if (JObject.Parse(nodeinfo)["accept_quality"] != null) //非tv模式可用清晰度
                             {
-                                dfns.Add(node["qn"].ToString());
+
+                                var accptquality = JObject.Parse(nodeinfo)["accept_quality"];
+                                foreach (JValue node in JArray.Parse(accptquality.ToString()).ToString())
+                                {
+                                    string qn = node.ToString();
+                                    if (qn != null && qn.Length > 0)
+                                        dfns.Add(node.ToString());
+                                }
                             }
                         }
                         Video v1 = new Video();
@@ -739,10 +771,10 @@ namespace BBDown
                             continue;
                         }
                         var pad = string.Empty.PadRight(clips.Count.ToString().Length, '0');
-                        for (int i = 0; i < clips.Count; i++) 
+                        for (int i = 0; i < clips.Count; i++)
                         {
                             var link = clips[i];
-                            videoPath= $"{p.aid}/{p.aid}.P{indexStr}.{p.cid}.{i.ToString(pad)}.mp4";
+                            videoPath = $"{p.aid}/{p.aid}.P{indexStr}.{p.cid}.{i.ToString(pad)}.mp4";
                             if (multiThread && !link.Contains("-cmcc-"))
                             {
                                 if (videoTracks.Count != 0)
@@ -796,7 +828,7 @@ namespace BBDown
                         {
                             throw new Exception("当前(WEB)平台不可观看，请尝试使用TV API解析。");
                         }
-                        else if (webJson.Contains("地区不可观看") || webJson.Contains("地区不支持")) 
+                        else if (webJson.Contains("地区不可观看") || webJson.Contains("地区不支持"))
                         {
                             throw new Exception("当前地区不可观看，请尝试使用代理解析。");
                         }
