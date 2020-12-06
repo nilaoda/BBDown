@@ -683,7 +683,7 @@ namespace BBDown
                             //如果获取数据失败，尝试从result和data获取数据
                             if (JObject.Parse(nodeinfo)["format"] != null)
                             {
-                                format = JObject.Parse(nodeinfo)["format"].ToString();
+                                nodeinfo = JObject.Parse(nodeinfo)["format"].ToString();
                             }
                             else if (JObject.Parse(webJson)["result"] != null)
                             {
