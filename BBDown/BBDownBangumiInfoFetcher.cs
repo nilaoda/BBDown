@@ -32,7 +32,7 @@ namespace BBDown
                 }
                 catch (Exception) { }
                 string _title = page["long_title"].ToString().Trim();
-                if (string.IsNullOrEmpty(_title)) _title = page["title"].ToString();
+                if(string.IsNullOrEmpty(_title)) _title = page["title"].ToString();
                 Page p = new Page(i++,
                     page["aid"].ToString(),
                     page["cid"].ToString(),

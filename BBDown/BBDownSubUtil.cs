@@ -61,7 +61,7 @@ namespace BBDown
                     data[i++] = Convert.ToByte(_type);
                     string t = GetPostResponse(api, data);
                     Regex reg = new Regex("(zh-Han[st]).*?(http.*?\\.json)");
-                    foreach (Match m in reg.Matches(t))
+                    foreach(Match m in reg.Matches(t))
                     {
                         Subtitle subtitle = new Subtitle();
                         subtitle.url = m.Groups[2].Value;
@@ -85,7 +85,7 @@ namespace BBDown
             StringBuilder lines = new StringBuilder();
             JObject json = JObject.Parse(jsonString);
             JArray sub = JArray.Parse(json["body"].ToString());
-            for (int i = 0; i < sub.Count; i++)
+            for(int i = 0; i < sub.Count; i++)
             {
                 lines.AppendLine((i + 1).ToString());
                 lines.AppendLine($"{FormatTime(sub[i]["from"].ToString())} --> {FormatTime(sub[i]["to"].ToString())}");
@@ -160,7 +160,7 @@ namespace BBDown
             {"ca", "català"}, {"no", "norsk språk"}
         };
 
-        public static Dictionary<string, string> SubLangDic = new Dictionary<string, string>
+        public static Dictionary<string, string> SubLangDic = new Dictionary<string, string> 
         {
             {"ar","ara"}, {"ar-eg","ara"},
             {"bg","bul"}, {"cmn-hans","chi"},
