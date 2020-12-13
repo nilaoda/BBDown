@@ -3,7 +3,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
-    <Version>1.3.5</Version>
+    <Version>1.3.6</Version>
     <Description>BBDown是一个免费且便捷高效的哔哩哔哩下载/解析软件.</Description>
     <PackageProjectUrl>https://github.com/nilaoda/BBDown</PackageProjectUrl>
   </PropertyGroup>
