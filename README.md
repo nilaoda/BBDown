@@ -28,6 +28,7 @@ Arguments:
 
 Options:
   -tv, --use-tv-api                    使用TV端解析模式
+  -intl, --use-intl-api                使用国际版解析模式
   -hevc, --only-hevc                   只下载hevc编码
   -info, --only-show-info              仅解析而不进行下载
   -hs, --hide-streams                  不要显示所有可用音视频流
