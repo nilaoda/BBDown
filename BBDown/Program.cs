@@ -572,7 +572,7 @@ namespace BBDown
                         }
                         if (audioTracks.Count > 0)
                         {
-                            if (multiThread && !audioTracks[vIndex].baseUrl.Contains("-cmcc-"))
+                            if (multiThread && !audioTracks[aIndex].baseUrl.Contains("-cmcc-"))
                             {
                                 Log($"开始多线程下载P{p.index}音频...");
                                 await MultiThreadDownloadFileAsync(audioTracks[aIndex].baseUrl, audioPath, useAria2c);
@@ -583,7 +583,7 @@ namespace BBDown
                             }
                             else
                             {
-                                if (multiThread && audioTracks[vIndex].baseUrl.Contains("-cmcc-"))
+                                if (multiThread && audioTracks[aIndex].baseUrl.Contains("-cmcc-"))
                                     LogError("检测到cmcc域名cdn, 已经禁用多线程");
                                 Log($"开始下载P{p.index}音频...");
                                 await DownloadFile(audioTracks[aIndex].baseUrl, audioPath, useAria2c);
