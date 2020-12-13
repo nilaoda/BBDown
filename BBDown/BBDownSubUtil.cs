@@ -12,9 +12,30 @@ namespace BBDown
 {
     class BBDownSubUtil
     {
-        public static List<Subtitle> GetSubtitles(string aid, string cid)
+        public static List<Subtitle> GetSubtitles(string aid, string cid, string epId, bool intl)
         {
             List<Subtitle> subtitles = new List<Subtitle>();
+            if (intl)
+            {
+                try
+                {
+                    string api = $"https://api.global.bilibili.com/intl/gateway/ogv/view/app/subtitle?&episode_id={epId}&s_locale=zh-Hans_CN";
+                    string json = GetWebSource(api);
+                    JObject infoJson = JObject.Parse(json);
+                    JArray subs = JArray.Parse(infoJson["data"]["subtitles"].ToString());
+                    foreach (JObject sub in subs)
+                    {
+                        Subtitle subtitle = new Subtitle();
+                        subtitle.url = sub["url"].ToString();
+                        subtitle.lan = sub["key"].ToString();
+                        subtitle.path = $"{aid}/{aid}.{cid}.{subtitle.lan}.srt";
+                        subtitles.Add(subtitle);
+                    }
+                    return subtitles;
+                }
+                catch (Exception) { return subtitles; } //返回空列表
+            }
+
             try
             {
                 string api = $"https://api.bilibili.com/x/web-interface/view?aid={aid}&cid={cid}";
@@ -28,6 +49,11 @@ namespace BBDown
                     subtitle.lan = sub["lan"].ToString();
                     subtitle.path = $"{aid}/{aid}.{cid}.{subtitle.lan}.srt";
                     subtitles.Add(subtitle);
+                }
+                //无字幕片源 但是字幕没上导致的空列表，尝试从国际接口获取
+                if (subtitles.Count == 0)
+                {
+                    return GetSubtitles(aid, cid, epId, true);
                 }
                 return subtitles;
             }
@@ -61,7 +87,7 @@ namespace BBDown
                     data[i++] = Convert.ToByte(_type);
                     string t = GetPostResponse(api, data);
                     Regex reg = new Regex("(zh-Han[st]).*?(http.*?\\.json)");
-                    foreach(Match m in reg.Matches(t))
+                    foreach (Match m in reg.Matches(t))
                     {
                         Subtitle subtitle = new Subtitle();
                         subtitle.url = m.Groups[2].Value;
