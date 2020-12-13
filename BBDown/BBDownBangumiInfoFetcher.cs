@@ -23,6 +23,22 @@ namespace BBDown
             JArray pages = JArray.Parse(infoJson["result"]["episodes"].ToString());
             List<Page> pagesInfo = new List<Page>();
             int i = 1;
+
+            if (pages.Count == 0) 
+            {
+                if (infoJson["result"]["section"] != null)
+                {
+                    foreach (JObject section in JArray.Parse(infoJson["result"]["section"].ToString()))
+                    {
+                        if (section.ToString().Contains($"/ep{id}"))
+                        {
+                            pages = JArray.Parse(section["episodes"].ToString());
+                            break;
+                        }
+                    }
+                }
+            }
+
             foreach (JObject page in pages)
             {
                 string res = "";
@@ -42,6 +58,7 @@ namespace BBDown
                 if (p.epid == id) index = p.index.ToString();
                 pagesInfo.Add(p);
             }
+
 
             var info = new BBDownVInfo();
             info.Title = title.Trim();
