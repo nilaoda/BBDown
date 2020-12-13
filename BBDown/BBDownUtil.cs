@@ -82,6 +82,11 @@ namespace BBDown
                     string mid = Regex.Match(input, "space.bilibili.com/(\\d{1,})").Groups[1].Value;
                     return $"mid:{mid}";
                 }
+                else if (input.Contains("ep_id="))
+                {
+                    string epId = GetQueryString("ep_id", input);
+                    return $"ep:{epId}";
+                }
                 else
                 {
                     string web = GetWebSource(input);
