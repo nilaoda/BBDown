@@ -60,8 +60,11 @@ namespace BBDown
             {
                 for (int i = 0; i < subs.Count; i++)
                 {
-                    inputArg.Append($" -i \"{subs[i].path}\" ");
-                    metaArg.Append($" -metadata:s:s:{i} handler_name=\"{SubDescDic[subs[i].lan]}\" -metadata:s:s:{i} language={SubLangDic[subs[i].lan]} ");
+                    if(File.Exists(subs[i].path) && File.ReadAllText(subs[i].path) != "")
+                    {
+                        inputArg.Append($" -i \"{subs[i].path}\" ");
+                        metaArg.Append($" -metadata:s:s:{i} handler_name=\"{SubDescDic[subs[i].lan]}\" -metadata:s:s:{i} language={SubLangDic[subs[i].lan]} ");
+                    }
                 }
             }
             if (!string.IsNullOrEmpty(pic))
