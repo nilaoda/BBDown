@@ -55,7 +55,7 @@ namespace BBDown
         private static string GetPlayJson(string aid, string cid, string epId, string qn)
         {
             string api = $"https://api.global.bilibili.com/intl/gateway/v2/ogv/playurl?" +
-                $"aid={aid}&appkey=7d089525d3611b1c&build=1000310&c_locale=&channel=master&cid={cid}&ep_id={epId}&force_host=0&fnvalfnval=80&fnver=0&fourk=1&lang=hans&locale=zh_CN&mobi_app=bstar_a&platform=android&prefer_code_type=0&qn={qn}&s_locale=zh_CN&timezone=GMT%2B08%3A00&ts={GetTimeStamp(true)}";
+                $"aid={aid}&appkey=7d089525d3611b1c&build=1000310&c_locale=&channel=master&cid={cid}&ep_id={epId}&force_host=0&fnvalfnval=80&fnver=0&fourk=1&lang=hans&locale=zh_CN&mobi_app=bstar_a&platform=android&prefer_code_type=0&qn={qn}&timezone=GMT%2B08%3A00&ts={GetTimeStamp(true)}" + (Program.TOKEN != "" ? $"&access_key={Program.TOKEN}" : "");
             string webJson = GetWebSource(api);
             return webJson;
         }

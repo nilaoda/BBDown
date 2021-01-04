@@ -19,7 +19,7 @@ namespace BBDown
             {
                 try
                 {
-                    string api = $"https://api.global.bilibili.com/intl/gateway/ogv/view/app/subtitle?&episode_id={epId}&s_locale=zh-Hans_CN";
+                    string api = $"https://app.global.bilibili.com/intl/gateway/v2/app/subtitle?&ep_id={epId}";
                     string json = GetWebSource(api);
                     JObject infoJson = JObject.Parse(json);
                     JArray subs = JArray.Parse(infoJson["data"]["subtitles"].ToString());
