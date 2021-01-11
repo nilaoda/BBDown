@@ -59,6 +59,7 @@ namespace BBDown
             public bool Debug { get; set; }
             public bool SkipMux { get; set; }
             public string SelectPage { get; set; } = "";
+            public string Language { get; set; } = "";
             public string Cookie { get; set; } = "";
             public string AccessToken { get; set; } = "";
 
@@ -141,6 +142,9 @@ namespace BBDown
                 new Option<bool>(
                     new string[]{ "--skip-mux"},
                     "跳过混流步骤"),
+                new Option<string>(
+                    new string[]{ "--language"},
+                    "设置混流的音频语言(代码)，如chi, jpn等"),
                 new Option<string>(
                     new string[]{ "--cookie" ,"-c"},
                     "设置字符串cookie用以下载网页接口的会员内容"),
@@ -309,6 +313,7 @@ namespace BBDown
                 bool useAria2c = myOption.UseAria2c;
                 DEBUG_LOG = myOption.Debug;
                 string input = myOption.Url;
+                string lang = myOption.Language;
                 string selectPage = myOption.SelectPage.ToUpper();
                 string aidOri = ""; //原始aid
                 COOKIE = myOption.Cookie;
@@ -462,6 +467,13 @@ namespace BBDown
                                 //处理文件夹以.结尾导致的异常情况
                                 if (title.EndsWith(".")) title += "_fix";
                                 string _outSubPath = GetValidFileName(title) + (pagesInfo.Count > 1 ? $"/[P{_indexStr}]{GetValidFileName(p.title)}" : (vInfo.PagesInfo.Count > 1 ? $"[P{_indexStr}]{GetValidFileName(p.title)}" : "")) + $"_{BBDownSubUtil.SubDescDic[s.lan]}.srt";
+                                if (_outSubPath.Contains("/"))
+                                {
+                                    if (!Directory.Exists(Path.GetDirectoryName(_outSubPath)))
+                                    {
+                                        Directory.CreateDirectory(Path.GetDirectoryName(_outSubPath));
+                                    }
+                                }
                                 File.Move(s.path, _outSubPath);
                             }
                         }
@@ -623,6 +635,7 @@ namespace BBDown
                             title,
                             vInfo.PagesInfo.Count > 1 ? ($"P{indexStr}.{p.title}") : "",
                             File.Exists($"{p.aid}/{p.aid}.jpg") ? $"{p.aid}/{p.aid}.jpg" : "",
+                            lang,
                             subtitleInfo, audioOnly, videoOnly);
                         if (code != 0 || !File.Exists(outPath) || new FileInfo(outPath).Length == 0)
                         {
@@ -715,6 +728,7 @@ namespace BBDown
                             title,
                             vInfo.PagesInfo.Count > 1 ? ($"P{indexStr}.{p.title}") : "",
                             File.Exists($"{p.aid}/{p.aid}.jpg") ? $"{p.aid}/{p.aid}.jpg" : "",
+                            lang,
                             subtitleInfo, audioOnly, videoOnly);
                         if (code != 0 || !File.Exists(outPath) || new FileInfo(outPath).Length == 0)
                         {

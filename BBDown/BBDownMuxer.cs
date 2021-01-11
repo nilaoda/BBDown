@@ -40,7 +40,7 @@ namespace BBDown
             return str.Replace("\"", "'");
         }
 
-        public static int MuxAV(string videoPath, string audioPath, string outPath, string desc = "", string title = "", string episodeId = "", string pic = "", List<Subtitle> subs = null, bool audioOnly = false, bool videoOnly = false)
+        public static int MuxAV(string videoPath, string audioPath, string outPath, string desc = "", string title = "", string episodeId = "", string pic = "", string lang = "", List<Subtitle> subs = null, bool audioOnly = false, bool videoOnly = false)
         {
             desc = EscapeString(desc);
             title = EscapeString(title);
@@ -78,6 +78,7 @@ namespace BBDown
             //----分析完毕
             var arguments = $"-loglevel warning -y " +
                  inputArg.ToString() + metaArg.ToString() + $" -metadata title=\"" + (episodeId == "" ? title : episodeId) + "\" " +
+                 (lang == "" ? "" : $"-metadata:s:a:0 language={lang} ") +
                  $"-metadata description=\"{desc}\" " +
                  (episodeId == "" ? "" : $"-metadata album=\"{title}\" ") +
                  (audioOnly ? " -vn " : "") + (videoOnly ? " -an " : "") +
