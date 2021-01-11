@@ -55,6 +55,7 @@ namespace BBDown
             public bool MultiThread { get; set; }
             public bool VideoOnly { get; set; }
             public bool AudioOnly { get; set; }
+            public bool SubOnly { get; set; }
             public bool Debug { get; set; }
             public bool SkipMux { get; set; }
             public string SelectPage { get; set; } = "";
@@ -74,6 +75,7 @@ namespace BBDown
                     $"{nameof(MultiThread)}={MultiThread.ToString()}, " +
                     $"{nameof(VideoOnly)}={VideoOnly.ToString()}, " +
                     $"{nameof(AudioOnly)}={AudioOnly.ToString()}, " +
+                    $"{nameof(SubOnly)}={SubOnly.ToString()}, " +
                     $"{nameof(Debug)}={Debug.ToString()}, " +
                     $"{nameof(SelectPage)}={SelectPage}, " +
                     $"{nameof(Cookie)}={Cookie}, " +
@@ -130,6 +132,9 @@ namespace BBDown
                 new Option<bool>(
                     new string[]{ "--video-only"},
                     "仅下载视频"),
+                new Option<bool>(
+                    new string[]{ "--sub-only"},
+                    "仅下载字幕"),
                 new Option<bool>(
                     new string[]{ "--debug"},
                     "输出调试日志"),
@@ -298,6 +303,7 @@ namespace BBDown
                 bool multiThread = myOption.MultiThread;
                 bool audioOnly = myOption.AudioOnly;
                 bool videoOnly = myOption.VideoOnly;
+                bool subOnly = myOption.SubOnly;
                 bool skipMux = myOption.SkipMux;
                 bool showAll = myOption.ShowAll;
                 bool useAria2c = myOption.UseAria2c;
@@ -378,7 +384,10 @@ namespace BBDown
                 }
                 else if (aidOri.StartsWith("ep"))
                 {
-                    fetcher = new BBDownBangumiInfoFetcher();
+                    if (intlApi)
+                        fetcher = new BBDownIntlBangumiInfoFetcher();
+                    else
+                        fetcher = new BBDownBangumiInfoFetcher();
                 }
                 else if (aidOri.StartsWith("mid"))
                 {
@@ -434,7 +443,7 @@ namespace BBDown
                         {
                             Directory.CreateDirectory(p.aid);
                         }
-                        if (!File.Exists($"{p.aid}/{p.aid}.jpg"))
+                        if (!subOnly && !File.Exists($"{p.aid}/{p.aid}.jpg"))
                         {
                             Log("下载封面...");
                             LogDebug("下载：{0}", pic);
@@ -447,6 +456,20 @@ namespace BBDown
                             Log($"下载字幕 {s.lan} => {BBDownSubUtil.SubDescDic[s.lan]}...");
                             LogDebug("下载：{0}", s.url);
                             BBDownSubUtil.SaveSubtitle(s.url, s.path);
+                            if (subOnly && File.Exists(s.path) && File.ReadAllText(s.path) != "") 
+                            {
+                                string _indexStr = p.index.ToString("0".PadRight(pagesInfo.OrderByDescending(_p => _p.index).First().index.ToString().Length, '0'));
+                                //处理文件夹以.结尾导致的异常情况
+                                if (title.EndsWith(".")) title += "_fix";
+                                string _outSubPath = GetValidFileName(title) + (pagesInfo.Count > 1 ? $"/[P{_indexStr}]{GetValidFileName(p.title)}" : (vInfo.PagesInfo.Count > 1 ? $"[P{_indexStr}]{GetValidFileName(p.title)}" : "")) + $"_{BBDownSubUtil.SubDescDic[s.lan]}.srt";
+                                File.Move(s.path, _outSubPath);
+                            }
+                        }
+
+                        if (subOnly)
+                        {
+                            if (Directory.Exists(p.aid) && Directory.GetFiles(p.aid).Length == 0) Directory.Delete(p.aid, true);
+                            continue;
                         }
                     }
 
