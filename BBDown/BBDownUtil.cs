@@ -87,6 +87,11 @@ namespace BBDown
                     string epId = GetQueryString("ep_id", input);
                     return $"ep:{epId}";
                 }
+                else if (Regex.IsMatch(input, "global.bilibili.com/play/\\d+/(\\d+)"))
+                {
+                    string epId = Regex.Match(input, "global.bilibili.com/play/\\d+/(\\d+)").Groups[1].Value;
+                    return $"ep:{epId}";
+                }
                 else
                 {
                     string web = GetWebSource(input);

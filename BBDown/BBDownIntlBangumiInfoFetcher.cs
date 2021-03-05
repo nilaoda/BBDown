@@ -14,13 +14,14 @@ namespace BBDown
         {
             id = id.Substring(3);
             string index = "";
-            string api = $"https://api.global.bilibili.com/intl/gateway/ogv/m/view?ep_id={id}&s_locale=ja_JP";
+            //string api = $"https://api.global.bilibili.com/intl/gateway/ogv/m/view?ep_id={id}&s_locale=ja_JP";
+            string api = $"https://api.global.bilibili.com/intl/gateway/v2/ogv/view/app/season?ep_id={id}&s_locale=zh_SG";
             string json = GetWebSource(api);
             JObject infoJson = JObject.Parse(json);
-            string seasonId = infoJson["data"]["season_id"].ToString();
-            string cover = infoJson["data"]["refine_cover"].ToString();
-            string title = infoJson["data"]["title"].ToString();
-            string desc = infoJson["data"]["evaluate"].ToString();
+            string seasonId = infoJson["result"]["season_id"].ToString();
+            string cover = infoJson["result"]["refine_cover"].ToString();
+            string title = infoJson["result"]["title"].ToString();
+            string desc = infoJson["result"]["evaluate"].ToString();
 
 
             string animeUrl = $"https://bangumi.bilibili.com/anime/{seasonId}";
@@ -34,12 +35,24 @@ namespace BBDown
                 desc = JObject.Parse(_json)["mediaInfo"]["evaluate"].ToString();
             }
 
-            string pubTime = infoJson["data"]["publish"]["pub_time"].ToString();
-            JArray pages = infoJson["data"]["episodes"].ToString() != "" ? JArray.Parse(infoJson["data"]["episodes"].ToString()) : new JArray();
+            string pubTime = infoJson["result"]["publish"]["pub_time"].ToString();
+            JArray pages = infoJson["result"]["episodes"].ToString() != "" ? JArray.Parse(infoJson["result"]["episodes"].ToString()) : new JArray();
             List<Page> pagesInfo = new List<Page>();
             int i = 1;
 
-            if (pages.Count == 0)
+            if (infoJson["result"]["modules"] != null)
+            {
+                foreach (JObject section in JArray.Parse(infoJson["result"]["modules"].ToString()))
+                {
+                    if (section.ToString().Contains($"/{id}"))
+                    {
+                        pages = JArray.Parse(section["data"]["episodes"].ToString());
+                        break;
+                    }
+                }
+            }
+
+            /*if (pages.Count == 0)
             {
                 if (web != "") 
                 {
@@ -58,7 +71,7 @@ namespace BBDown
                         }
                     }
                 }
-            }
+            }*/
 
             foreach (JObject page in pages)
             {
