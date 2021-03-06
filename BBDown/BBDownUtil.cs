@@ -167,54 +167,61 @@ namespace BBDown
         public static string GetWebSource(String url)
         {
             string htmlCode = string.Empty;
-            HttpWebRequest webRequest = (HttpWebRequest)WebRequest.Create(url);
-            webRequest.Method = "GET";
-            webRequest.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.102 Safari/537.36 Edge/18.20221";
-            webRequest.Headers.Add("Accept-Encoding", "gzip, deflate");
-            webRequest.Headers.Add("Cookie", (url.Contains("/ep") || url.Contains("/ss")) ? Program.COOKIE + ";CURRENT_FNVAL=80;" : Program.COOKIE);
-            if (url.Contains("api.bilibili.com/pgc/player/web/playurl") || url.Contains("api.bilibili.com/pugv/player/web/playurl"))
-                webRequest.Headers.Add("Referer", "https://www.bilibili.com");
-            webRequest.CachePolicy = new HttpRequestCachePolicy(HttpRequestCacheLevel.NoCacheNoStore);
-            webRequest.KeepAlive = false;
-            webRequest.AllowAutoRedirect = true;  //自动跳转
-            LogDebug("获取网页内容：Url: {0}, Headers: {1}", url, webRequest.Headers);
-
-            HttpWebResponse webResponse = (HttpWebResponse)webRequest.GetResponse();
-            if (webResponse.ContentEncoding != null
-                && webResponse.ContentEncoding.ToLower() == "gzip") //如果使用了GZip则先解压
+            try
             {
-                using (Stream streamReceive = webResponse.GetResponseStream())
+                HttpWebRequest webRequest = (HttpWebRequest)WebRequest.Create(url);
+                webRequest.Method = "GET";
+                webRequest.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.102 Safari/537.36 Edge/18.20221";
+                webRequest.Headers.Add("Accept-Encoding", "gzip, deflate");
+                webRequest.Headers.Add("Cookie", (url.Contains("/ep") || url.Contains("/ss")) ? Program.COOKIE + ";CURRENT_FNVAL=80;" : Program.COOKIE);
+                if (url.Contains("api.bilibili.com/pgc/player/web/playurl") || url.Contains("api.bilibili.com/pugv/player/web/playurl"))
+                    webRequest.Headers.Add("Referer", "https://www.bilibili.com");
+                webRequest.CachePolicy = new HttpRequestCachePolicy(HttpRequestCacheLevel.NoCacheNoStore);
+                webRequest.KeepAlive = false;
+                webRequest.AllowAutoRedirect = true;  //自动跳转
+                LogDebug("获取网页内容：Url: {0}, Headers: {1}", url, webRequest.Headers);
+
+                HttpWebResponse webResponse = (HttpWebResponse)webRequest.GetResponse();
+                if (webResponse.ContentEncoding != null
+                    && webResponse.ContentEncoding.ToLower() == "gzip") //如果使用了GZip则先解压
                 {
-                    using (var zipStream =
-                        new GZipInputStream(streamReceive))
+                    using (Stream streamReceive = webResponse.GetResponseStream())
                     {
-                        using (StreamReader sr = new StreamReader(zipStream, Encoding.UTF8))
+                        using (var zipStream =
+                            new GZipInputStream(streamReceive))
+                        {
+                            using (StreamReader sr = new StreamReader(zipStream, Encoding.UTF8))
+                            {
+                                htmlCode = sr.ReadToEnd();
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    using (Stream streamReceive = webResponse.GetResponseStream())
+                    {
+                        using (StreamReader sr = new StreamReader(streamReceive, Encoding.UTF8))
                         {
                             htmlCode = sr.ReadToEnd();
                         }
                     }
                 }
-            }
-            else
-            {
-                using (Stream streamReceive = webResponse.GetResponseStream())
+
+                if (webResponse != null)
                 {
-                    using (StreamReader sr = new StreamReader(streamReceive, Encoding.UTF8))
-                    {
-                        htmlCode = sr.ReadToEnd();
-                    }
+                    webResponse.Close();
                 }
-            }
+                if (webRequest != null)
+                {
+                    webRequest.Abort();
+                }
 
-            if (webResponse != null)
-            {
-                webResponse.Close();
             }
-            if (webRequest != null)
+            catch (Exception)
             {
-                webRequest.Abort();
+                ;
             }
-
             return htmlCode;
         }
 

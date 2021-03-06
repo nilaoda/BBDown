@@ -19,20 +19,23 @@ namespace BBDown
             string json = GetWebSource(api);
             JObject infoJson = JObject.Parse(json);
             string seasonId = infoJson["result"]["season_id"].ToString();
-            string cover = infoJson["result"]["refine_cover"].ToString();
+            string cover = infoJson["result"]["cover"].ToString();
             string title = infoJson["result"]["title"].ToString();
             string desc = infoJson["result"]["evaluate"].ToString();
 
 
-            string animeUrl = $"https://bangumi.bilibili.com/anime/{seasonId}";
-            var web = GetWebSource(animeUrl);
-            if (web != "")
+            if (cover == "")
             {
-                Regex regex = new Regex("window.__INITIAL_STATE__=([\\s\\S].*?);\\(function\\(\\)");
-                string _json = regex.Match(web).Groups[1].Value;
-                cover = JObject.Parse(_json)["mediaInfo"]["cover"].ToString();
-                title = JObject.Parse(_json)["mediaInfo"]["title"].ToString();
-                desc = JObject.Parse(_json)["mediaInfo"]["evaluate"].ToString();
+                string animeUrl = $"https://bangumi.bilibili.com/anime/{seasonId}";
+                var web = GetWebSource(animeUrl);
+                if (web != "")
+                {
+                    Regex regex = new Regex("window.__INITIAL_STATE__=([\\s\\S].*?);\\(function\\(\\)");
+                    string _json = regex.Match(web).Groups[1].Value;
+                    cover = JObject.Parse(_json)["mediaInfo"]["cover"].ToString();
+                    title = JObject.Parse(_json)["mediaInfo"]["title"].ToString();
+                    desc = JObject.Parse(_json)["mediaInfo"]["evaluate"].ToString();
+                }
             }
 
             string pubTime = infoJson["result"]["publish"]["pub_time"].ToString();
