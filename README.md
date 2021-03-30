@@ -3,6 +3,9 @@
 # BBDown
 一款命令行式哔哩哔哩下载器. Bilibili Downloader.
 
+# 注意
+本软件合并时需要使用[ffmpeg](https://www.gyan.dev/ffmpeg/builds/) ，非`win-x64`平台请自行下载配置，并加入环境变量.
+
 # 快速开始
 本软件已经以 [Dotnet Tool](https://www.nuget.org/packages/BBDown/) 形式发布  
 
