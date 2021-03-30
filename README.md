@@ -39,8 +39,10 @@ Options:
   -p, --select-page <select-page>      选择指定分p或分p范围：(-p 8 或 -p 1,2 或 -p 3-5 或 -p ALL)
   --audio-only                         仅下载音频
   --video-only                         仅下载视频
+  --sub-only                           仅下载字幕
   --debug                              输出调试日志
   --skip-mux                           跳过混流步骤
+  --language <language>                设置混流的音频语言(代码)，如chi, jpn等
   -c, --cookie <cookie>                设置字符串cookie用以下载网页接口的会员内容
   -a, --access-token <access-token>    设置access_token用以下载TV接口的会员内容
   --version                            Show version information
