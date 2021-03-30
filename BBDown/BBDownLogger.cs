@@ -42,7 +42,10 @@ namespace BBDown
             {
                 Console.ForegroundColor = ConsoleColor.DarkGray;
                 Console.Write(DateTime.Now.ToString("[yyyy-MM-dd HH:mm:ss.fff]") + " - ");
-                Console.Write(string.Format(toFormat, args).Trim());
+                if (args.Length > 0)
+                    Console.Write(string.Format(toFormat, args).Trim());
+                else
+                    Console.Write(toFormat);
                 Console.ResetColor();
                 Console.WriteLine();
             }
