@@ -218,26 +218,8 @@ namespace BBDown
                 }
                 else
                 {
-                    string nodeinfo = webJsonStr;
-                    //如果获取数据失败，尝试从result和data获取数据
-                    if (JObject.Parse(nodeinfo)["format"] != null)
-                    {
-                        nodeinfo = JObject.Parse(nodeinfo)["format"].ToString();
-                    }
-                    else if (respJson["result"] != null)
-                    {
-                        nodeinfo = respJson["result"].ToString();
-                    }
-                    else if (respJson["data"] != null)
-                    {
-                        nodeinfo = respJson["data"].ToString();
-                    }
-                    else
-                    {
-                        LogError("解析数据错误，未发现有用的信息");
-                        LogDebug("{0}", webJsonStr);
-                        return (webJsonStr, videoTracks, audioTracks, clips, dfns);
-                    }
+                    //如果获取数据失败，尝试从根路径获取数据
+                    string nodeinfo = respJson.ToString();
                     quality = JObject.Parse(nodeinfo)["quality"].ToString();
                     videoCodecid = JObject.Parse(nodeinfo)["video_codecid"].ToString();
                     //获取所有分段
