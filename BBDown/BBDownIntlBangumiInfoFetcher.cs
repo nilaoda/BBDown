@@ -15,7 +15,7 @@ namespace BBDown
             id = id.Substring(3);
             string index = "";
             //string api = $"https://api.global.bilibili.com/intl/gateway/ogv/m/view?ep_id={id}&s_locale=ja_JP";
-            string api = $"https://api.global.bilibili.com/intl/gateway/v2/ogv/view/app/season?ep_id={id}&s_locale=zh_SG&mobi_app=bstar_a";
+            string api = $"https://api.global.bilibili.com/intl/gateway/v2/ogv/view/app/season?ep_id={id}&platform=android&s_locale=zh_SG&mobi_app=bstar_a";
             string json = GetWebSource(api);
             JObject infoJson = JObject.Parse(json);
             string seasonId = infoJson["result"]["season_id"].ToString();
