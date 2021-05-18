@@ -293,12 +293,12 @@ namespace BBDown
             return epId;
         }
 
-        public static async Task DownloadFile(string url, string path, bool aria2c)
+        public static async Task DownloadFile(string url, string path, bool aria2c, string aria2cProxy)
         {
             LogDebug("Start downloading: {0}", url);
             if (aria2c)
             {
-                BBDownAria2c.DownloadFileByAria2c(url, path);
+                BBDownAria2c.DownloadFileByAria2c(url, path, aria2cProxy);
                 if (File.Exists(path + ".aria2") || !File.Exists(path))
                     throw new Exception("aria2下载可能存在错误");
                 Console.WriteLine();
@@ -349,11 +349,11 @@ namespace BBDown
             });
         }
 
-        public static async Task MultiThreadDownloadFileAsync(string url, string path, bool aria2c)
+        public static async Task MultiThreadDownloadFileAsync(string url, string path, bool aria2c, string aria2cProxy)
         {
             if (aria2c)
             {
-                BBDownAria2c.DownloadFileByAria2c(url, path);
+                BBDownAria2c.DownloadFileByAria2c(url, path, aria2cProxy);
                 if (File.Exists(path + ".aria2") || !File.Exists(path))
                     throw new Exception("aria2下载可能存在错误");
                 Console.WriteLine();

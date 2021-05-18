@@ -62,6 +62,7 @@ namespace BBDown
             public string Language { get; set; } = "";
             public string Cookie { get; set; } = "";
             public string AccessToken { get; set; } = "";
+            public string Aria2cProxy { get; set; } = "";
 
             public override string ToString()
             {
@@ -80,7 +81,8 @@ namespace BBDown
                     $"{nameof(Debug)}={Debug.ToString()}, " +
                     $"{nameof(SelectPage)}={SelectPage}, " +
                     $"{nameof(Cookie)}={Cookie}, " +
-                    $"{nameof(AccessToken)}={AccessToken}}}";
+                    $"{nameof(AccessToken)}={AccessToken}, " +
+                    $"{nameof(Aria2cProxy)}={Aria2cProxy}}}";
             }
         }
 
@@ -121,6 +123,9 @@ namespace BBDown
                 new Option<bool>(
                     new string[]{ "--use-aria2c"},
                     "调用aria2c进行下载(你需要自行准备好二进制可执行文件)"),
+                new Option<string>(
+                    new string[]{ "--aria2c-proxy"},
+                    "调用aria2c进行下载时的代理地址配置"),
                 new Option<bool>(
                     new string[]{ "--multi-thread", "-mt"},
                     "使用多线程下载"),
@@ -311,6 +316,7 @@ namespace BBDown
                 bool skipMux = myOption.SkipMux;
                 bool showAll = myOption.ShowAll;
                 bool useAria2c = myOption.UseAria2c;
+                string aria2cProxy = myOption.Aria2cProxy;
                 DEBUG_LOG = myOption.Debug;
                 string input = myOption.Url;
                 string lang = myOption.Language;
@@ -591,7 +597,7 @@ namespace BBDown
                             if (multiThread && !videoTracks[vIndex].baseUrl.Contains("-cmcc-"))
                             {
                                 Log($"开始多线程下载P{p.index}视频...");
-                                await MultiThreadDownloadFileAsync(videoTracks[vIndex].baseUrl, videoPath, useAria2c);
+                                await MultiThreadDownloadFileAsync(videoTracks[vIndex].baseUrl, videoPath, useAria2c, aria2cProxy);
                                 Log("合并视频分片...");
                                 CombineMultipleFilesIntoSingleFile(GetFiles(Path.GetDirectoryName(videoPath), ".vclip"), videoPath);
                                 Log("清理分片...");
@@ -602,7 +608,7 @@ namespace BBDown
                                 if (multiThread && videoTracks[vIndex].baseUrl.Contains("-cmcc-"))
                                     LogError("检测到cmcc域名cdn, 已经禁用多线程");
                                 Log($"开始下载P{p.index}视频...");
-                                await DownloadFile(videoTracks[vIndex].baseUrl, videoPath, useAria2c);
+                                await DownloadFile(videoTracks[vIndex].baseUrl, videoPath, useAria2c, aria2cProxy);
                             }
                         }
                         if (audioTracks.Count > 0)
@@ -610,7 +616,7 @@ namespace BBDown
                             if (multiThread && !audioTracks[aIndex].baseUrl.Contains("-cmcc-"))
                             {
                                 Log($"开始多线程下载P{p.index}音频...");
-                                await MultiThreadDownloadFileAsync(audioTracks[aIndex].baseUrl, audioPath, useAria2c);
+                                await MultiThreadDownloadFileAsync(audioTracks[aIndex].baseUrl, audioPath, useAria2c, aria2cProxy);
                                 Log("合并音频分片...");
                                 CombineMultipleFilesIntoSingleFile(GetFiles(Path.GetDirectoryName(audioPath), ".aclip"), audioPath);
                                 Log("清理分片...");
@@ -621,7 +627,7 @@ namespace BBDown
                                 if (multiThread && audioTracks[aIndex].baseUrl.Contains("-cmcc-"))
                                     LogError("检测到cmcc域名cdn, 已经禁用多线程");
                                 Log($"开始下载P{p.index}音频...");
-                                await DownloadFile(audioTracks[aIndex].baseUrl, audioPath, useAria2c);
+                                await DownloadFile(audioTracks[aIndex].baseUrl, audioPath, useAria2c, aria2cProxy);
                             }
                         }
 
@@ -698,7 +704,7 @@ namespace BBDown
                                 if (videoTracks.Count != 0)
                                 {
                                     Log($"开始多线程下载P{p.index}视频, 片段({(i + 1).ToString(pad)}/{clips.Count})...");
-                                    await MultiThreadDownloadFileAsync(link, videoPath, useAria2c);
+                                    await MultiThreadDownloadFileAsync(link, videoPath, useAria2c, aria2cProxy);
                                     Log("合并视频分片...");
                                     CombineMultipleFilesIntoSingleFile(GetFiles(Path.GetDirectoryName(videoPath), ".vclip"), videoPath);
                                 }
@@ -712,7 +718,7 @@ namespace BBDown
                                 if (videoTracks.Count != 0)
                                 {
                                     Log($"开始下载P{p.index}视频, 片段({(i + 1).ToString(pad)}/{clips.Count})...");
-                                    await DownloadFile(link, videoPath, useAria2c);
+                                    await DownloadFile(link, videoPath, useAria2c, aria2cProxy);
                                 }
                             }
                         }
