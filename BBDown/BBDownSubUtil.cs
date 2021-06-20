@@ -115,7 +115,9 @@ namespace BBDown
             {
                 lines.AppendLine((i + 1).ToString());
                 lines.AppendLine($"{FormatTime(sub[i]["from"].ToString())} --> {FormatTime(sub[i]["to"].ToString())}");
-                lines.AppendLine(sub[i]["content"].ToString());
+                //有的没有内容
+                if (((JObject)sub[i]).ContainsKey("content"))
+                    lines.AppendLine(sub[i]["content"].ToString());
                 lines.AppendLine();
             }
             return lines.ToString();
