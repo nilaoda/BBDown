@@ -113,11 +113,12 @@ namespace BBDown
             JArray sub = JArray.Parse(json["body"].ToString());
             for(int i = 0; i < sub.Count; i++)
             {
+                JObject line = (JObject)sub[i];
                 lines.AppendLine((i + 1).ToString());
-                lines.AppendLine($"{FormatTime(sub[i]["from"].ToString())} --> {FormatTime(sub[i]["to"].ToString())}");
+                lines.AppendLine($"{(line.ContainsKey("from") ? FormatTime(line["from"].ToString()) : "0")} --> {FormatTime(line["to"].ToString())}");
                 //有的没有内容
-                if (((JObject)sub[i]).ContainsKey("content"))
-                    lines.AppendLine(sub[i]["content"].ToString());
+                if (line.ContainsKey("content"))
+                    lines.AppendLine(line["content"].ToString());
                 lines.AppendLine();
             }
             return lines.ToString();
