@@ -480,7 +480,7 @@ namespace BBDown
                                         Directory.CreateDirectory(Path.GetDirectoryName(_outSubPath));
                                     }
                                 }
-                                File.Move(s.path, _outSubPath);
+                                File.Move(s.path, _outSubPath, true);
                             }
                         }
 
