@@ -24,7 +24,8 @@ namespace BBDown
             List<Page> pagesInfo = new List<Page>();
             int i = 1;
 
-            if (pages.Count == 0) 
+            //episodes为空; 或者未包含对应epid，番外/花絮什么的
+            if (pages.Count == 0 || !pages.ToString().Contains($"/ep{id}")) 
             {
                 if (infoJson["result"]["section"] != null)
                 {
@@ -32,6 +33,7 @@ namespace BBDown
                     {
                         if (section.ToString().Contains($"/ep{id}"))
                         {
+                            title += "[" + section["title"].ToString() + "]";
                             pages = JArray.Parse(section["episodes"].ToString());
                             break;
                         }
@@ -41,14 +43,16 @@ namespace BBDown
 
             foreach (JObject page in pages)
             {
+                //跳过预告
+                if (page.ContainsKey("badge") && page["badge"].ToString() == "预告") continue;
                 string res = "";
                 try
                 {
                     res = page["dimension"]["width"].ToString() + "x" + page["dimension"]["height"].ToString();
                 }
                 catch (Exception) { }
-                string _title = page["long_title"].ToString().Trim();
-                if(string.IsNullOrEmpty(_title)) _title = page["title"].ToString();
+                string _title = page["title"].ToString() + " " + page["long_title"].ToString().Trim();
+                _title = _title.Trim();
                 Page p = new Page(i++,
                     page["aid"].ToString(),
                     page["cid"].ToString(),
