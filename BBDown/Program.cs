@@ -504,6 +504,16 @@ namespace BBDown
                     if (title.EndsWith(".")) title += "_fix";
                     string outPath = GetValidFileName(title) + (pagesInfo.Count > 1 ? $"/[P{indexStr}]{GetValidFileName(p.title)}" : (vInfo.PagesInfo.Count > 1 ? $"[P{indexStr}]{GetValidFileName(p.title)}" : "")) + ".mp4";
                     
+                    if (File.Exists(outPath) && new FileInfo(outPath).Length != 0)
+                    {
+                        Log($"{outPath}已存在, 跳过下载...");
+                        if (pagesInfo.Count == 1 && Directory.Exists(p.aid)) 
+                        {
+                            Directory.Delete(p.aid, true);
+                        }
+                        continue;
+                    }
+                    
                     //调用解析
                     (webJsonStr, videoTracks, audioTracks, clips, dfns) = ExtractTracks(hevc, aidOri, p.aid, p.cid, p.epid, tvApi, intlApi);
 
@@ -579,11 +589,6 @@ namespace BBDown
                                 if (aIndex > audioTracks.Count || aIndex < 0) aIndex = 0;
                                 Console.ResetColor();
                             }
-                        }
-                        if (File.Exists(outPath) && new FileInfo(outPath).Length != 0)
-                        {
-                            Log($"{outPath}已存在, 跳过下载...");
-                            continue;
                         }
 
                         Log($"已选择的流:");
