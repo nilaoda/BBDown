@@ -188,3 +188,4 @@ BBDown -p ALL "https://www.bilibili.com/bangumi/play/ss33073"
 * https://github.com/SeeFlowerX/bilibili-grpc-api
 * https://github.com/FFmpeg/FFmpeg
 * https://github.com/gpac/gpac
+* https://github.com/aria2/aria2
