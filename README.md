@@ -65,6 +65,7 @@ Commands:
 - [x] 选择指定清晰度进行下载
 - [x] 下载外挂字幕并转换为srt格式
 - [x] 自动合并音频+视频流+字幕流
+- [x] 单独下载视频或音频轨道
 - [x] 二维码登录账号
 - [x] **多线程下载**
 - [x] 支持调用aria2c下载
@@ -76,6 +77,7 @@ Commands:
 - [ ] 下载指定收藏夹中的视频
 - [ ] 下载某个个人空间页的视频
 - [ ] 自定义存储文件名等
+- [ ] 弹幕下载&转换
 
 # 使用示例
 
@@ -141,3 +143,15 @@ BBDown -p ALL "https://www.bilibili.com/bangumi/play/ss33073"
 下载完毕后在当前目录查看MP4文件：
 
 ![2](https://user-images.githubusercontent.com/20772925/88478901-5e1cdc00-cf7e-11ea-97c1-154b9226564e.png)
+
+# 致谢
+
+* https://github.com/JamesNK/Newtonsoft.Json
+* https://github.com/codebude/QRCoder
+* https://github.com/icsharpcode/SharpZipLib
+* https://github.com/protobuf-net/protobuf-net
+* https://github.com/dotnet/command-line-api
+* https://github.com/SocialSisterYi/bilibili-API-collect
+* https://github.com/SeeFlowerX/bilibili-grpc-api
+* https://github.com/FFmpeg/FFmpeg
+* https://github.com/gpac/gpac
