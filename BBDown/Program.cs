@@ -175,7 +175,7 @@ namespace BBDown
                     "设置字符串cookie用以下载网页接口的会员内容"),
                 new Option<string>(
                     new string[]{ "--access-token" ,"-token"},
-                    "设置access_token用以下载TV接口的会员内容")
+                    "设置access_token用以下载TV/APP接口的会员内容")
             };
 
             Command loginCommand = new Command(
