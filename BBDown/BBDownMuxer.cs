@@ -13,11 +13,11 @@ namespace BBDown
 {
     class BBDownMuxer
     {
-        public static int ffmpeg(string parms)
+        public static int RunExe(string app, string parms)
         {
             int code = 0;
             Process p = new Process();
-            p.StartInfo.FileName = "ffmpeg";
+            p.StartInfo.FileName = app;
             p.StartInfo.Arguments = parms;
             p.StartInfo.UseShellExecute = false;
             p.StartInfo.RedirectStandardError = true;
@@ -40,11 +40,51 @@ namespace BBDown
             return str.Replace("\"", "'");
         }
 
-        public static int MuxAV(string videoPath, string audioPath, string outPath, string desc = "", string title = "", string episodeId = "", string pic = "", string lang = "", List<Subtitle> subs = null, bool audioOnly = false, bool videoOnly = false)
+        public static int MuxByMp4box(string videoPath, string audioPath, string outPath, string desc, string title, string episodeId, string pic, string lang, List<Subtitle> subs, bool audioOnly, bool videoOnly)
+        {
+            StringBuilder inputArg = new StringBuilder();
+            StringBuilder metaArg = new StringBuilder();
+            inputArg.Append(" -inter 0 -noprog ");
+            if (!string.IsNullOrEmpty(videoPath))
+                inputArg.Append($" -add \"{videoPath}#trackID=1:name=\" ");
+            if (!string.IsNullOrEmpty(audioPath))
+                inputArg.Append($" -add \"{audioPath}:lang={(lang == "" ? "und" : lang)}\" ");
+            
+            if (!string.IsNullOrEmpty(pic))
+                metaArg.Append($":cover=\"{pic}\"");
+            if (!string.IsNullOrEmpty(episodeId))
+                metaArg.Append($":album=\"{title}\":name=\"{episodeId}\"");
+            else
+                metaArg.Append($":name=\"{title}\"");
+            metaArg.Append($":comment=\"{desc}\"");
+
+            if (subs != null)
+            {
+                for (int i = 0; i < subs.Count; i++)
+                {
+                    if (File.Exists(subs[i].path) && File.ReadAllText(subs[i].path) != "")
+                    {
+                        inputArg.Append($" -add \"{subs[i].path}#trackID=1:name={SubDescDic[subs[i].lan]}:lang={SubLangDic[subs[i].lan]}\" ");
+                    }
+                }
+            }
+
+            //----分析完毕
+            var arguments = inputArg.ToString() + (metaArg.ToString() == "" ? "" : " -itags tools=\"\"" + metaArg.ToString()) + $" \"{outPath}\"";
+            LogDebug("mp4box命令：{0}", arguments);
+            return RunExe("mp4box.exe", arguments);
+        }
+
+        public static int MuxAV(bool useMp4box, string videoPath, string audioPath, string outPath, string desc = "", string title = "", string episodeId = "", string pic = "", string lang = "", List<Subtitle> subs = null, bool audioOnly = false, bool videoOnly = false)
         {
             desc = EscapeString(desc);
             title = EscapeString(title);
             episodeId = EscapeString(episodeId);
+
+            if (useMp4box)
+            {
+                return MuxByMp4box(videoPath, audioPath, outPath, desc, title, episodeId, pic, lang, subs, audioOnly, videoOnly);
+            }
 
             if (outPath.Contains("/") && ! Directory.Exists(Path.GetDirectoryName(outPath)))
                 Directory.CreateDirectory(Path.GetDirectoryName(outPath));
@@ -87,7 +127,7 @@ namespace BBDown
                  (subs != null ? " -c:s mov_text " : "") +
                  $"\"{outPath}\"";
             LogDebug("ffmpeg命令：{0}", arguments);
-            return ffmpeg(arguments);
+            return RunExe("ffmpeg", arguments);
         }
 
         public static void MergeFLV(string[] files, string outPath)
@@ -103,7 +143,7 @@ namespace BBDown
                     var tmpFile = Path.Combine(Path.GetDirectoryName(file), Path.GetFileNameWithoutExtension(file) + ".ts");
                     var arguments = $"-loglevel warning -y -i \"{file}\" -map 0 -c copy -f mpegts -bsf:v h264_mp4toannexb \"{tmpFile}\"";
                     LogDebug("ffmpeg命令：{0}", arguments);
-                    ffmpeg(arguments);
+                    RunExe("ffmpeg", arguments);
                     File.Delete(file);
                 }
                 var f = GetFiles(Path.GetDirectoryName(files[0]), ".ts");

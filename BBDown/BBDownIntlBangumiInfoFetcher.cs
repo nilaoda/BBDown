@@ -78,14 +78,16 @@ namespace BBDown
 
             foreach (JObject page in pages)
             {
+                //跳过预告
+                if (page.ContainsKey("badge") && page["badge"].ToString() == "预告") continue;
                 string res = "";
                 try
                 {
                     res = page["dimension"]["width"].ToString() + "x" + page["dimension"]["height"].ToString();
                 }
                 catch (Exception) { }
-                string _title = page["long_title"].ToString().Trim();
-                if (string.IsNullOrEmpty(_title)) _title = page["title"].ToString();
+                string _title = page["title"].ToString() + " " + page["long_title"].ToString().Trim();
+                _title = _title.Trim();
                 Page p = new Page(i++,
                     page["aid"].ToString(),
                     page["cid"].ToString(),

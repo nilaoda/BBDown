@@ -309,7 +309,7 @@ namespace BBDown
             {
                 long totalLength = -1;
                 WebClient client = new WebClient();
-                if (!url.Contains("platform=android_tv_yst"))
+                if (!url.Contains("platform=android_tv_yst") && !url.Contains("platform=android"))
                     client.Headers.Add("Referer", "https://www.bilibili.com");
                 client.Headers.Add("User-Agent", "Mozilla/5.0");
                 client.Headers.Add("Cookie", Program.COOKIE);
@@ -690,6 +690,11 @@ namespace BBDown
             NameValueCollection httpValueCollection = HttpUtility.ParseQueryString(String.Empty);
             httpValueCollection.Add(nameValueCollection);
             return httpValueCollection.ToString();
+        }
+
+        public static string GetMaxQn()
+        {
+            return Program.qualitys.Keys.First();
         }
 
         public static NameValueCollection GetTVLoginParms()

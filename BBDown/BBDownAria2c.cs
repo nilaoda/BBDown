@@ -20,7 +20,7 @@ namespace BBDown
         public static void DownloadFileByAria2c(string url, string path, string proxy)
         {
             var headerArgs = "";
-            if (!url.Contains("platform=android_tv_yst"))
+            if (!url.Contains("platform=android_tv_yst") && !url.Contains("platform=android"))
                 headerArgs += " --header=\"Referer: https://www.bilibili.com\"";
             headerArgs += " --header=\"User-Agent: Mozilla/5.0\"";
             headerArgs += $" --header=\"Cookie: {Program.COOKIE}\"";

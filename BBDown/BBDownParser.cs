@@ -6,18 +6,25 @@ using static BBDown.BBDownUtil;
 using static BBDown.BBDownLogger;
 using static BBDown.BBDownEntity;
 using Newtonsoft.Json.Linq;
+using System.Linq;
 
 namespace BBDown
 {
     class BBDownParser
     {
-        private static string GetPlayJson(string aidOri, string aid, string cid, string epId, bool tvApi, bool intl, string qn = "0")
+        private static string GetPlayJson(bool onlyAvc, string aidOri, string aid, string cid, string epId, bool tvApi, bool intl, bool appApi, string qn = "0")
         {
+            LogDebug("aid={0},cid={1},epId={2},tvApi={3},IntlApi={4},appApi={5},qn={6}", aid, cid, epId, tvApi, intl, appApi, qn);
+
             if (intl) return GetPlayJson(aid, cid, epId, qn);
+
 
             bool cheese = aidOri.StartsWith("cheese:");
             bool bangumi = cheese || aidOri.StartsWith("ep:");
-            LogDebug("aid={0},cid={1},epId={2},tvApi={3},bangumi={4},cheese={5},qn={6}", aid, cid, epId, tvApi, bangumi, cheese, qn);
+            LogDebug("bangumi={0},cheese={1}", bangumi, cheese);
+
+            if (appApi) return BBDownAppHelper.DoReq(aid, cid, qn, bangumi, onlyAvc, Program.TOKEN);
+
             string prefix = tvApi ? (bangumi ? "api.snm0516.aisee.tv/pgc/player/api/playurltv" : "api.snm0516.aisee.tv/x/tv/ugc/playurl")
                         : (bangumi ? "api.bilibili.com/pgc/player/web/playurl" : "api.bilibili.com/x/player/playurl");
             string api = $"https://{prefix}?avid={aid}&cid={cid}&qn={qn}&type=&otype=json" + (tvApi ? "" : "&fourk=1") +
@@ -60,7 +67,7 @@ namespace BBDown
             return webJson;
         }
 
-        public static (string, List<Video>, List<Audio>, List<string>, List<string>) ExtractTracks(bool hevc, string aidOri, string aid, string cid, string epId, bool tvApi, bool intl, string qn = "0")
+        public static (string, List<Video>, List<Audio>, List<string>, List<string>) ExtractTracks(bool onlyHevc, bool onlyAvc, string aidOri, string aid, string cid, string epId, bool tvApi, bool intlApi, bool appApi, string qn = "0")
         {
             List<Video> videoTracks = new List<Video>();
             List<Audio> audioTracks = new List<Audio>();
@@ -68,7 +75,7 @@ namespace BBDown
             List<string> dfns = new List<string>();
 
             //调用解析
-            string webJsonStr = GetPlayJson(aidOri, aid, cid, epId, tvApi, intl);
+            string webJsonStr = GetPlayJson(onlyAvc, aidOri, aid, cid, epId, tvApi, intlApi, appApi);
 
             JObject respJson = JObject.Parse(webJsonStr);
 
@@ -90,7 +97,7 @@ namespace BBDown
                             v.bandwith = Convert.ToInt64(stream["dash_video"]["bandwidth"].ToString()) / 1000;
                             v.baseUrl = stream["dash_video"]["base_url"].ToString();
                             v.codecs = stream["dash_video"]["codecid"].ToString() == "12" ? "HEVC" : "AVC";
-                            if (hevc && v.codecs == "AVC") continue;
+                            if (onlyHevc && v.codecs == "AVC") continue;
                             if (!videoTracks.Contains(v)) videoTracks.Add(v);
                         }
                     }
@@ -129,7 +136,7 @@ namespace BBDown
             reParse:
                 if (reParse)
                 {
-                    webJsonStr = GetPlayJson(aidOri, aid, cid, epId, tvApi, intl, "125");
+                    webJsonStr = GetPlayJson(onlyAvc, aidOri, aid, cid, epId, tvApi, intlApi, appApi, GetMaxQn());
                     respJson = JObject.Parse(webJsonStr);
                 }
                 try { video = JArray.Parse(!tvApi ? respJson[nodeName]["dash"]["video"].ToString() : respJson["dash"]["video"].ToString()); } catch { }
@@ -145,18 +152,19 @@ namespace BBDown
                         v.bandwith = Convert.ToInt64(node["bandwidth"].ToString()) / 1000;
                         v.baseUrl = node["base_url"].ToString();
                         v.codecs = node["codecid"].ToString() == "12" ? "HEVC" : "AVC";
-                        if (!tvApi)
+                        if (!tvApi && !appApi)
                         {
                             v.res = node["width"].ToString() + "x" + node["height"].ToString();
                             v.fps = node["frame_rate"].ToString();
                         }
-                        if (hevc && v.codecs == "AVC") continue;
+                        if (onlyHevc && v.codecs == "AVC") continue;
+                        if (onlyAvc && v.codecs == "HEVC") continue;
                         if (!videoTracks.Contains(v)) videoTracks.Add(v);
                     }
                 }
 
                 //此处处理免二压视频，需要单独再请求一次
-                if (!reParse)
+                if (!reParse && !appApi)
                 {
                     reParse = true;
                     goto reParse;
@@ -172,7 +180,7 @@ namespace BBDown
                         a.dur = pDur;
                         a.bandwith = Convert.ToInt64(node["bandwidth"].ToString()) / 1000;
                         a.baseUrl = node["base_url"].ToString();
-                        a.codecs = "M4A";
+                        a.codecs = node["codecs"].ToString().Replace("mp4a.40.2", "M4A");
                         audioTracks.Add(a);
                     }
                 }
@@ -180,7 +188,7 @@ namespace BBDown
             else if (webJsonStr.Contains("\"durl\":[")) //flv
             {
                 //默认以最高清晰度解析
-                webJsonStr = GetPlayJson(aidOri, aid, cid, epId, tvApi, intl, "125");
+                webJsonStr = GetPlayJson(onlyAvc, aidOri, aid, cid, epId, tvApi, intlApi, appApi, GetMaxQn());
                 respJson = JObject.Parse(webJsonStr);
                 string quality = "";
                 string videoCodecid = "";
@@ -256,7 +264,7 @@ namespace BBDown
                 v.codecs = videoCodecid == "12" ? "HEVC" : "AVC";
                 v.dur = (int)length / 1000;
                 v.size = size;
-                if (hevc && v.codecs == "AVC") { }
+                if (onlyHevc && v.codecs == "AVC") { }
                 if (!videoTracks.Contains(v)) videoTracks.Add(v);
             }
 
