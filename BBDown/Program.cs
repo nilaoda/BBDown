@@ -695,6 +695,7 @@ namespace BBDown
                             LogError("合并失败"); continue;
                         }
                         Log("清理临时文件...");
+                        Thread.Sleep(200);
                         if (videoTracks.Count > 0) File.Delete(videoPath);
                         if (audioTracks.Count > 0) File.Delete(audioPath);
                         foreach (var s in subtitleInfo) File.Delete(s.path);
@@ -788,6 +789,7 @@ namespace BBDown
                             LogError("合并失败"); continue;
                         }
                         Log("清理临时文件...");
+                        Thread.Sleep(200);
                         if (videoTracks.Count != 0) File.Delete(videoPath);
                         foreach (var s in subtitleInfo) File.Delete(s.path);
                         if (pagesInfo.Count == 1 || p.index == pagesInfo.Last().index || p.aid != pagesInfo.Last().aid)
