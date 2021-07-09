@@ -72,7 +72,7 @@ namespace BBDown
             //----分析完毕
             var arguments = inputArg.ToString() + (metaArg.ToString() == "" ? "" : " -itags tools=\"\"" + metaArg.ToString()) + $" \"{outPath}\"";
             LogDebug("mp4box命令：{0}", arguments);
-            return RunExe("mp4box.exe", arguments);
+            return RunExe("mp4box", arguments);
         }
 
         public static int MuxAV(bool useMp4box, string videoPath, string audioPath, string outPath, string desc = "", string title = "", string episodeId = "", string pic = "", string lang = "", List<Subtitle> subs = null, bool audioOnly = false, bool videoOnly = false)
