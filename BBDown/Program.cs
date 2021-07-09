@@ -31,6 +31,8 @@ namespace BBDown
             {"64","720P 高清" }, {"48","720P 高清" }, {"32","480P 清晰" }, {"16","360P 流畅" }
         };
 
+        public static string APP_DIR = Path.GetDirectoryName(System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName);
+
         private static int Compare(Video r1, Video r2)
         {
             return (Convert.ToInt32(r1.id) * 100000 + r1.bandwith) > (Convert.ToInt32(r2.id) * 100000 + r2.bandwith) ? -1 : 1;
@@ -235,7 +237,7 @@ namespace BBDown
                             string cc = JObject.Parse(w)["data"]["url"].ToString();
                             Log("登录成功: SESSDATA=" + GetQueryString("SESSDATA", cc));
                             //导出cookie
-                            File.WriteAllText(Path.Combine(AppContext.BaseDirectory, "BBDown.data"), cc.Substring(cc.IndexOf('?') + 1).Replace("&", ";"));
+                            File.WriteAllText(Path.Combine(APP_DIR, "BBDown.data"), cc.Substring(cc.IndexOf('?') + 1).Replace("&", ";"));
                             File.Delete("qrcode.png");
                             break;
                         }
@@ -289,7 +291,7 @@ namespace BBDown
                             string cc = JObject.Parse(web)["data"]["access_token"].ToString();
                             Log("登录成功: AccessToken=" + cc);
                             //导出cookie
-                            File.WriteAllText(Path.Combine(AppContext.BaseDirectory, "BBDownTV.data"), "access_token=" + cc);
+                            File.WriteAllText(Path.Combine(APP_DIR, "BBDownTV.data"), "access_token=" + cc);
                             File.Delete("qrcode.png");
                             break;
                         }
@@ -369,25 +371,26 @@ namespace BBDown
                     selectedPages.Add(GetQueryString("p", input));
                 }
 
+                LogDebug("AppDirectory: {0}", APP_DIR);
                 LogDebug("运行参数：{0}", myOption);
-                if (string.IsNullOrEmpty(COOKIE) && File.Exists(Path.Combine(AppContext.BaseDirectory, "BBDown.data")) && !tvApi)
+                if (string.IsNullOrEmpty(COOKIE) && File.Exists(Path.Combine(APP_DIR, "BBDown.data")) && !tvApi)
                 {
                     Log("加载本地cookie...");
-                    LogDebug("文件路径：{0}", Path.Combine(AppContext.BaseDirectory, "BBDown.data"));
-                    COOKIE = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "BBDown.data"));
+                    LogDebug("文件路径：{0}", Path.Combine(APP_DIR, "BBDown.data"));
+                    COOKIE = File.ReadAllText(Path.Combine(APP_DIR, "BBDown.data"));
                 }
-                if (string.IsNullOrEmpty(TOKEN) && File.Exists(Path.Combine(AppContext.BaseDirectory, "BBDownTV.data")) && tvApi)
+                if (string.IsNullOrEmpty(TOKEN) && File.Exists(Path.Combine(APP_DIR, "BBDownTV.data")) && tvApi)
                 {
                     Log("加载本地token...");
-                    LogDebug("文件路径：{0}", Path.Combine(AppContext.BaseDirectory, "BBDownTV.data"));
-                    TOKEN = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "BBDownTV.data"));
+                    LogDebug("文件路径：{0}", Path.Combine(APP_DIR, "BBDownTV.data"));
+                    TOKEN = File.ReadAllText(Path.Combine(APP_DIR, "BBDownTV.data"));
                     TOKEN = TOKEN.Replace("access_token=", "");
                 }
-                if (string.IsNullOrEmpty(TOKEN) && File.Exists(Path.Combine(AppContext.BaseDirectory, "BBDownApp.data")) && appApi)
+                if (string.IsNullOrEmpty(TOKEN) && File.Exists(Path.Combine(APP_DIR, "BBDownApp.data")) && appApi)
                 {
                     Log("加载本地token...");
-                    LogDebug("文件路径：{0}", Path.Combine(AppContext.BaseDirectory, "BBDownApp.data"));
-                    TOKEN = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "BBDownApp.data"));
+                    LogDebug("文件路径：{0}", Path.Combine(APP_DIR, "BBDownApp.data"));
+                    TOKEN = File.ReadAllText(Path.Combine(APP_DIR, "BBDownApp.data"));
                     TOKEN = TOKEN.Replace("access_token=", "");
                 }
                 Log("获取aid...");
