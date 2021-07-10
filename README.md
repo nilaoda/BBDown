@@ -177,7 +177,7 @@ BBDown -p ALL "https://www.bilibili.com/bangumi/play/ss33073"
 
 # 更新日志
 
-请查看 [changelog.txt](https://github.com/nilaoda/BBDown/blob/master/changelog.txt)
+请查看 [changelog.txt](https://github.com/nilaoda/BBDown/blob/master/BBDown/changelog.txt)
 
 # 演示
 ![1](https://user-images.githubusercontent.com/20772925/88686407-a2001480-d129-11ea-8aac-97a0c71af115.gif)
