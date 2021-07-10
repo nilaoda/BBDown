@@ -122,18 +122,23 @@ BBDown -tv -token "******" "https://www.bilibili.com/video/BV1qt4y1X7TW"
 <summary>APP鉴权</summary>  
 
 ---
-  
+
+> 根据 [#123](https://github.com/nilaoda/BBDown/issues/123#issuecomment-877583825) ，可以填写TV登录产生的`access_token`来给APP接口使用。可复制`BBDownTV.data`到`BBDownApp.data`使程序自动读取.
+
 目前程序无法自动获取鉴权信息，推荐通过**抓包**来获取.
 
 在请求Header中寻找键为`authorization`的项，其值形为`identify_v1 5227************1`，其中的`5227************1`就是token(access_key)
 
-获取后手动通过`-token`命令加载, 或写入`BBDownApp.data`使程序自动读取
+获取后手动通过`-token`命令加载, 或写入`BBDownApp.data`使程序自动读取.
   
 ```
 BBDown -app -token "******" "https://www.bilibili.com/video/BV1qt4y1X7TW"
 ```
 
 </details>
+
+<details>
+<summary>常用命令</summary>  
 
 ---
 
@@ -167,6 +172,8 @@ BBDown -p 1-10 "https://www.bilibili.com/video/BV1At41167aj"
 ```
 BBDown -p ALL "https://www.bilibili.com/bangumi/play/ss33073"
 ```
+
+</details>
 
 # 更新日志
 
