@@ -1,0 +1,18 @@
+<Directives>
+    <Application>
+        <Assembly Name="BBDown" Dynamic="Required All" />
+        <Assembly Name="protobuf-net.Core" Dynamic="Required All">
+            <Type Name="ProtoBuf.Serializers.RepeatedSerializer" Dynamic="Required All">
+                <Method Name="CreateList" Dynamic="Required">
+                    <GenericArgument Name="DashItem,BBDown" />
+                </Method>
+                <Method Name="CreateList" Dynamic="Required">
+                    <GenericArgument Name="StreamItem,BBDown" />
+                </Method>
+                <Method Name="CreateList" Dynamic="Required">
+                    <GenericArgument Name="ResponseUrl,BBDown" />
+                </Method>
+            </Type>
+        </Assembly>
+    </Application>
+</Directives>
