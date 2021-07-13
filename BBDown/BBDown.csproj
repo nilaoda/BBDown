@@ -12,9 +12,7 @@
     <PackageOutputPath>./nupkg</PackageOutputPath>
     <IlcOptimizationPreference>Speed</IlcOptimizationPreference>
     <IlcFoldIdenticalMethodBodies>true</IlcFoldIdenticalMethodBodies>
-    <!-- <IlcGenerateStackTraceData>false</IlcGenerateStackTraceData> -->
-    <IlcDisableReflection>true</IlcDisableReflection>
-    <!-- <StaticallyLinked>true</StaticallyLinked> -->
+    <StaticallyLinked>true</StaticallyLinked>
     <TrimMode>Link</TrimMode>
   </PropertyGroup>
 
