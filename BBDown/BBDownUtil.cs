@@ -1,7 +1,5 @@
 ﻿using ICSharpCode.SharpZipLib.GZip;
-using Newtonsoft.Json.Linq;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
@@ -12,6 +10,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
@@ -97,7 +96,8 @@ namespace BBDown
                     string web = GetWebSource(input);
                     Regex regex = new Regex("window.__INITIAL_STATE__=([\\s\\S].*?);\\(function\\(\\)");
                     string json = regex.Match(web).Groups[1].Value;
-                    string epId = JObject.Parse(json)["epList"][0]["id"].ToString();
+                    using var jDoc = JsonDocument.Parse(json);
+                    string epId = jDoc.RootElement.GetProperty("epList").EnumerateArray().First().GetProperty("id").ToString();
                     return $"ep:{epId}";
                 }
             }
@@ -123,7 +123,8 @@ namespace BBDown
                 string web = GetWebSource("https://www.bilibili.com/bangumi/play/" + input);
                 Regex regex = new Regex("window.__INITIAL_STATE__=([\\s\\S].*?);\\(function\\(\\)");
                 string json = regex.Match(web).Groups[1].Value;
-                string epId = JObject.Parse(json)["epList"][0]["id"].ToString();
+                using var jDoc = JsonDocument.Parse(json);
+                string epId = jDoc.RootElement.GetProperty("epList").EnumerateArray().First().GetProperty("id").ToString();
                 return $"ep:{epId}";
             }
             else
@@ -281,7 +282,8 @@ namespace BBDown
         {
             string api = $"https://api.bilibili.com/x/web-interface/archive/stat?bvid={bv}";
             string json = GetWebSource(api);
-            string aid = JObject.Parse(json)["data"]["aid"].ToString();
+            using var jDoc = JsonDocument.Parse(json);
+            string aid = jDoc.RootElement.GetProperty("data").GetProperty("aid").ToString();
             return aid;
         }
 
@@ -289,7 +291,8 @@ namespace BBDown
         {
             string api = $"https://api.bilibili.com/pugv/view/web/season?season_id={ssid}";
             string json = GetWebSource(api);
-            string epId = JObject.Parse(json)["data"]["episodes"][0]["id"].ToString();
+            using var jDoc = JsonDocument.Parse(json);
+            string epId = jDoc.RootElement.GetProperty("data").GetProperty("episodes").EnumerateArray().First().GetProperty("id").ToString();
             return epId;
         }
 
@@ -546,7 +549,7 @@ namespace BBDown
         /// <returns></returns>
         public static string[] GetFiles(string dir, string ext)
         {
-            ArrayList al = new ArrayList();
+            List<string> al = new List<string>();
             StringBuilder sb = new StringBuilder();
             DirectoryInfo d = new DirectoryInfo(dir);
             foreach (FileInfo fi in d.GetFiles())
@@ -556,7 +559,7 @@ namespace BBDown
                     al.Add(fi.FullName);
                 }
             }
-            string[] res = (string[])al.ToArray(typeof(string));
+            string[] res = al.ToArray();
             Array.Sort(res); //排序
             return res;
         }

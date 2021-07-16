@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json.Linq;
-using QRCoder;
+﻿using QRCoder;
 using System;
 using System.Collections.Generic;
 using System.CommandLine;
@@ -17,6 +16,7 @@ using static BBDown.BBDownLogger;
 using static BBDown.BBDownMuxer;
 using System.Text;
 using System.Linq;
+using System.Text.Json;
 
 namespace BBDown
 {
@@ -198,7 +198,7 @@ namespace BBDown
                 {
                     Log("获取登录地址...");
                     string loginUrl = "https://passport.bilibili.com/qrcode/getLoginUrl";
-                    string url = JObject.Parse(GetWebSource(loginUrl))["data"]["url"].ToString();
+                    string url = JsonDocument.Parse(GetWebSource(loginUrl)).RootElement.GetProperty("data").GetProperty("url").ToString();
                     string oauthKey = GetQueryString("oauthKey", url);
                     //Log(oauthKey);
                     //Log(url);
@@ -214,7 +214,7 @@ namespace BBDown
                     {
                         Thread.Sleep(1000);
                         string w = GetLoginStatus(oauthKey);
-                        string data = JObject.Parse(w)["data"].ToString();
+                        string data = JsonDocument.Parse(w).RootElement.GetProperty("data").ToString();
                         if (data == "-2")
                         {
                             LogColor("二维码已过期, 请重新执行登录指令.");
@@ -234,7 +234,7 @@ namespace BBDown
                         }
                         else
                         {
-                            string cc = JObject.Parse(w)["data"]["url"].ToString();
+                            string cc = JsonDocument.Parse(w).RootElement.GetProperty("data").GetProperty("url").ToString();
                             Log("登录成功: SESSDATA=" + GetQueryString("SESSDATA", cc));
                             //导出cookie
                             File.WriteAllText(Path.Combine(APP_DIR, "BBDown.data"), cc.Substring(cc.IndexOf('?') + 1).Replace("&", ";"));
@@ -258,8 +258,8 @@ namespace BBDown
                     WebClient webClient = new WebClient();
                     byte[] responseArray = webClient.UploadValues(loginUrl, parms);
                     string web = Encoding.UTF8.GetString(responseArray);
-                    string url = JObject.Parse(web)["data"]["url"].ToString();
-                    string authCode = JObject.Parse(web)["data"]["auth_code"].ToString();
+                    string url = JsonDocument.Parse(web).RootElement.GetProperty("data").GetProperty("url").ToString();
+                    string authCode = JsonDocument.Parse(web).RootElement.GetProperty("data").GetProperty("auth_code").ToString();
                     Log("生成二维码...");
                     QRCodeGenerator qrGenerator = new QRCodeGenerator();
                     QRCodeData qrCodeData = qrGenerator.CreateQrCode(url, QRCodeGenerator.ECCLevel.Q);
@@ -276,7 +276,7 @@ namespace BBDown
                         Thread.Sleep(1000);
                         responseArray = webClient.UploadValues(pollUrl, parms);
                         web = Encoding.UTF8.GetString(responseArray);
-                        string code = JObject.Parse(web)["code"].ToString();
+                        string code = JsonDocument.Parse(web).RootElement.GetProperty("code").ToString();
                         if (code == "86038")
                         {
                             LogColor("二维码已过期, 请重新执行登录指令.");
@@ -288,7 +288,7 @@ namespace BBDown
                         }
                         else
                         {
-                            string cc = JObject.Parse(web)["data"]["access_token"].ToString();
+                            string cc = JsonDocument.Parse(web).RootElement.GetProperty("data").GetProperty("access_token").ToString();
                             Log("登录成功: AccessToken=" + cc);
                             //导出cookie
                             File.WriteAllText(Path.Combine(APP_DIR, "BBDownTV.data"), "access_token=" + cc);
@@ -557,8 +557,7 @@ namespace BBDown
                     (webJsonStr, videoTracks, audioTracks, clips, dfns) = ExtractTracks(onlyHevc, onlyAvc, aidOri, p.aid, p.cid, p.epid, tvApi, intlApi, appApi);
 
                     //File.WriteAllText($"debug.json", JObject.Parse(webJson).ToString());
-                    JObject respJson = JObject.Parse(webJsonStr);
-
+                    
 
                     //此处代码简直灾难，后续优化吧
                     if ((videoTracks.Count != 0 || audioTracks.Count != 0) && clips.Count == 0)   //dash

@@ -5,8 +5,8 @@ using System.Text.RegularExpressions;
 using static BBDown.BBDownUtil;
 using static BBDown.BBDownLogger;
 using static BBDown.BBDownEntity;
-using Newtonsoft.Json.Linq;
 using System.Linq;
+using System.Text.Json;
 
 namespace BBDown
 {
@@ -77,40 +77,42 @@ namespace BBDown
             //调用解析
             string webJsonStr = GetPlayJson(onlyAvc, aidOri, aid, cid, epId, tvApi, intlApi, appApi);
 
-            JObject respJson = JObject.Parse(webJsonStr);
+            var respJson = JsonDocument.Parse(webJsonStr);
+            var data = respJson.RootElement;
 
             //intl接口
             if (webJsonStr.Contains("\"stream_list\""))
             {
-                int pDur = respJson.SelectToken("data.video_info.timelength").Value<int>() / 1000;
-                JArray audio = JArray.Parse(respJson.SelectToken("data.video_info.dash_audio").ToString());
-                foreach(JObject stream in JArray.Parse(respJson.SelectToken("data.video_info.stream_list").ToString()))
+                int pDur = data.GetProperty("data").GetProperty("video_info").GetProperty("timelength").GetInt32() / 1000;
+                var audio = data.GetProperty("data").GetProperty("video_info").GetProperty("dash_audio").EnumerateArray().ToList();
+                foreach(var stream in data.GetProperty("data").GetProperty("video_info").GetProperty("stream_list").EnumerateArray())
                 {
-                    if (stream.ContainsKey("dash_video"))
+                    JsonElement dashVideo;
+                    if (stream.TryGetProperty("dash_video", out dashVideo))
                     {
-                        if (stream["dash_video"]["base_url"].ToString() != "")
+                        if (dashVideo.GetProperty("base_url").ToString() != "")
                         {
                             Video v = new Video();
                             v.dur = pDur;
-                            v.id = stream["stream_info"]["quality"].ToString();
+                            v.id = stream.GetProperty("stream_info").GetProperty("quality").ToString();
                             v.dfn = Program.qualitys[v.id];
-                            v.bandwith = Convert.ToInt64(stream["dash_video"]["bandwidth"].ToString()) / 1000;
-                            v.baseUrl = stream["dash_video"]["base_url"].ToString();
-                            v.codecs = stream["dash_video"]["codecid"].ToString() == "12" ? "HEVC" : "AVC";
+                            v.bandwith = Convert.ToInt64(dashVideo.GetProperty("bandwidth").ToString()) / 1000;
+                            v.baseUrl = dashVideo.GetProperty("base_url").ToString();
+                            v.codecs = dashVideo.GetProperty("codecid").ToString() == "12" ? "HEVC" : "AVC";
                             if (onlyHevc && v.codecs == "AVC") continue;
                             if (!videoTracks.Contains(v)) videoTracks.Add(v);
                         }
                     }
                 }
 
-                foreach(JObject node in audio)
+                foreach(var node in audio)
                 {
                     Audio a = new Audio();
-                    a.id = node["id"].ToString();
-                    a.dfn = node["id"].ToString();
+                    a.id = node.GetProperty("id").ToString();
+                    a.dfn = node.GetProperty("id").ToString();
                     a.dur = pDur;
-                    a.bandwith = Convert.ToInt64(node["bandwidth"].ToString()) / 1000;
-                    a.baseUrl = node["base_url"].ToString();
+                    a.bandwith = Convert.ToInt64(node.GetProperty("bandwidth").ToString()) / 1000;
+                    a.baseUrl = node.GetProperty("base_url").ToString();
                     a.codecs = "M4A";
                     audioTracks.Add(a);
                 }
@@ -120,8 +122,8 @@ namespace BBDown
 
             if (webJsonStr.Contains("\"dash\":{")) //dash
             {
-                JArray audio = null;
-                JArray video = null;
+                List<JsonElement> audio = null;
+                List<JsonElement> video = null;
                 int pDur = 0;
                 string nodeName = "data";
                 if (webJsonStr.Contains("\"result\":{"))
@@ -129,33 +131,33 @@ namespace BBDown
                     nodeName = "result";
                 }
 
-                try { pDur = !tvApi ? respJson[nodeName]["dash"]["duration"].Value<int>() : respJson["dash"]["duration"].Value<int>(); } catch { }
-                try { pDur = !tvApi ? respJson[nodeName]["timelength"].Value<int>() / 1000 : respJson["timelength"].Value<int>() / 1000; } catch { }
+                try { pDur = !tvApi ? respJson.RootElement.GetProperty(nodeName).GetProperty("dash").GetProperty("duration").GetInt32() : respJson.RootElement.GetProperty("dash").GetProperty("duration").GetInt32(); } catch { }
+                try { pDur = !tvApi ? respJson.RootElement.GetProperty(nodeName).GetProperty("timelength").GetInt32() / 1000 : respJson.RootElement.GetProperty("timelength").GetInt32() / 1000; } catch { }
 
                 bool reParse = false;
             reParse:
                 if (reParse)
                 {
                     webJsonStr = GetPlayJson(onlyAvc, aidOri, aid, cid, epId, tvApi, intlApi, appApi, GetMaxQn());
-                    respJson = JObject.Parse(webJsonStr);
+                    respJson = JsonDocument.Parse(webJsonStr);
                 }
-                try { video = JArray.Parse(!tvApi ? respJson[nodeName]["dash"]["video"].ToString() : respJson["dash"]["video"].ToString()); } catch { }
-                try { audio = JArray.Parse(!tvApi ? respJson[nodeName]["dash"]["audio"].ToString() : respJson["dash"]["audio"].ToString()); } catch { }
+                try { video = !tvApi ? respJson.RootElement.GetProperty(nodeName).GetProperty("dash").GetProperty("video").EnumerateArray().ToList() : respJson.RootElement.GetProperty("dash").GetProperty("video").EnumerateArray().ToList(); } catch { }
+                try { audio = !tvApi ? respJson.RootElement.GetProperty(nodeName).GetProperty("dash").GetProperty("audio").EnumerateArray().ToList() : respJson.RootElement.GetProperty("dash").GetProperty("audio").EnumerateArray().ToList(); } catch { }
                 if (video != null)
                 {
-                    foreach (JObject node in video)
+                    foreach (var node in video)
                     {
                         Video v = new Video();
                         v.dur = pDur;
-                        v.id = node["id"].ToString();
-                        v.dfn = Program.qualitys[node["id"].ToString()];
-                        v.bandwith = Convert.ToInt64(node["bandwidth"].ToString()) / 1000;
-                        v.baseUrl = node["base_url"].ToString();
-                        v.codecs = node["codecid"].ToString() == "12" ? "HEVC" : "AVC";
+                        v.id = node.GetProperty("id").ToString();
+                        v.dfn = Program.qualitys[v.id];
+                        v.bandwith = Convert.ToInt64(node.GetProperty("bandwidth").ToString()) / 1000;
+                        v.baseUrl = node.GetProperty("base_url").ToString();
+                        v.codecs = node.GetProperty("codecid").ToString() == "12" ? "HEVC" : "AVC";
                         if (!tvApi && !appApi)
                         {
-                            v.res = node["width"].ToString() + "x" + node["height"].ToString();
-                            v.fps = node["frame_rate"].ToString();
+                            v.res = node.GetProperty("width").ToString() + "x" + node.GetProperty("height").ToString();
+                            v.fps = node.GetProperty("frame_rate").ToString();
                         }
                         if (onlyHevc && v.codecs == "AVC") continue;
                         if (onlyAvc && v.codecs == "HEVC") continue;
@@ -172,15 +174,15 @@ namespace BBDown
 
                 if (audio != null)
                 {
-                    foreach (JObject node in audio)
+                    foreach (var node in audio)
                     {
                         Audio a = new Audio();
-                        a.id = node["id"].ToString();
-                        a.dfn = node["id"].ToString();
+                        a.id = node.GetProperty("id").ToString();
+                        a.dfn = a.id;
                         a.dur = pDur;
-                        a.bandwith = Convert.ToInt64(node["bandwidth"].ToString()) / 1000;
-                        a.baseUrl = node["base_url"].ToString();
-                        a.codecs = node["codecs"].ToString().Replace("mp4a.40.2", "M4A");
+                        a.bandwith = Convert.ToInt64(node.GetProperty("bandwidth").ToString()) / 1000;
+                        a.baseUrl = node.GetProperty("base_url").ToString();
+                        a.codecs = node.GetProperty("codecs").ToString().Replace("mp4a.40.2", "M4A");
                         audioTracks.Add(a);
                     }
                 }
@@ -189,7 +191,7 @@ namespace BBDown
             {
                 //默认以最高清晰度解析
                 webJsonStr = GetPlayJson(onlyAvc, aidOri, aid, cid, epId, tvApi, intlApi, appApi, GetMaxQn());
-                respJson = JObject.Parse(webJsonStr);
+                respJson = JsonDocument.Parse(webJsonStr);
                 string quality = "";
                 string videoCodecid = "";
                 string url = "";
@@ -197,26 +199,28 @@ namespace BBDown
                 double length = 0;
                 if (webJsonStr.Contains("\"data\":{"))
                 {
-                    quality = respJson["data"]["quality"].ToString();
-                    videoCodecid = respJson["data"]["video_codecid"].ToString();
+                    quality = respJson.RootElement.GetProperty("data").GetProperty("quality").ToString();
+                    videoCodecid = respJson.RootElement.GetProperty("data").GetProperty("video_codecid").ToString();
                     //获取所有分段
-                    foreach (JObject node in JArray.Parse(respJson["data"]["durl"].ToString()))
+                    foreach (var node in respJson.RootElement.GetProperty("data").GetProperty("durl").EnumerateArray().ToList())
                     {
-                        clips.Add(node["url"].ToString());
-                        size += node["size"].Value<double>();
-                        length += node["length"].Value<double>();
+                        clips.Add(node.GetProperty("url").ToString());
+                        size += node.GetProperty("size").GetDouble();
+                        length += node.GetProperty("length").GetDouble();
                     }
                     //TV模式可用清晰度
-                    if (respJson["data"]["qn_extras"] != null)
+                    JsonElement qnExtras;
+                    JsonElement acceptQuality;
+                    if (respJson.RootElement.GetProperty("data").TryGetProperty("qn_extras", out qnExtras)) 
                     {
-                        foreach (JObject node in JArray.Parse(respJson["data"]["qn_extras"].ToString()))
+                        foreach (var node in qnExtras.EnumerateArray())
                         {
-                            dfns.Add(node["qn"].ToString());
+                            dfns.Add(node.GetProperty("qn").ToString());
                         }
                     }
-                    else if (respJson["data"]["accept_quality"] != null) //非tv模式可用清晰度
+                    else if (respJson.RootElement.GetProperty("data").TryGetProperty("accept_quality", out acceptQuality)) //非tv模式可用清晰度
                     {
-                        foreach (JValue node in JArray.Parse(respJson["data"]["accept_quality"].ToString()))
+                        foreach (var node in acceptQuality.EnumerateArray())
                         {
                             string _qn = node.ToString();
                             if (_qn != null && _qn.Length > 0)
@@ -228,27 +232,30 @@ namespace BBDown
                 {
                     //如果获取数据失败，尝试从根路径获取数据
                     string nodeinfo = respJson.ToString();
-                    quality = JObject.Parse(nodeinfo)["quality"].ToString();
-                    videoCodecid = JObject.Parse(nodeinfo)["video_codecid"].ToString();
+                    var nodeJson = JsonDocument.Parse(nodeinfo).RootElement;
+                    quality = nodeJson.GetProperty("quality").ToString();
+                    videoCodecid = nodeJson.GetProperty("video_codecid").ToString();
                     //获取所有分段
-                    foreach (JObject node in JArray.Parse(JObject.Parse(nodeinfo)["durl"].ToString()))
+                    foreach (var node in nodeJson.GetProperty("durl").EnumerateArray())
                     {
-                        clips.Add(node["url"].ToString());
-                        size += node["size"].Value<double>();
-                        length += node["length"].Value<double>();
+                        clips.Add(node.GetProperty("url").ToString());
+                        size += node.GetProperty("size").GetDouble();
+                        length += node.GetProperty("length").GetDouble();
                     }
                     //TV模式可用清晰度
-                    if (JObject.Parse(nodeinfo)["qn_extras"] != null)
+                    JsonElement qnExtras;
+                    JsonElement acceptQuality;
+                    if (nodeJson.TryGetProperty("qn_extras", out qnExtras))
                     {
                         //获取可用清晰度
-                        foreach (JObject node in JArray.Parse(JObject.Parse(nodeinfo)["qn_extras"].ToString()))
+                        foreach (var node in qnExtras.EnumerateArray())
                         {
-                            dfns.Add(node["qn"].ToString());
+                            dfns.Add(node.GetProperty("qn").ToString());
                         }
                     }                   
-                    else if (JObject.Parse(nodeinfo)["accept_quality"] != null) //非tv模式可用清晰度
+                    else if (nodeJson.TryGetProperty("accept_quality", out acceptQuality)) //非tv模式可用清晰度
                     {
-                        foreach (JValue node in JArray.Parse(JObject.Parse(nodeinfo)["accept_quality"].ToString()))
+                        foreach (var node in acceptQuality.EnumerateArray())
                         {
                             string _qn = node.ToString();
                             if (_qn != null && _qn.Length > 0)

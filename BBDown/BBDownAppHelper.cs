@@ -1,16 +1,12 @@
-﻿using ICSharpCode.SharpZipLib.GZip;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using ProtoBuf;
+﻿using ProtoBuf;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Text;
+using System.Text.Json;
 using static BBDown.BBDownLogger;
 
 namespace BBDown
@@ -255,7 +251,7 @@ namespace BBDown
         /// <returns></returns>
         private static string ConvertToString(object obj)
         {
-            return JsonConvert.SerializeObject(obj);
+            return JsonSerializer.Serialize(obj);
         }
 
         /// <summary>

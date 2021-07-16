@@ -1,8 +1,8 @@
-﻿using Newtonsoft.Json.Linq;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Text.Json;
 using static BBDown.BBDownLogger;
 using static BBDown.BBDownUtil;
 
@@ -14,19 +14,19 @@ namespace BBDown
         {
             id = id.Substring(4);
             string userInfoApi = $"https://api.bilibili.com/x/space/acc/info?mid={id}&jsonp=jsonp";
-            string userName = GetValidFileName(JObject.Parse(GetWebSource(userInfoApi))["data"]["name"].ToString());
+            string userName = GetValidFileName(JsonDocument.Parse(GetWebSource(userInfoApi)).RootElement.GetProperty("data").GetProperty("name").ToString());
             List<string> urls = new List<string>();
             int pageSize = 100;
             int pageNumber = 1;
             string api = $"https://api.bilibili.com/x/space/arc/search?mid={id}&ps={pageSize}&tid=0&pn={pageNumber}&keyword=&order=pubdate&jsonp=jsonp";
             string json = GetWebSource(api);
-            JObject infoJson = JObject.Parse(json);
-            JArray pages = JArray.Parse(infoJson["data"]["list"]["vlist"].ToString());
-            foreach (JObject page in pages)
+            var infoJson = JsonDocument.Parse(json);
+            var pages = infoJson.RootElement.GetProperty("data").GetProperty("list").GetProperty("vlist").EnumerateArray();
+            foreach (var page in pages)
             {
-                urls.Add($"https://www.bilibili.com/video/av{page["aid"].ToString()}");
+                urls.Add($"https://www.bilibili.com/video/av{page.GetProperty("aid")}");
             }
-            int totalCount = infoJson["data"]["page"]["count"].Value<int>();
+            int totalCount = infoJson.RootElement.GetProperty("data").GetProperty("page").GetProperty("count").GetInt32();
             int totalPage = (int)Math.Ceiling((double)totalCount / pageSize);
             while (pageNumber < totalPage)
             {
@@ -48,11 +48,11 @@ pause");
             List<string> urls = new List<string>();
             string api = $"https://api.bilibili.com/x/space/arc/search?mid={mid}&ps={pageSize}&tid=0&pn={pageNumber}&keyword=&order=pubdate&jsonp=jsonp";
             string json = GetWebSource(api);
-            JObject infoJson = JObject.Parse(json);
-            JArray pages = JArray.Parse(infoJson["data"]["list"]["vlist"].ToString());
-            foreach (JObject page in pages)
+            var infoJson = JsonDocument.Parse(json);
+            var pages = infoJson.RootElement.GetProperty("data").GetProperty("list").GetProperty("vlist").EnumerateArray();
+            foreach (var page in pages)
             {
-                urls.Add($"https://www.bilibili.com/video/av{page["aid"].ToString()}");
+                urls.Add($"https://www.bilibili.com/video/av{page.GetProperty("aid")}");
             }
             return urls;
         }

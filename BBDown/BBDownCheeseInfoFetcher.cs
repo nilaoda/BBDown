@@ -1,7 +1,8 @@
-﻿using Newtonsoft.Json.Linq;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
+using System.Text.Json;
 using static BBDown.BBDownEntity;
 using static BBDown.BBDownUtil;
 
@@ -15,24 +16,25 @@ namespace BBDown
             string index = "";
             string api = $"https://api.bilibili.com/pugv/view/web/season?ep_id={id}";
             string json = GetWebSource(api);
-            JObject infoJson = JObject.Parse(json);
-            string cover = infoJson["data"]["cover"].ToString();
-            string title = infoJson["data"]["title"].ToString();
-            string desc = infoJson["data"]["subtitle"].ToString();
-            JArray pages = JArray.Parse(infoJson["data"]["episodes"].ToString());
+            using var infoJson = JsonDocument.Parse(json);
+            var data = infoJson.RootElement.GetProperty("data");
+            string cover = data.GetProperty("cover").ToString();
+            string title = data.GetProperty("title").ToString();
+            string desc = data.GetProperty("subtitle").ToString();
+            var pages = data.GetProperty("episodes").EnumerateArray().ToList();
             List<Page> pagesInfo = new List<Page>();
-            foreach (JObject page in pages)
+            foreach (var page in pages)
             {
-                Page p = new Page(page["index"].Value<int>(),
-                    page["aid"].ToString(),
-                    page["cid"].ToString(),
-                    page["id"].ToString(),
-                    page["title"].ToString().Trim(),
-                    page["duration"].Value<int>(), "");
+                Page p = new Page(page.GetProperty("index").GetInt32(),
+                    page.GetProperty("aid").ToString(),
+                    page.GetProperty("cid").ToString(),
+                    page.GetProperty("id").ToString(),
+                    page.GetProperty("title").ToString().Trim(),
+                    page.GetProperty("duration").GetInt32(), "");
                 if (p.epid == id) index = p.index.ToString();
                 pagesInfo.Add(p);
             }
-            string pubTime = pagesInfo.Count > 0 ? pages[0]["release_date"].ToString() : "";
+            string pubTime = pagesInfo.Count > 0 ? pages[0].GetProperty("release_date").ToString() : "";
             pubTime = pubTime != "" ? (new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc).AddSeconds(Convert.ToDouble(pubTime)).ToLocalTime().ToString()) : "";
 
             var info = new BBDownVInfo();
