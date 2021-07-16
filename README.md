@@ -188,7 +188,6 @@ BBDown -p ALL "https://www.bilibili.com/bangumi/play/ss33073"
 
 # 致谢
 
-* https://github.com/JamesNK/Newtonsoft.Json
 * https://github.com/codebude/QRCoder
 * https://github.com/icsharpcode/SharpZipLib
 * https://github.com/protobuf-net/protobuf-net
