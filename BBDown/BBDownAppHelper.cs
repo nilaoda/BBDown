@@ -7,6 +7,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using static BBDown.BBDownLogger;
 
 namespace BBDown
@@ -63,7 +64,7 @@ namespace BBDown
         private static string ConvertToDashJson(object data)
         {
             var resp = (PlayViewReply)data;
-            var videos =  new List<object>();
+            var videos = new List<object>();
             var audios = new List<object>();
 
             if (resp.videoInfo.streamLists != null)
@@ -72,13 +73,12 @@ namespace BBDown
                 {
                     if (item.dashVideo != null)
                     {
-                        videos.Add(new
-                        {
-                            id = item.streamInfo.Quality,
-                            base_url = item.dashVideo.baseUrl,
-                            bandwidth = item.dashVideo.Bandwidth,
-                            codecid = item.dashVideo.Codecid
-                        });
+                        videos.Add(new AudioInfoWitCodecId(
+                            item.streamInfo.Quality,
+                            item.dashVideo.baseUrl,
+                            item.dashVideo.Bandwidth,
+                            item.dashVideo.Codecid
+                        ));
                     }
                 }
             }
@@ -87,42 +87,37 @@ namespace BBDown
             {
                 foreach (var item in resp.videoInfo.dashAudioes)
                 {
-                    audios.Add(new
-                    {
-                        id = item.Id,
-                        base_url = item.baseUrl,
-                        bandwidth = item.Bandwidth,
-                        codecs = "M4A"
-                    });
+                    audios.Add(new AudioInfoWithCodecName(
+                        item.Id,
+                        item.baseUrl,
+                        item.Bandwidth,
+                        "M4A"
+                    ));
                 }
             }
 
-            if (resp.videoInfo.Dolby != null && resp.videoInfo.Dolby.Audio != null) 
+            if (resp.videoInfo.Dolby != null && resp.videoInfo.Dolby.Audio != null)
             {
-                audios.Add(new
-                {
-                    id = resp.videoInfo.Dolby.Audio.Id,
-                    base_url = resp.videoInfo.Dolby.Audio.baseUrl,
-                    bandwidth = resp.videoInfo.Dolby.Audio.Bandwidth,
-                    codecs = "E-AC-3"
-                });
+                audios.Add(new AudioInfoWithCodecName(
+                    resp.videoInfo.Dolby.Audio.Id,
+                    resp.videoInfo.Dolby.Audio.baseUrl,
+                    resp.videoInfo.Dolby.Audio.Bandwidth,
+                    "E-AC-3"
+                ));
             }
 
-            var json = new
-            {
-                code = 0,
-                message = "0",
-                ttl = 1,
-                data = new
-                {
-                    timelength = resp.videoInfo.Timelength,
-                    dash = new
-                    {
-                        video = videos,
-                        audio = audios
-                    }
-                }
-            };
+            var json = new DashJson(
+                0,
+                "0",
+                1,
+                new DashData(
+                    resp.videoInfo.Timelength,
+                    new DashInfo(
+                        videos,
+                        audios
+                    )
+                )
+            );
 
             return ConvertToString(json);
         }
@@ -365,7 +360,7 @@ namespace BBDown
         {
             LogDebug("Post to: {0}, data: {1}", Url, Convert.ToBase64String(postData));
 
-            HttpClient client  = new HttpClient(new HttpClientHandler
+            HttpClient client = new HttpClient(new HttpClientHandler
             {
                 AllowAutoRedirect = true,
                 //Proxy = null
@@ -391,5 +386,108 @@ namespace BBDown
 
             return bytes;
         }
+    }
+
+    internal class AudioInfoWithCodecName
+    {
+        [JsonPropertyName("id")]
+        public uint Id { get; }
+        [JsonPropertyName("base_url")]
+        public string BaseUrl { get; }
+        [JsonPropertyName("bandwidth")]
+        public uint Bandwidth { get; }
+        [JsonPropertyName("codecs")]
+        public string Codecs { get; }
+
+        public AudioInfoWithCodecName(uint id, string base_url, uint bandwidth, string codecs)
+        {
+            Id = id;
+            BaseUrl = base_url;
+            Bandwidth = bandwidth;
+            Codecs = codecs;
+        }
+
+        public override bool Equals(object obj) => obj is AudioInfoWithCodecName other && Id == other.Id && BaseUrl == other.BaseUrl && Bandwidth == other.Bandwidth && Codecs == other.Codecs;
+        public override int GetHashCode() => HashCode.Combine(Id, BaseUrl, Bandwidth, Codecs);
+    }
+
+    internal class AudioInfoWitCodecId
+    {
+        [JsonPropertyName("id")]
+        public uint Id { get; }
+        [JsonPropertyName("base_url")]
+        public string BaseUrl { get; }
+        [JsonPropertyName("bandwidth")]
+        public uint Bandwidth { get; }
+        [JsonPropertyName("codecid")]
+        public uint Codecid { get; }
+
+        public AudioInfoWitCodecId(uint id, string base_url, uint bandwidth, uint codecid)
+        {
+            Id = id;
+            BaseUrl = base_url;
+            Bandwidth = bandwidth;
+            Codecid = codecid;
+        }
+
+        public override bool Equals(object obj) => obj is AudioInfoWitCodecId other && Id == other.Id && BaseUrl == other.BaseUrl && Bandwidth == other.Bandwidth && Codecid == other.Codecid;
+        public override int GetHashCode() => HashCode.Combine(Id, BaseUrl, Bandwidth, Codecid);
+    }
+
+    internal class DashInfo
+    {
+        [JsonPropertyName("video")]
+        public List<object> Video { get; }
+        [JsonPropertyName("audio")]
+        public List<object> Audio { get; }
+
+        public DashInfo(List<object> video, List<object> audio)
+        {
+            Video = video;
+            Audio = audio;
+        }
+
+        public override bool Equals(object obj) => obj is DashInfo other && EqualityComparer<List<object>>.Default.Equals(Video, other.Video) && EqualityComparer<List<object>>.Default.Equals(Audio, other.Audio);
+        public override int GetHashCode() => HashCode.Combine(Video, Audio);
+    }
+
+    internal class DashData
+    {
+        [JsonPropertyName("timelength")]
+        public ulong TimeLength { get; }
+        [JsonPropertyName("dash")]
+        public DashInfo Dash { get; }
+
+        public DashData(ulong timelength, DashInfo dash)
+        {
+            TimeLength = timelength;
+            Dash = dash;
+        }
+
+        public override bool Equals(object obj) => obj is DashData other && TimeLength == other.TimeLength && EqualityComparer<DashInfo>.Default.Equals(Dash, other.Dash);
+        public override int GetHashCode() => HashCode.Combine(TimeLength, Dash);
+    }
+
+    internal class DashJson
+    {
+        [JsonPropertyName("code")]
+        public int Code { get; }
+        [JsonPropertyName("message")]
+        public string Message { get; }
+        [JsonPropertyName("ttl")]
+        public int Ttl { get; }
+        [JsonPropertyName("data")]
+        public DashData Data { get; }
+
+        public DashJson(int code, string message, int ttl, DashData data)
+        {
+            Code = code;
+            Message = message;
+            Ttl = ttl;
+            Data = data;
+        }
+
+        public override bool Equals(object obj) => obj is DashJson other && Code == other.Code && Message == other.Message && Ttl == other.Ttl && EqualityComparer<DashData>.Default.Equals(Data, other.Data);
+        public override int GetHashCode() => HashCode.Combine(Code, Message, Ttl, Data);
     }
 }
