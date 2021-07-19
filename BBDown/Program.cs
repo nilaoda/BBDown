@@ -70,6 +70,8 @@ namespace BBDown
             public string AccessToken { get; set; } = "";
             public string Aria2cProxy { get; set; } = "";
 
+            public string Output { get; set; } = "";
+
             public override string ToString()
             {
                 return $"{{Input={Url}, {nameof(UseTvApi)}={UseTvApi.ToString()}, " +
@@ -92,7 +94,8 @@ namespace BBDown
                     $"{nameof(SelectPage)}={SelectPage}, " +
                     $"{nameof(Cookie)}={Cookie}, " +
                     $"{nameof(AccessToken)}={AccessToken}, " +
-                    $"{nameof(Aria2cProxy)}={Aria2cProxy}}}";
+                    $"{nameof(Aria2cProxy)}={Aria2cProxy}, " +
+                    $"{nameof(Output)}={Output}}}";
             }
         }
 
@@ -177,7 +180,10 @@ namespace BBDown
                     "设置字符串cookie用以下载网页接口的会员内容"),
                 new Option<string>(
                     new string[]{ "--access-token" ,"-token"},
-                    "设置access_token用以下载TV/APP接口的会员内容")
+                    "设置access_token用以下载TV/APP接口的会员内容"),
+                new Option<string>(
+                    new string[]{ "--output" ,"-o"},
+                    "设置输出路径")
             };
 
             Command loginCommand = new Command(
@@ -349,6 +355,7 @@ namespace BBDown
                 string aidOri = ""; //原始aid
                 COOKIE = myOption.Cookie;
                 TOKEN = myOption.AccessToken.Replace("access_token=", "");
+                string output = myOption.Output;
 
                 //audioOnly和videoOnly同时开启则全部忽视
                 if (audioOnly && videoOnly)
@@ -542,7 +549,7 @@ namespace BBDown
                     string audioPath = $"{p.aid}/{p.aid}.P{indexStr}.{p.cid}.m4a";
                     //处理文件夹以.结尾导致的异常情况
                     if (title.EndsWith(".")) title += "_fix";
-                    string outPath = GetValidFileName(title) + (pagesInfo.Count > 1 ? $"/[P{indexStr}]{GetValidFileName(p.title)}" : (vInfo.PagesInfo.Count > 1 ? $"[P{indexStr}]{GetValidFileName(p.title)}" : "")) + ".mp4";
+                    string outPath = output != "" ? output : GetValidFileName(title) + (pagesInfo.Count > 1 ? $"/[P{indexStr}]{GetValidFileName(p.title)}" : (vInfo.PagesInfo.Count > 1 ? $"[P{indexStr}]{GetValidFileName(p.title)}" : "")) + ".mp4";
                     if (!infoMode && File.Exists(outPath) && new FileInfo(outPath).Length != 0)
                     {
                         Log($"{outPath}已存在, 跳过下载...");
