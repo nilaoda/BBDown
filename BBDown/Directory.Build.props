@@ -1,9 +1,9 @@
-﻿<Project>
+<Project>
 
   <PropertyGroup>
     <IlcOptimizationPreference>Speed</IlcOptimizationPreference>
     <IlcFoldIdenticalMethodBodies>true</IlcFoldIdenticalMethodBodies>
-    <StaticallyLinked>true</StaticallyLinked>
+    <StaticallyLinked Condition="$(RuntimeIdentifier.StartsWith('win'))">true</StaticallyLinked>
     <TrimMode>Link</TrimMode>
   </PropertyGroup>
 
