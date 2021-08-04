@@ -415,7 +415,11 @@ namespace BBDown
                         {
                             clipProgress[index] = downloaded;
                             progress.Report((double)clipProgress.Values.Sum() / fileSize);
-                        });
+                        }, true);
+                    }
+                    catch (NotSupportedException)
+                    {
+                        throw;
                     }
                     catch
                     {
