@@ -519,6 +519,7 @@ namespace BBDown
             if (!url.Contains("platform=android_tv_yst"))
                 message.Headers.Add("Referer", "https://www.bilibili.com");
             message.Headers.Add("User-Agent", "Mozilla/5.0");
+            message.RequestUri = new(url);
             var response = await httpClient.SendAsync(message, HttpCompletionOption.ResponseHeadersRead);
             long totalSizeBytes = response.Content.Headers.ContentLength ?? 0;
 
