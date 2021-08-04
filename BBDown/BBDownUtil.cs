@@ -1,5 +1,6 @@
 ﻿using ICSharpCode.SharpZipLib.GZip;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
@@ -298,7 +299,7 @@ namespace BBDown
             return epId;
         }
 
-        private static async Task RangeDownloadToTmpAsync(string url, string tmpName, long fromPosition, long? toPosition, Action<long, long> onProgress, bool failOnRangeNotSupported = false)
+        private static async Task RangeDownloadToTmpAsync(int id, string url, string tmpName, long fromPosition, long? toPosition, Action<int, long, long> onProgress, bool failOnRangeNotSupported = false)
         {
             var lastTime = File.Exists(tmpName) ? new FileInfo(tmpName).LastWriteTimeUtc : DateTimeOffset.MinValue;
             using (var fileStream = new FileStream(tmpName, FileMode.OpenOrCreate))
@@ -337,7 +338,7 @@ namespace BBDown
                     await fileStream.WriteAsync(buffer.AsMemory(0, recevied));
                     await fileStream.FlushAsync();
                     downloadedBytes += recevied;
-                    onProgress(downloadedBytes, totalBytes);
+                    onProgress(id, downloadedBytes - fromPosition, totalBytes);
                 }
             }
         }
@@ -356,7 +357,7 @@ namespace BBDown
             string tmpName = Path.Combine(Path.GetDirectoryName(path), Path.GetFileNameWithoutExtension(path) + ".tmp");
             using (var progress = new ProgressBar())
             {
-                await RangeDownloadToTmpAsync(url, tmpName, 0, null, (downloaded, total) => progress.Report((double)downloaded / total));
+                await RangeDownloadToTmpAsync(0, url, tmpName, 0, null, (_, downloaded, total) => progress.Report((double)downloaded / total));
                 File.Move(tmpName, path, true);
             }
         }
@@ -397,7 +398,9 @@ namespace BBDown
             List<Clip> allClips = GetAllClips(url, fileSize);
             int total = allClips.Count;
             LogDebug("分段数量：{0}", total);
-            long done = 0;
+            ConcurrentDictionary<int, long> clipProgress = new();
+            foreach (var i in allClips) clipProgress[i.index] = 0;
+
             using (var progress = new ProgressBar())
             {
                 progress.Report(0);
@@ -408,10 +411,10 @@ namespace BBDown
                 reDown:
                     try
                     {
-                        await RangeDownloadToTmpAsync(url, tmp, clip.from, clip.to == -1 ? null : clip.to, (downloaded, total) =>
+                        await RangeDownloadToTmpAsync(clip.index, url, tmp, clip.from, clip.to == -1 ? null : clip.to, (index, downloaded, _) =>
                         {
-                            Interlocked.Add(ref done, downloaded);
-                            progress.Report((double)done / fileSize);
+                            clipProgress[index] = downloaded;
+                            progress.Report((double)clipProgress.Values.Sum() / fileSize);
                         });
                     }
                     catch
