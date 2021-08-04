@@ -515,12 +515,13 @@ namespace BBDown
 
         private static async Task<long> GetFileSizeAsync(string url)
         {
-            using var message = new HttpRequestMessage();
-            if (!url.Contains("platform=android_tv_yst"))
-                message.Headers.Add("Referer", "https://www.bilibili.com");
-            message.Headers.Add("User-Agent", "Mozilla/5.0");
-            message.RequestUri = new(url);
-            var response = await httpClient.SendAsync(message, HttpCompletionOption.ResponseHeadersRead);
+            using var httpRequestMessage = new HttpRequestMessage();
+            if (!url.Contains("platform=android_tv_yst") && !url.Contains("platform=android"))
+                httpRequestMessage.Headers.Add("Referer", "https://www.bilibili.com");
+            httpRequestMessage.Headers.Add("User-Agent", "Mozilla/5.0");
+            httpRequestMessage.Headers.Add("Cookie", Program.COOKIE);
+            httpRequestMessage.RequestUri = new(url);
+            var response = (await httpClient.SendAsync(httpRequestMessage, HttpCompletionOption.ResponseHeadersRead)).EnsureSuccessStatusCode();
             long totalSizeBytes = response.Content.Headers.ContentLength ?? 0;
 
             return totalSizeBytes;
