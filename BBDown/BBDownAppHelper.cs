@@ -76,7 +76,7 @@ namespace BBDown
                         videos.Add(new AudioInfoWitCodecId(
                             item.streamInfo.Quality,
                             item.dashVideo.baseUrl,
-                            item.dashVideo.Bandwidth,
+                            (uint)(item.dashVideo.Size * 8 / 1024 / (resp.videoInfo.Timelength / 1000)),
                             item.dashVideo.Codecid
                         ));
                     }
