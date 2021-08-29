@@ -5,13 +5,14 @@
     <IlcFoldIdenticalMethodBodies>true</IlcFoldIdenticalMethodBodies>
     <StaticallyLinked Condition="$(RuntimeIdentifier.StartsWith('win'))">true</StaticallyLinked>
     <TrimMode>Link</TrimMode>
+    <NativeAotCompilerVersion>7.0.0-*</NativeAotCompilerVersion>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.DotNet.ILCompiler" Version="6.0.0-*" />
+    <PackageReference Include="Microsoft.DotNet.ILCompiler" Version="$(NativeAotCompilerVersion)" />
     <!-- Cross-compilation for Windows x64-arm64 and Linux x64-arm64 -->
-    <PackageReference Condition="'$(RuntimeIdentifier)'=='win-arm64'" Include="runtime.win-x64.Microsoft.DotNet.ILCompiler" Version="6.0.0-*" />
-    <PackageReference Condition="'$(RuntimeIdentifier)'=='linux-arm64'" Include="runtime.linux-x64.Microsoft.DotNet.ILCompiler" Version="6.0.0-*" />
+    <PackageReference Condition="'$(RuntimeIdentifier)'=='win-arm64'" Include="runtime.win-x64.Microsoft.DotNet.ILCompiler" Version="$(NativeAotCompilerVersion)" />
+    <PackageReference Condition="'$(RuntimeIdentifier)'=='linux-arm64'" Include="runtime.linux-x64.Microsoft.DotNet.ILCompiler" Version="$(NativeAotCompilerVersion)" />
   </ItemGroup>
 
   <ItemGroup>
