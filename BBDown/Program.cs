@@ -823,7 +823,7 @@ namespace BBDown
             {
                 Console.BackgroundColor = ConsoleColor.Red;
                 Console.ForegroundColor = ConsoleColor.White;
-                Console.Write(e.Message);
+                Console.Write(DEBUG_LOG ? e.ToString() : e.Message);
                 Console.ResetColor();
                 Console.WriteLine();
                 Thread.Sleep(1);

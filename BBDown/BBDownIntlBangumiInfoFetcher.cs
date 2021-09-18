@@ -21,9 +21,9 @@ namespace BBDown
             using var infoJson = JsonDocument.Parse(json);
             var result = infoJson.RootElement.GetProperty("result");
             string seasonId = result.GetProperty("season_id").ToString();
-            string cover = result.GetProperty("result").GetProperty("cover").ToString();
-            string title = result.GetProperty("result").GetProperty("title").ToString();
-            string desc = result.GetProperty("result").GetProperty("evaluate").ToString();
+            string cover = result.GetProperty("cover").ToString();
+            string title = result.GetProperty("title").ToString();
+            string desc = result.GetProperty("evaluate").ToString();
 
 
             if (cover == "")
@@ -42,7 +42,11 @@ namespace BBDown
             }
 
             string pubTime = result.GetProperty("publish").GetProperty("pub_time").ToString();
-            var pages = result.GetProperty("episodes").ToString() != "" ? result.GetProperty("episodes").EnumerateArray().ToList() : new List<JsonElement>();
+            var pages = new List<JsonElement>();
+            if (result.TryGetProperty("episodes", out _))
+            {
+                pages = result.GetProperty("episodes").EnumerateArray().ToList();
+            }
             List<Page> pagesInfo = new List<Page>();
             int i = 1;
 
