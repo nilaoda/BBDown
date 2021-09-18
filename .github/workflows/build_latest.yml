@@ -44,7 +44,7 @@ jobs:
         uses: actions/setup-dotnet@v1
         with:
           dotnet-version: '5.0.302' 
-      - run: apt-get update
+      - run: sudo apt-get update
       - run: sudo apt-get install libcurl4-openssl-dev zlib1g-dev libkrb5-dev
       - run: dotnet publish -r linux-x64 -c Release
       - run: strip BBDown/bin/Release/net5.0/linux-x64/native/BBDown
