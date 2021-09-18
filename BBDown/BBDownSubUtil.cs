@@ -155,7 +155,7 @@ namespace BBDown
             {"da", "Dansk"}, {"da-dk", "Dansk"},
             {"de", "Deutsch"}, {"de-de", "Deutsch"},
             {"el", "Ελληνικά"}, {"en", "English"},
-            {"en-US", "English"}, {"es", "Español (Latinoamérica)"},
+            {"en-US", "English"}, {"es", "Español (Latinoamérica)"}, {"en-GB", "English (United Kingdom)"},
             {"es-419", "Español (Latinoamérica)"}, {"es-es", "Español (España)"},
             {"es-ES", "Español (España)"}, {"fi", "Suomi"},
             {"fi-fi", "Suomi"}, {"fr", "Français"},
@@ -196,7 +196,8 @@ namespace BBDown
             {"hy", "հայերեն"}, {"az", "Azərbaycan"},
             {"kk", "Қазақ тілі"}, {"is", "icelandic"},
             {"fil", "Pilipino"}, {"ku", "Kurdî"},
-            {"ca", "català"}, {"no", "norsk språk"}
+            {"ca", "català"}, {"no", "norsk språk"},
+            {"ur", "Urdu"}
         };
 
         public static Dictionary<string, string> SubLangDic = new Dictionary<string, string> 
@@ -244,7 +245,8 @@ namespace BBDown
             {"kk", "kaz"}, {"is", "ice"},
             {"fil", "phi"}, {"ku", "kur"},
             {"ca", "cat"}, {"no", "nor"},
-            {"hu", "hun"}
+            {"hu", "hun"}, {"en-GB","eng"},
+            {"ur", "urd"}
         };
     }
 }
