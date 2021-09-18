@@ -64,36 +64,12 @@ namespace BBDown
             public bool NoPaddingPageNum { get; set; }
             public bool Debug { get; set; }
             public bool SkipMux { get; set; }
+            public bool SkipSubtitle { get; set; }
             public string SelectPage { get; set; } = "";
             public string Language { get; set; } = "";
             public string Cookie { get; set; } = "";
             public string AccessToken { get; set; } = "";
             public string Aria2cProxy { get; set; } = "";
-
-            public override string ToString()
-            {
-                return $"{{Input={Url}, {nameof(UseTvApi)}={UseTvApi.ToString()}, " +
-                    $"{nameof(UseAppApi)}={UseAppApi.ToString()}, " +
-                    $"{nameof(UseIntlApi)}={UseIntlApi.ToString()}, " +
-                    $"{nameof(UseMP4box)}={UseMP4box.ToString()}, " +
-                    $"{nameof(OnlyHevc)}={OnlyHevc.ToString()}, " +
-                    $"{nameof(OnlyAvc)}={OnlyAvc.ToString()}, " +
-                    $"{nameof(OnlyShowInfo)}={OnlyShowInfo.ToString()}, " +
-                    $"{nameof(Interactive)}={Interactive.ToString()}, " +
-                    $"{nameof(HideStreams)}={HideStreams.ToString()}, " +
-                    $"{nameof(ShowAll)}={ShowAll.ToString()}, " +
-                    $"{nameof(UseAria2c)}={UseAria2c.ToString()}, " +
-                    $"{nameof(MultiThread)}={MultiThread.ToString()}, " +
-                    $"{nameof(VideoOnly)}={VideoOnly.ToString()}, " +
-                    $"{nameof(AudioOnly)}={AudioOnly.ToString()}, " +
-                    $"{nameof(SubOnly)}={SubOnly.ToString()}, " +
-                    $"{nameof(NoPaddingPageNum)}={NoPaddingPageNum.ToString()}, " +
-                    $"{nameof(Debug)}={Debug.ToString()}, " +
-                    $"{nameof(SelectPage)}={SelectPage}, " +
-                    $"{nameof(Cookie)}={Cookie}, " +
-                    $"{nameof(AccessToken)}={AccessToken}, " +
-                    $"{nameof(Aria2cProxy)}={Aria2cProxy}}}";
-            }
         }
 
         public static int Main(params string[] args)
@@ -169,6 +145,9 @@ namespace BBDown
                 new Option<bool>(
                     new string[]{ "--skip-mux"},
                     "跳过混流步骤"),
+                new Option<bool>(
+                    new string[]{ "--skip-subtitle"},
+                    "跳过字幕下载"),
                 new Option<string>(
                     new string[]{ "--language"},
                     "设置混流的音频语言(代码)，如chi, jpn等"),
@@ -339,6 +318,7 @@ namespace BBDown
                 bool videoOnly = myOption.VideoOnly;
                 bool subOnly = myOption.SubOnly;
                 bool skipMux = myOption.SkipMux;
+                bool skipSubtitle = myOption.SkipSubtitle;
                 bool showAll = myOption.ShowAll;
                 bool useAria2c = myOption.UseAria2c;
                 string aria2cProxy = myOption.Aria2cProxy;
@@ -364,6 +344,9 @@ namespace BBDown
                     onlyHevc = false;
                 }
 
+                if (skipSubtitle)
+                    subOnly = false;
+
                 List<string> selectedPages = null;
                 if (!string.IsNullOrEmpty(GetQueryString("p", input)))
                 {
@@ -372,7 +355,7 @@ namespace BBDown
                 }
 
                 LogDebug("AppDirectory: {0}", APP_DIR);
-                LogDebug("运行参数：{0}", myOption);
+                LogDebug("运行参数：{0}", JsonSerializer.Serialize(myOption));
                 if (string.IsNullOrEmpty(COOKIE) && File.Exists(Path.Combine(APP_DIR, "BBDown.data")) && !tvApi)
                 {
                     Log("加载本地cookie...");
@@ -525,27 +508,31 @@ namespace BBDown
                             LogDebug("下载：{0}", pic);
                             new WebClient().DownloadFile(pic, $"{p.aid}/{p.aid}.jpg");
                         }
-                        LogDebug("获取字幕...");
-                        subtitleInfo = BBDownSubUtil.GetSubtitles(p.aid, p.cid, p.epid, intlApi);
-                        foreach (Subtitle s in subtitleInfo)
+
+                        if (!skipSubtitle)
                         {
-                            Log($"下载字幕 {s.lan} => {BBDownSubUtil.SubDescDic[s.lan]}...");
-                            LogDebug("下载：{0}", s.url);
-                            BBDownSubUtil.SaveSubtitle(s.url, s.path);
-                            if (subOnly && File.Exists(s.path) && File.ReadAllText(s.path) != "")
+                            LogDebug("获取字幕...");
+                            subtitleInfo = BBDownSubUtil.GetSubtitles(p.aid, p.cid, p.epid, intlApi);
+                            foreach (Subtitle s in subtitleInfo)
                             {
-                                string _indexStr = p.index.ToString("0".PadRight(pagesInfo.OrderByDescending(_p => _p.index).First().index.ToString().Length, '0'));
-                                //处理文件夹以.结尾导致的异常情况
-                                if (title.EndsWith(".")) title += "_fix";
-                                string _outSubPath = GetValidFileName(title) + (pagesInfo.Count > 1 ? $"/[P{_indexStr}]{GetValidFileName(p.title)}" : (vInfo.PagesInfo.Count > 1 ? $"[P{_indexStr}]{GetValidFileName(p.title)}" : "")) + $"_{BBDownSubUtil.SubDescDic[s.lan]}.srt";
-                                if (_outSubPath.Contains("/"))
+                                Log($"下载字幕 {s.lan} => {BBDownSubUtil.SubDescDic[s.lan]}...");
+                                LogDebug("下载：{0}", s.url);
+                                BBDownSubUtil.SaveSubtitle(s.url, s.path);
+                                if (subOnly && File.Exists(s.path) && File.ReadAllText(s.path) != "")
                                 {
-                                    if (!Directory.Exists(Path.GetDirectoryName(_outSubPath)))
+                                    string _indexStr = p.index.ToString("0".PadRight(pagesInfo.OrderByDescending(_p => _p.index).First().index.ToString().Length, '0'));
+                                    //处理文件夹以.结尾导致的异常情况
+                                    if (title.EndsWith(".")) title += "_fix";
+                                    string _outSubPath = GetValidFileName(title) + (pagesInfo.Count > 1 ? $"/[P{_indexStr}]{GetValidFileName(p.title)}" : (vInfo.PagesInfo.Count > 1 ? $"[P{_indexStr}]{GetValidFileName(p.title)}" : "")) + $"_{BBDownSubUtil.SubDescDic[s.lan]}.srt";
+                                    if (_outSubPath.Contains("/"))
                                     {
-                                        Directory.CreateDirectory(Path.GetDirectoryName(_outSubPath));
+                                        if (!Directory.Exists(Path.GetDirectoryName(_outSubPath)))
+                                        {
+                                            Directory.CreateDirectory(Path.GetDirectoryName(_outSubPath));
+                                        }
                                     }
+                                    File.Move(s.path, _outSubPath, true);
                                 }
-                                File.Move(s.path, _outSubPath, true);
                             }
                         }
 
