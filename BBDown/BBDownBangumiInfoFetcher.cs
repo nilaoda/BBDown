@@ -35,7 +35,7 @@ namespace BBDown
                     {
                         if (section.ToString().Contains($"/ep{id}"))
                         {
-                            title += "[" + section.GetProperty("title").GetSingle() + "]";
+                            title += "[" + section.GetProperty("title").ToString() + "]";
                             pages = section.GetProperty("episodes").EnumerateArray().ToList();
                             break;
                         }
