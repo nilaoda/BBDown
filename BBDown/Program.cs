@@ -65,6 +65,7 @@ namespace BBDown
             public bool Debug { get; set; }
             public bool SkipMux { get; set; }
             public bool SkipSubtitle { get; set; }
+            public bool SkipCover { get; set; }
             public string SelectPage { get; set; } = "";
             public string Language { get; set; } = "";
             public string Cookie { get; set; } = "";
@@ -148,6 +149,9 @@ namespace BBDown
                 new Option<bool>(
                     new string[]{ "--skip-subtitle"},
                     "跳过字幕下载"),
+                new Option<bool>(
+                    new string[]{ "--skip-cover"},
+                    "跳过封面下载"),
                 new Option<string>(
                     new string[]{ "--language"},
                     "设置混流的音频语言(代码)，如chi, jpn等"),
@@ -319,6 +323,7 @@ namespace BBDown
                 bool subOnly = myOption.SubOnly;
                 bool skipMux = myOption.SkipMux;
                 bool skipSubtitle = myOption.SkipSubtitle;
+                bool skipCover = myOption.SkipCover;
                 bool showAll = myOption.ShowAll;
                 bool useAria2c = myOption.UseAria2c;
                 string aria2cProxy = myOption.Aria2cProxy;
@@ -502,7 +507,7 @@ namespace BBDown
                         {
                             Directory.CreateDirectory(p.aid);
                         }
-                        if (!subOnly && !File.Exists($"{p.aid}/{p.aid}.jpg"))
+                        if (!skipCover && !subOnly && !File.Exists($"{p.aid}/{p.aid}.jpg")) 
                         {
                             Log("下载封面...");
                             LogDebug("下载：{0}", pic);
