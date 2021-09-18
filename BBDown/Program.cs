@@ -488,6 +488,31 @@ namespace BBDown
                 foreach (Page p in pagesInfo)
                 {
                     Log($"开始解析P{p.index}...");
+
+                    string webJsonStr = "";
+                    List<Video> videoTracks = new List<Video>();
+                    List<Audio> audioTracks = new List<Audio>();
+                    List<string> clips = new List<string>();
+                    List<string> dfns = new List<string>();
+
+                    string indexStr = myOption.NoPaddingPageNum ? p.index.ToString() : p.index.ToString("0".PadRight(pagesInfo.OrderByDescending(_p => _p.index).First().index.ToString().Length, '0'));
+                    string videoPath = $"{p.aid}/{p.aid}.P{indexStr}.{p.cid}.mp4";
+                    string audioPath = $"{p.aid}/{p.aid}.P{indexStr}.{p.cid}.m4a";
+
+                    //处理文件夹以.结尾导致的异常情况
+                    if (title.EndsWith(".")) title += "_fix";
+                    string outPath = GetValidFileName(title) + (pagesInfo.Count > 1 ? $"/[P{indexStr}]{GetValidFileName(p.title)}" : (vInfo.PagesInfo.Count > 1 ? $"[P{indexStr}]{GetValidFileName(p.title)}" : "")) + ".mp4";
+                    if (!infoMode && File.Exists(outPath) && new FileInfo(outPath).Length != 0)
+                    {
+                        Log($"{outPath}已存在, 跳过下载...");
+                        if (pagesInfo.Count == 1 && Directory.Exists(p.aid)) 
+                        {
+                            Directory.Delete(p.aid, true);
+                        }
+                        continue;
+                    }
+
+                    //处理封面&&字幕
                     if (!infoMode)
                     {
                         if (!Directory.Exists(p.aid))
@@ -507,7 +532,7 @@ namespace BBDown
                             Log($"下载字幕 {s.lan} => {BBDownSubUtil.SubDescDic[s.lan]}...");
                             LogDebug("下载：{0}", s.url);
                             BBDownSubUtil.SaveSubtitle(s.url, s.path);
-                            if (subOnly && File.Exists(s.path) && File.ReadAllText(s.path) != "") 
+                            if (subOnly && File.Exists(s.path) && File.ReadAllText(s.path) != "")
                             {
                                 string _indexStr = p.index.ToString("0".PadRight(pagesInfo.OrderByDescending(_p => _p.index).First().index.ToString().Length, '0'));
                                 //处理文件夹以.结尾导致的异常情况
@@ -529,28 +554,6 @@ namespace BBDown
                             if (Directory.Exists(p.aid) && Directory.GetFiles(p.aid).Length == 0) Directory.Delete(p.aid, true);
                             continue;
                         }
-                    }
-
-                    string webJsonStr = "";
-                    List<Video> videoTracks = new List<Video>();
-                    List<Audio> audioTracks = new List<Audio>();
-                    List<string> clips = new List<string>();
-                    List<string> dfns = new List<string>();
-
-                    string indexStr = myOption.NoPaddingPageNum ? p.index.ToString() : p.index.ToString("0".PadRight(pagesInfo.OrderByDescending(_p => _p.index).First().index.ToString().Length, '0'));
-                    string videoPath = $"{p.aid}/{p.aid}.P{indexStr}.{p.cid}.mp4";
-                    string audioPath = $"{p.aid}/{p.aid}.P{indexStr}.{p.cid}.m4a";
-                    //处理文件夹以.结尾导致的异常情况
-                    if (title.EndsWith(".")) title += "_fix";
-                    string outPath = GetValidFileName(title) + (pagesInfo.Count > 1 ? $"/[P{indexStr}]{GetValidFileName(p.title)}" : (vInfo.PagesInfo.Count > 1 ? $"[P{indexStr}]{GetValidFileName(p.title)}" : "")) + ".mp4";
-                    if (!infoMode && File.Exists(outPath) && new FileInfo(outPath).Length != 0)
-                    {
-                        Log($"{outPath}已存在, 跳过下载...");
-                        if (pagesInfo.Count == 1 && Directory.Exists(p.aid)) 
-                        {
-                            Directory.Delete(p.aid, true);
-                        }
-                        continue;
                     }
 
                     //调用解析
