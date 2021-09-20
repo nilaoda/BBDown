@@ -86,6 +86,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      - run: apk update
       - run: apk --no-cache add clang clang-dev musl-dev git gcc krb5-dev zlib-dev libexecinfo lldb binutils build-base zlib-static
       - run: dotnet publish -r linux-musl-x64 -c Release -o artifact
       - run: strip artifact/BBDown
