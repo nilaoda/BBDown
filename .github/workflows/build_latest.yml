@@ -33,7 +33,7 @@ jobs:
         uses: actions/upload-artifact@v1.0.0
         with:
           name: BBDown_win-arm64
-          path: artifact\BBDown.exe
+          path: BBDown\bin\Release\net5.0\win-arm64\native\BBDown.exe
   
 
   build-linux-x64:
