@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
+using System.Threading.Tasks;
 using static BBDown.BBDownEntity;
 using static BBDown.BBDownUtil;
 
@@ -9,12 +10,12 @@ namespace BBDown
 {
     class BBDownBangumiInfoFetcher : IFetcher
     {
-        public BBDownVInfo Fetch(string id)
+        public async Task<BBDownVInfo> FetchAsync(string id)
         {
             id = id.Substring(3);
             string index = "";
             string api = $"https://api.bilibili.com/pgc/view/web/season?ep_id={id}";
-            string json = GetWebSource(api);
+            string json = await GetWebSourceAsync(api);
             using var infoJson = JsonDocument.Parse(json);
             var result = infoJson.RootElement.GetProperty("result");
             string cover = result.GetProperty("cover").ToString();

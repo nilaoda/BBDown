@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using static BBDown.BBDownEntity;
 using static BBDown.BBDownUtil;
 
@@ -11,10 +12,10 @@ namespace BBDown
 {
     class BBDownNormalInfoFetcher : IFetcher
     {
-        public BBDownVInfo Fetch(string id)
+        public async Task<BBDownVInfo> FetchAsync(string id)
         {
             string api = $"https://api.bilibili.com/x/web-interface/view?aid={id}";
-            string json = GetWebSource(api);
+            string json = await GetWebSourceAsync(api);
             using var infoJson = JsonDocument.Parse(json);
             var data = infoJson.RootElement.GetProperty("data");
             string title = data.GetProperty("title").ToString();

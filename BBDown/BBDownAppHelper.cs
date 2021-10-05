@@ -218,7 +218,7 @@ namespace BBDown
         /// </summary>
         /// <param name="obj"></param>
         /// <returns></returns>
-        private static byte[] ObjectToBytes(Object obj)
+        private static byte[] ObjectToBytes(object obj)
         {
             using (var stream = new MemoryStream())
             {
@@ -232,7 +232,7 @@ namespace BBDown
         /// </summary>
         /// <param name="obj"></param>
         /// <returns></returns>
-        private static string SerializeToBase64(Object obj)
+        private static string SerializeToBase64(object obj)
         {
             return Convert.ToBase64String(ObjectToBytes(obj)).TrimEnd('=');
         }

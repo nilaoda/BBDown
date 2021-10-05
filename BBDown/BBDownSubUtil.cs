@@ -8,12 +8,13 @@ using static BBDown.BBDownLogger;
 using System.Text.RegularExpressions;
 using System.Text.Json;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace BBDown
 {
     class BBDownSubUtil
     {
-        public static List<Subtitle> GetSubtitles(string aid, string cid, string epId, bool intl)
+        public static async Task<List<Subtitle>> GetSubtitlesAsync(string aid, string cid, string epId, bool intl)
         {
             List<Subtitle> subtitles = new List<Subtitle>();
             if (intl)
@@ -21,7 +22,7 @@ namespace BBDown
                 try
                 {
                     string api = $"https://app.global.bilibili.com/intl/gateway/v2/app/subtitle?&ep_id={epId}";
-                    string json = GetWebSource(api);
+                    string json = await GetWebSourceAsync(api);
                     using var infoJson = JsonDocument.Parse(json);
                     var subs = infoJson.RootElement.GetProperty("data").GetProperty("subtitles").EnumerateArray();
                     foreach (var sub in subs)
@@ -40,7 +41,7 @@ namespace BBDown
             try
             {
                 string api = $"https://api.bilibili.com/x/web-interface/view?aid={aid}&cid={cid}";
-                string json = GetWebSource(api);
+                string json = await GetWebSourceAsync(api);
                 using var infoJson = JsonDocument.Parse(json);
                 var subs = infoJson.RootElement.GetProperty("data").GetProperty("subtitle").GetProperty("list").EnumerateArray();
                 foreach (var sub in subs)
@@ -54,7 +55,7 @@ namespace BBDown
                 //无字幕片源 但是字幕没上导致的空列表，尝试从国际接口获取
                 if (subtitles.Count == 0)
                 {
-                    return GetSubtitles(aid, cid, epId, true);
+                    return await GetSubtitlesAsync(aid, cid, epId, true);
                 }
                 return subtitles;
             }
@@ -86,7 +87,7 @@ namespace BBDown
                     data[i++] = Convert.ToByte(_cid);
                     data[i++] = Convert.ToByte(3 << 3 | 0); // index=3
                     data[i++] = Convert.ToByte(_type);
-                    string t = GetPostResponse(api, data);
+                    string t = await GetPostResponseAsync(api, data);
                     Regex reg = new Regex("(zh-Han[st]).*?(http.*?\\.json)");
                     foreach (Match m in reg.Matches(t))
                     {
@@ -102,9 +103,9 @@ namespace BBDown
             }
         }
 
-        public static void SaveSubtitle(string url, string path)
+        public static async Task SaveSubtitleAsync(string url, string path)
         {
-            File.WriteAllText(path, ConvertSubFromJson(GetWebSource(url)), new UTF8Encoding());
+            await File.WriteAllTextAsync(path, ConvertSubFromJson(await GetWebSourceAsync(url)), new UTF8Encoding());
         }
 
         private static string ConvertSubFromJson(string jsonString)

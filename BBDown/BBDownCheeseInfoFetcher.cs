@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using System.Threading.Tasks;
 using static BBDown.BBDownEntity;
 using static BBDown.BBDownUtil;
 
@@ -10,12 +11,12 @@ namespace BBDown
 {
     class BBDownCheeseInfoFetcher : IFetcher
     {
-        public BBDownVInfo Fetch(string id)
+        public async Task<BBDownVInfo> FetchAsync(string id)
         {
             id = id.Substring(7);
             string index = "";
             string api = $"https://api.bilibili.com/pugv/view/web/season?ep_id={id}";
-            string json = GetWebSource(api);
+            string json = await GetWebSourceAsync(api);
             using var infoJson = JsonDocument.Parse(json);
             var data = infoJson.RootElement.GetProperty("data");
             string cover = data.GetProperty("cover").ToString();
