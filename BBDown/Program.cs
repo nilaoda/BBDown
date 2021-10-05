@@ -74,7 +74,7 @@ namespace BBDown
             public string Aria2cProxy { get; set; } = "";
         }
 
-        public static int Main(params string[] args)
+        public static async Task<int> Main(params string[] args)
         {
             ServicePointManager.DefaultConnectionLimit = 2048;
             ServicePointManager.ServerCertificateValidationCallback = (sender, certificate, chain, errors) =>
@@ -288,7 +288,7 @@ namespace BBDown
                 await DoWorkAsync(myOption);
             });
 
-            return rootCommand.InvokeAsync(args).Result;
+            return await rootCommand.InvokeAsync(args);
         }
 
         private static async Task DoWorkAsync(MyOption myOption)

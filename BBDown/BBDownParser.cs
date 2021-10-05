@@ -24,7 +24,7 @@ namespace BBDown
             bool bangumi = cheese || aidOri.StartsWith("ep:");
             LogDebug("bangumi={0},cheese={1}", bangumi, cheese);
 
-            if (appApi) return BBDownAppHelper.DoReq(aid, cid, qn, bangumi, onlyAvc, Program.TOKEN);
+            if (appApi) return await BBDownAppHelper.DoReqAsync(aid, cid, qn, bangumi, onlyAvc, Program.TOKEN);
 
             string prefix = tvApi ? (bangumi ? "api.snm0516.aisee.tv/pgc/player/api/playurltv" : "api.snm0516.aisee.tv/x/tv/ugc/playurl")
                         : (bangumi ? "api.bilibili.com/pgc/player/web/playurl" : "api.bilibili.com/x/player/playurl");

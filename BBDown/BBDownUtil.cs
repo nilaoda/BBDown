@@ -283,7 +283,7 @@ namespace BBDown
             LogDebug("Start downloading: {0}", url);
             if (aria2c)
             {
-                BBDownAria2c.DownloadFileByAria2c(url, path, aria2cProxy);
+                await BBDownAria2c.DownloadFileByAria2cAsync(url, path, aria2cProxy);
                 if (File.Exists(path + ".aria2") || !File.Exists(path))
                     throw new Exception("aria2下载可能存在错误");
                 Console.WriteLine();
@@ -322,7 +322,7 @@ namespace BBDown
         {
             if (aria2c)
             {
-                BBDownAria2c.DownloadFileByAria2c(url, path, aria2cProxy);
+                await BBDownAria2c.DownloadFileByAria2cAsync(url, path, aria2cProxy);
                 if (File.Exists(path + ".aria2") || !File.Exists(path))
                     throw new Exception("aria2下载可能存在错误");
                 Console.WriteLine();
