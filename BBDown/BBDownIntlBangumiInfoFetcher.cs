@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using static BBDown.BBDownEntity;
 using static BBDown.BBDownUtil;
 
@@ -11,13 +12,13 @@ namespace BBDown
 {
     class BBDownIntlBangumiInfoFetcher : IFetcher
     {
-        public BBDownVInfo Fetch(string id)
+        public async Task<BBDownVInfo> FetchAsync(string id)
         {
             id = id.Substring(3);
             string index = "";
             //string api = $"https://api.global.bilibili.com/intl/gateway/ogv/m/view?ep_id={id}&s_locale=ja_JP";
             string api = $"https://api.global.bilibili.com/intl/gateway/v2/ogv/view/app/season?ep_id={id}&platform=android&s_locale=zh_SG&mobi_app=bstar_a" + (Program.TOKEN != "" ? $"&access_key={Program.TOKEN}" : "");
-            string json = GetWebSource(api);
+            string json = await GetWebSourceAsync(api);
             using var infoJson = JsonDocument.Parse(json);
             var result = infoJson.RootElement.GetProperty("result");
             string seasonId = result.GetProperty("season_id").ToString();
@@ -29,7 +30,7 @@ namespace BBDown
             if (cover == "")
             {
                 string animeUrl = $"https://bangumi.bilibili.com/anime/{seasonId}";
-                var web = GetWebSource(animeUrl);
+                var web = await GetWebSourceAsync(animeUrl);
                 if (web != "")
                 {
                     Regex regex = new Regex("window.__INITIAL_STATE__=([\\s\\S].*?);\\(function\\(\\)");

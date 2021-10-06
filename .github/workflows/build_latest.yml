@@ -3,7 +3,7 @@ name: Build Latest
 on: [push]
 
 env:
-  DOTNET_SDK_VERSION: '5.0.401'
+  DOTNET_SDK_VERSION: '6.0.100-rc.1.21463.6'
 
 jobs:
 
@@ -19,21 +19,22 @@ jobs:
         uses: actions/setup-dotnet@v1
         with:
           dotnet-version: ${{ env.DOTNET_SDK_VERSION }}
+          include-prerelease: true
 
-      - run: dotnet publish -r win-x64 -c Release -o artifact
-      - run: dotnet publish -r win-arm64 -c Release
+      - run: dotnet publish -r win-x64 -c Release -o artifact-x64
+      - run: dotnet publish -r win-arm64 -c Release -o artifact-arm64
 
       - name: Upload Artifact[win-x64]
         uses: actions/upload-artifact@v1.0.0
         with:
           name: BBDown_win-x64
-          path: artifact\BBDown.exe
+          path: artifact-x64\BBDown.exe
 
       - name: Upload Artifact[win-arm64]
         uses: actions/upload-artifact@v1.0.0
         with:
           name: BBDown_win-arm64
-          path: BBDown\bin\Release\net5.0\win-arm64\native\BBDown.exe
+          path: artifact-arm64\BBDown.exe
   
 
   build-linux-x64:
@@ -47,6 +48,7 @@ jobs:
         uses: actions/setup-dotnet@v1
         with:
           dotnet-version: ${{ env.DOTNET_SDK_VERSION }}
+          include-prerelease: true
       - run: sudo apt-get update
       - run: sudo apt-get install libcurl4-openssl-dev zlib1g-dev libkrb5-dev
       - run: dotnet publish -r linux-x64 -c Release -o artifact
@@ -70,6 +72,7 @@ jobs:
         uses: actions/setup-dotnet@v1
         with:
           dotnet-version: ${{ env.DOTNET_SDK_VERSION }}
+          include-prerelease: true
       - run: dotnet publish -r linux-arm64 -c Release -p:CppCompilerAndLinker=clang-9 -p:SysRoot=/crossrootfs/arm64 -o artifact
       - run: aarch64-linux-gnu-strip artifact/BBDown
       
@@ -82,7 +85,7 @@ jobs:
   build-linux-musl-x64:
 
     runs-on: ubuntu-latest
-    container: mcr.microsoft.com/dotnet/sdk:5.0-alpine
+    container: mcr.microsoft.com/dotnet/sdk:6.0-alpine
 
     steps:
       - uses: actions/checkout@v2
@@ -107,6 +110,7 @@ jobs:
         uses: actions/setup-dotnet@v1
         with:
           dotnet-version: ${{ env.DOTNET_SDK_VERSION }}
+          include-prerelease: true
       - run: dotnet publish -r osx-x64 -c Release -o artifact
       - run: strip artifact/BBDown
       

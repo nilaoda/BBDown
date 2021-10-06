@@ -17,6 +17,7 @@ using static BBDown.BBDownMuxer;
 using System.Text;
 using System.Linq;
 using System.Text.Json;
+using System.Net.Http;
 
 namespace BBDown
 {
@@ -73,7 +74,7 @@ namespace BBDown
             public string Aria2cProxy { get; set; } = "";
         }
 
-        public static int Main(params string[] args)
+        public static async Task<int> Main(params string[] args)
         {
             ServicePointManager.DefaultConnectionLimit = 2048;
             ServicePointManager.ServerCertificateValidationCallback = (sender, certificate, chain, errors) =>
@@ -175,13 +176,13 @@ namespace BBDown
             rootCommand.TreatUnmatchedTokensAsErrors = true;
 
             //WEB登录
-            loginCommand.Handler = CommandHandler.Create(delegate
+            loginCommand.Handler = CommandHandler.Create(async delegate
             {
                 try
                 {
                     Log("获取登录地址...");
                     string loginUrl = "https://passport.bilibili.com/qrcode/getLoginUrl";
-                    string url = JsonDocument.Parse(GetWebSource(loginUrl)).RootElement.GetProperty("data").GetProperty("url").ToString();
+                    string url = JsonDocument.Parse(await GetWebSourceAsync(loginUrl)).RootElement.GetProperty("data").GetProperty("url").ToString();
                     string oauthKey = GetQueryString("oauthKey", url);
                     //Log(oauthKey);
                     //Log(url);
@@ -195,8 +196,8 @@ namespace BBDown
                     Log("生成二维码成功：qrcode.png, 请打开并扫描");
                     while (true)
                     {
-                        Thread.Sleep(1000);
-                        string w = GetLoginStatus(oauthKey);
+                        await Task.Delay(1000);
+                        string w = await GetLoginStatusAsync(oauthKey);
                         string data = JsonDocument.Parse(w).RootElement.GetProperty("data").ToString();
                         if (data == "-2")
                         {
@@ -230,7 +231,7 @@ namespace BBDown
             });
 
             //TV登录
-            loginTVCommand.Handler = CommandHandler.Create(delegate
+            loginTVCommand.Handler = CommandHandler.Create(async delegate
             {
                 try
                 {
@@ -238,8 +239,7 @@ namespace BBDown
                     string pollUrl = "https://passport.bilibili.com/x/passport-tv-login/qrcode/poll";
                     var parms = GetTVLoginParms();
                     Log("获取登录地址...");
-                    WebClient webClient = new WebClient();
-                    byte[] responseArray = webClient.UploadValues(loginUrl, parms);
+                    byte[] responseArray = await (await AppHttpClient.PostAsync(loginUrl, new FormUrlEncodedContent(parms.ToDictionary()))).Content.ReadAsByteArrayAsync();
                     string web = Encoding.UTF8.GetString(responseArray);
                     string url = JsonDocument.Parse(web).RootElement.GetProperty("data").GetProperty("url").ToString();
                     string authCode = JsonDocument.Parse(web).RootElement.GetProperty("data").GetProperty("auth_code").ToString();
@@ -256,8 +256,8 @@ namespace BBDown
                     parms.Add("sign", GetSign(ToQueryString(parms)));
                     while (true)
                     {
-                        Thread.Sleep(1000);
-                        responseArray = webClient.UploadValues(pollUrl, parms);
+                        await Task.Delay(1000);
+                        responseArray = await (await AppHttpClient.PostAsync(pollUrl, new FormUrlEncodedContent(parms.ToDictionary()))).Content.ReadAsByteArrayAsync();
                         web = Encoding.UTF8.GetString(responseArray);
                         string code = JsonDocument.Parse(web).RootElement.GetProperty("code").ToString();
                         if (code == "86038")
@@ -288,7 +288,7 @@ namespace BBDown
                 await DoWorkAsync(myOption);
             });
 
-            return rootCommand.InvokeAsync(args).Result;
+            return await rootCommand.InvokeAsync(args);
         }
 
         private static async Task DoWorkAsync(MyOption myOption)
@@ -432,7 +432,7 @@ namespace BBDown
                 {
                     fetcher = new BBDownSpaceVideoFetcher();
                 }
-                var vInfo = fetcher.Fetch(aidOri);
+                var vInfo = await fetcher.FetchAsync(aidOri);
                 string title = vInfo.Title;
                 string desc = vInfo.Desc;
                 string pic = vInfo.Pic;
@@ -511,18 +511,20 @@ namespace BBDown
                         {
                             Log("下载封面...");
                             LogDebug("下载：{0}", pic);
-                            new WebClient().DownloadFile(pic, $"{p.aid}/{p.aid}.jpg");
+                            await using var response = await AppHttpClient.GetStreamAsync(pic);
+                            await using var fs = new FileStream($"{p.aid}/{p.aid}.jpg", FileMode.OpenOrCreate);
+                            await response.CopyToAsync(fs);
                         }
 
                         if (!skipSubtitle)
                         {
                             LogDebug("获取字幕...");
-                            subtitleInfo = BBDownSubUtil.GetSubtitles(p.aid, p.cid, p.epid, intlApi);
+                            subtitleInfo = await BBDownSubUtil.GetSubtitlesAsync(p.aid, p.cid, p.epid, intlApi);
                             foreach (Subtitle s in subtitleInfo)
                             {
                                 Log($"下载字幕 {s.lan} => {BBDownSubUtil.SubDescDic[s.lan]}...");
                                 LogDebug("下载：{0}", s.url);
-                                BBDownSubUtil.SaveSubtitle(s.url, s.path);
+                                await BBDownSubUtil.SaveSubtitleAsync(s.url, s.path);
                                 if (subOnly && File.Exists(s.path) && File.ReadAllText(s.path) != "")
                                 {
                                     string _indexStr = p.index.ToString("0".PadRight(pagesInfo.OrderByDescending(_p => _p.index).First().index.ToString().Length, '0'));
@@ -549,7 +551,7 @@ namespace BBDown
                     }
 
                     //调用解析
-                    (webJsonStr, videoTracks, audioTracks, clips, dfns) = ExtractTracks(onlyHevc, onlyAvc, aidOri, p.aid, p.cid, p.epid, tvApi, intlApi, appApi);
+                    (webJsonStr, videoTracks, audioTracks, clips, dfns) = await ExtractTracksAsync(onlyHevc, onlyAvc, aidOri, p.aid, p.cid, p.epid, tvApi, intlApi, appApi);
 
                     //File.WriteAllText($"debug.json", JObject.Parse(webJson).ToString());
                     
@@ -717,7 +719,7 @@ namespace BBDown
                             if (vIndex > dfns.Count || vIndex < 0) vIndex = 0;
                             Console.ResetColor();
                             //重新解析
-                            (webJsonStr, videoTracks, audioTracks, clips, dfns) = ExtractTracks(onlyHevc, onlyAvc, aidOri, p.aid, p.cid, p.epid, tvApi, intlApi, appApi, dfns[vIndex]);
+                            (webJsonStr, videoTracks, audioTracks, clips, dfns) = await ExtractTracksAsync(onlyHevc, onlyAvc, aidOri, p.aid, p.cid, p.epid, tvApi, intlApi, appApi, dfns[vIndex]);
                             flag = true;
                             videoTracks.Clear();
                             goto reParse;

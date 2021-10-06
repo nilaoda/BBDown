@@ -8,6 +8,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading.Tasks;
 using static BBDown.BBDownLogger;
 
 namespace BBDown
@@ -44,13 +45,13 @@ namespace BBDown
         /// <param name="qn"></param>
         /// <param name="appkey"></param>
         /// <returns></returns>
-        public static string DoReq(string aid, string cid, string qn, bool bangumi, bool onlyAvc, string appkey = "")
+        public static async Task<string> DoReqAsync(string aid, string cid, string qn, bool bangumi, bool onlyAvc, string appkey = "")
         {
             var headers = GetHeader(appkey);
             LogDebug("App-Req-Headers: {0}", ConvertToString(headers));
             var body = GetPayload(Convert.ToInt64(aid), Convert.ToInt64(cid), Convert.ToInt64(qn), onlyAvc ? PlayViewReq.CodeType.Code264 : PlayViewReq.CodeType.Code265);
             //Console.WriteLine(ReadMessage<PlayViewReq>(body));
-            var data = GetPostResponse(bangumi ? API : API, body, headers);
+            var data = await GetPostResponseAsync(bangumi ? API : API, body, headers);
             var resp = ReadMessage<PlayViewReply>(data);
             LogDebug("PlayViewReplyPlain: {0}", ConvertToString(resp));
             return ConvertToDashJson(resp);
@@ -218,7 +219,7 @@ namespace BBDown
         /// </summary>
         /// <param name="obj"></param>
         /// <returns></returns>
-        private static byte[] ObjectToBytes(Object obj)
+        private static byte[] ObjectToBytes(object obj)
         {
             using (var stream = new MemoryStream())
             {
@@ -232,7 +233,7 @@ namespace BBDown
         /// </summary>
         /// <param name="obj"></param>
         /// <returns></returns>
-        private static string SerializeToBase64(Object obj)
+        private static string SerializeToBase64(object obj)
         {
             return Convert.ToBase64String(ObjectToBytes(obj)).TrimEnd('=');
         }
@@ -356,15 +357,9 @@ namespace BBDown
             }
         }
 
-        public static byte[] GetPostResponse(string Url, byte[] postData, Dictionary<string, string> headers)
+        public static async Task<byte[]> GetPostResponseAsync(string Url, byte[] postData, Dictionary<string, string> headers)
         {
             LogDebug("Post to: {0}, data: {1}", Url, Convert.ToBase64String(postData));
-
-            HttpClient client = new HttpClient(new HttpClientHandler
-            {
-                AllowAutoRedirect = true,
-                //Proxy = null
-            });
 
             ByteArrayContent content = new ByteArrayContent(postData);
             content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/grpc");
@@ -381,8 +376,8 @@ namespace BBDown
                 foreach (KeyValuePair<string, string> header in headers)
                     request.Headers.TryAddWithoutValidation(header.Key, header.Value);
 
-            HttpResponseMessage response = client.SendAsync(request).Result;
-            byte[] bytes = response.Content.ReadAsByteArrayAsync().Result;
+            HttpResponseMessage response = await BBDownUtil.AppHttpClient.SendAsync(request);
+            byte[] bytes = await response.Content.ReadAsByteArrayAsync();
 
             return bytes;
         }

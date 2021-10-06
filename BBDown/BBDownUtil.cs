@@ -21,9 +21,14 @@ using static BBDown.BBDownLogger;
 
 namespace BBDown
 {
-    class BBDownUtil
+    static class BBDownUtil
     {
-        private static readonly HttpClient httpClient = new();
+        public static readonly HttpClient AppHttpClient = new(new HttpClientHandler
+        {
+            AllowAutoRedirect = true,
+            AutomaticDecompression = DecompressionMethods.All
+        });
+
         public static async Task CheckUpdateAsync()
         {
             try
@@ -55,11 +60,11 @@ namespace BBDown
                 }
                 else if (input.Contains("video/BV"))
                 {
-                    return GetAidByBV(Regex.Match(input, "BV(\\w+)").Groups[1].Value);
+                    return await GetAidByBVAsync(Regex.Match(input, "BV(\\w+)").Groups[1].Value);
                 }
                 else if (input.Contains("video/bv"))
                 {
-                    return GetAidByBV(Regex.Match(input, "bv(\\w+)").Groups[1].Value);
+                    return await GetAidByBVAsync(Regex.Match(input, "bv(\\w+)").Groups[1].Value);
                 }
                 else if (input.Contains("/cheese/"))
                 {
@@ -70,7 +75,7 @@ namespace BBDown
                     }
                     else if (input.Contains("/ss"))
                     {
-                        epId = GetEpidBySSId(Regex.Match(input, "/ss(\\d{1,})").Groups[1].Value);
+                        epId = await GetEpidBySSIdAsync(Regex.Match(input, "/ss(\\d{1,})").Groups[1].Value);
                     }
                     return $"cheese:{epId}";
                 }
@@ -96,7 +101,7 @@ namespace BBDown
                 }
                 else
                 {
-                    string web = GetWebSource(input);
+                    string web = await GetWebSourceAsync(input);
                     Regex regex = new Regex("window.__INITIAL_STATE__=([\\s\\S].*?);\\(function\\(\\)");
                     string json = regex.Match(web).Groups[1].Value;
                     using var jDoc = JsonDocument.Parse(json);
@@ -106,11 +111,11 @@ namespace BBDown
             }
             else if (input.StartsWith("BV"))
             {
-                return GetAidByBV(input.Substring(2));
+                return await GetAidByBVAsync(input.Substring(2));
             }
             else if (input.StartsWith("bv"))
             {
-                return GetAidByBV(input.Substring(2));
+                return await GetAidByBVAsync(input.Substring(2));
             }
             else if (input.ToLower().StartsWith("av")) //av
             {
@@ -123,7 +128,7 @@ namespace BBDown
             }
             else if (input.StartsWith("ss"))
             {
-                string web = GetWebSource("https://www.bilibili.com/bangumi/play/" + input);
+                string web = await GetWebSourceAsync("https://www.bilibili.com/bangumi/play/" + input);
                 Regex regex = new Regex("window.__INITIAL_STATE__=([\\s\\S].*?);\\(function\\(\\)");
                 string json = regex.Match(web).Groups[1].Value;
                 using var jDoc = JsonDocument.Parse(json);
@@ -136,7 +141,7 @@ namespace BBDown
             }
         }
 
-        public static String FormatFileSize(Double fileSize)
+        public static string FormatFileSize(double fileSize)
         {
             if (fileSize < 0)
             {
@@ -144,15 +149,15 @@ namespace BBDown
             }
             else if (fileSize >= 1024 * 1024 * 1024)
             {
-                return string.Format("{0:########0.00} GB", ((Double)fileSize) / (1024 * 1024 * 1024));
+                return string.Format("{0:########0.00} GB", ((double)fileSize) / (1024 * 1024 * 1024));
             }
             else if (fileSize >= 1024 * 1024)
             {
-                return string.Format("{0:####0.00} MB", ((Double)fileSize) / (1024 * 1024));
+                return string.Format("{0:####0.00} MB", ((double)fileSize) / (1024 * 1024));
             }
             else if (fileSize >= 1024)
             {
-                return string.Format("{0:####0.00} KB", ((Double)fileSize) / 1024);
+                return string.Format("{0:####0.00} KB", ((double)fileSize) / 1024);
             }
             else
             {
@@ -160,7 +165,7 @@ namespace BBDown
             }
         }
 
-        public static String FormatTime(Int32 time)
+        public static string FormatTime(int time)
         {
             TimeSpan ts = new TimeSpan(0, 0, time);
             string str = "";
@@ -168,59 +173,24 @@ namespace BBDown
             return str;
         }
 
-        public static string GetWebSource(String url)
+        public static async Task<string> GetWebSourceAsync(string url)
         {
             string htmlCode = string.Empty;
             try
             {
-                HttpWebRequest webRequest = (HttpWebRequest)WebRequest.Create(url);
-                webRequest.Method = "GET";
-                webRequest.UserAgent = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36";
+                using var webRequest = new HttpRequestMessage(HttpMethod.Get, url);
+                webRequest.Headers.Add("UserAgent", "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36");
                 webRequest.Headers.Add("Accept-Encoding", "gzip, deflate");
                 webRequest.Headers.Add("Cookie", (url.Contains("/ep") || url.Contains("/ss")) ? Program.COOKIE + ";CURRENT_FNVAL=80;" : Program.COOKIE);
                 if (url.Contains("api.bilibili.com/pgc/player/web/playurl") || url.Contains("api.bilibili.com/pugv/player/web/playurl"))
                     webRequest.Headers.Add("Referer", "https://www.bilibili.com");
-                webRequest.CachePolicy = new HttpRequestCachePolicy(HttpRequestCacheLevel.NoCacheNoStore);
-                webRequest.KeepAlive = false;
-                webRequest.AllowAutoRedirect = true;  //自动跳转
+                webRequest.Headers.CacheControl = CacheControlHeaderValue.Parse("no-cache");
+                webRequest.Headers.Connection.Clear();
+
                 LogDebug("获取网页内容：Url: {0}, Headers: {1}", url, webRequest.Headers);
+                var webResponse = (await AppHttpClient.SendAsync(webRequest, HttpCompletionOption.ResponseHeadersRead)).EnsureSuccessStatusCode();
 
-                HttpWebResponse webResponse = (HttpWebResponse)webRequest.GetResponse();
-                if (webResponse.ContentEncoding != null
-                    && webResponse.ContentEncoding.ToLower() == "gzip") //如果使用了GZip则先解压
-                {
-                    using (Stream streamReceive = webResponse.GetResponseStream())
-                    {
-                        using (var zipStream =
-                            new GZipInputStream(streamReceive))
-                        {
-                            using (StreamReader sr = new StreamReader(zipStream, Encoding.UTF8))
-                            {
-                                htmlCode = sr.ReadToEnd();
-                            }
-                        }
-                    }
-                }
-                else
-                {
-                    using (Stream streamReceive = webResponse.GetResponseStream())
-                    {
-                        using (StreamReader sr = new StreamReader(streamReceive, Encoding.UTF8))
-                        {
-                            htmlCode = sr.ReadToEnd();
-                        }
-                    }
-                }
-
-                if (webResponse != null)
-                {
-                    webResponse.Close();
-                }
-                if (webRequest != null)
-                {
-                    webRequest.Abort();
-                }
-
+                htmlCode = await webResponse.Content.ReadAsStringAsync();
             }
             catch (Exception)
             {
@@ -230,70 +200,35 @@ namespace BBDown
             return htmlCode;
         }
 
-        public static string GetPostResponse(string Url, byte[] postData)
+        public static async Task<string> GetPostResponseAsync(string Url, byte[] postData)
         {
             LogDebug("Post to: {0}, data: {1}", Url, Convert.ToBase64String(postData));
             string htmlCode = string.Empty;
-            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(Url);
-            request.Method = "POST";
-            request.ContentType = "application/grpc";
-            request.ContentLength = postData.Length;
-            request.UserAgent = "Dalvik/2.1.0 (Linux; U; Android 6.0.1; oneplus a5010 Build/V417IR) 6.10.0 os/android model/oneplus a5010 mobi_app/android build/6100500 channel/bili innerVer/6100500 osVer/6.0.1 network/2";
+            using HttpRequestMessage request = new(HttpMethod.Post, Url);
+            request.Headers.Add("ContentType", "application/grpc");
+            request.Headers.Add("ContentLength", postData.Length.ToString());
+            request.Headers.Add("UserAgent", "Dalvik/2.1.0 (Linux; U; Android 6.0.1; oneplus a5010 Build/V417IR) 6.10.0 os/android model/oneplus a5010 mobi_app/android build/6100500 channel/bili innerVer/6100500 osVer/6.0.1 network/2");
             request.Headers.Add("Cookie", Program.COOKIE);
-            Stream myRequestStream = request.GetRequestStream();
-            myRequestStream.Write(postData);
-            myRequestStream.Close();
-            HttpWebResponse webResponse = (HttpWebResponse)request.GetResponse();
-            if (webResponse.ContentEncoding != null
-                && webResponse.ContentEncoding.ToLower() == "gzip") //如果使用了GZip则先解压
-            {
-                using (Stream streamReceive = webResponse.GetResponseStream())
-                {
-                    using (var zipStream =
-                        new GZipInputStream(streamReceive))
-                    {
-                        using (StreamReader sr = new StreamReader(zipStream, Encoding.UTF8))
-                        {
-                            htmlCode = sr.ReadToEnd();
-                        }
-                    }
-                }
-            }
-            else
-            {
-                using (Stream streamReceive = webResponse.GetResponseStream())
-                {
-                    using (StreamReader sr = new StreamReader(streamReceive, Encoding.UTF8))
-                    {
-                        htmlCode = sr.ReadToEnd();
-                    }
-                }
-            }
-
-            if (webResponse != null)
-            {
-                webResponse.Close();
-            }
-            if (request != null)
-            {
-                request.Abort();
-            }
+            request.Content = new ByteArrayContent(postData);
+            var webResponse = await AppHttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+            Stream myRequestStream = await webResponse.Content.ReadAsStreamAsync();
+            htmlCode = await webResponse.Content.ReadAsStringAsync();
             return htmlCode;
         }
 
-        public static string GetAidByBV(string bv)
+        public static async Task<string> GetAidByBVAsync(string bv)
         {
             string api = $"https://api.bilibili.com/x/web-interface/archive/stat?bvid={bv}";
-            string json = GetWebSource(api);
+            string json = await GetWebSourceAsync(api);
             using var jDoc = JsonDocument.Parse(json);
             string aid = jDoc.RootElement.GetProperty("data").GetProperty("aid").ToString();
             return aid;
         }
 
-        public static string GetEpidBySSId(string ssid)
+        public static async Task<string> GetEpidBySSIdAsync(string ssid)
         {
             string api = $"https://api.bilibili.com/pugv/view/web/season?season_id={ssid}";
-            string json = GetWebSource(api);
+            string json = await GetWebSourceAsync(api);
             using var jDoc = JsonDocument.Parse(json);
             string epId = jDoc.RootElement.GetProperty("data").GetProperty("episodes").EnumerateArray().First().GetProperty("id").ToString();
             return epId;
@@ -316,7 +251,7 @@ namespace BBDown
                 httpRequestMessage.Headers.IfRange = new(lastTime);
                 httpRequestMessage.RequestUri = new(url);
 
-                using var response = (await httpClient.SendAsync(httpRequestMessage, HttpCompletionOption.ResponseHeadersRead)).EnsureSuccessStatusCode();
+                using var response = (await AppHttpClient.SendAsync(httpRequestMessage, HttpCompletionOption.ResponseHeadersRead)).EnsureSuccessStatusCode();
 
                 if (response.StatusCode == HttpStatusCode.OK) // server doesn't response a partial content
                 {
@@ -348,7 +283,7 @@ namespace BBDown
             LogDebug("Start downloading: {0}", url);
             if (aria2c)
             {
-                BBDownAria2c.DownloadFileByAria2c(url, path, aria2cProxy);
+                await BBDownAria2c.DownloadFileByAria2cAsync(url, path, aria2cProxy);
                 if (File.Exists(path + ".aria2") || !File.Exists(path))
                     throw new Exception("aria2下载可能存在错误");
                 Console.WriteLine();
@@ -387,7 +322,7 @@ namespace BBDown
         {
             if (aria2c)
             {
-                BBDownAria2c.DownloadFileByAria2c(url, path, aria2cProxy);
+                await BBDownAria2c.DownloadFileByAria2cAsync(url, path, aria2cProxy);
                 if (File.Exists(path + ".aria2") || !File.Exists(path))
                     throw new Exception("aria2下载可能存在错误");
                 Console.WriteLine();
@@ -528,7 +463,7 @@ namespace BBDown
             httpRequestMessage.Headers.Add("User-Agent", "Mozilla/5.0");
             httpRequestMessage.Headers.Add("Cookie", Program.COOKIE);
             httpRequestMessage.RequestUri = new(url);
-            var response = (await httpClient.SendAsync(httpRequestMessage, HttpCompletionOption.ResponseHeadersRead)).EnsureSuccessStatusCode();
+            var response = (await AppHttpClient.SendAsync(httpRequestMessage, HttpCompletionOption.ResponseHeadersRead)).EnsureSuccessStatusCode();
             long totalSizeBytes = response.Content.Headers.ContentLength ?? 0;
 
             return totalSizeBytes;
@@ -592,14 +527,13 @@ namespace BBDown
             return "";
         }
 
-        public static string GetLoginStatus(string oauthKey)
+        public static async Task<string> GetLoginStatusAsync(string oauthKey)
         {
             string queryUrl = "https://passport.bilibili.com/qrcode/getLoginInfo";
-            WebClient webClient = new WebClient();
             NameValueCollection postValues = new NameValueCollection();
             postValues.Add("oauthKey", oauthKey);
             postValues.Add("gourl", "https%3A%2F%2Fwww.bilibili.com%2F");
-            byte[] responseArray = webClient.UploadValues(queryUrl, postValues);
+            byte[] responseArray = await (await AppHttpClient.PostAsync(queryUrl, new FormUrlEncodedContent(postValues.ToDictionary()))).Content.ReadAsByteArrayAsync();
             return Encoding.UTF8.GetString(responseArray);
         }
 
@@ -648,9 +582,19 @@ namespace BBDown
         //https://stackoverflow.com/a/45088333
         public static string ToQueryString(NameValueCollection nameValueCollection)
         {
-            NameValueCollection httpValueCollection = HttpUtility.ParseQueryString(String.Empty);
+            NameValueCollection httpValueCollection = HttpUtility.ParseQueryString(string.Empty);
             httpValueCollection.Add(nameValueCollection);
             return httpValueCollection.ToString();
+        }
+
+        public static Dictionary<string, string> ToDictionary(this NameValueCollection nameValueCollection)
+        {
+            var dict = new Dictionary<string, string>();
+            foreach (var key in nameValueCollection.AllKeys)
+            {
+                dict[key] = nameValueCollection[key];
+            }
+            return dict;
         }
 
         public static string GetMaxQn()
@@ -660,7 +604,7 @@ namespace BBDown
 
         public static NameValueCollection GetTVLoginParms()
         {
-            NameValueCollection sb = new NameValueCollection();
+            NameValueCollection sb = new();
             DateTime now = DateTime.Now;
             string deviceId = GetRandomString(20);
             string buvid = GetRandomString(37);
