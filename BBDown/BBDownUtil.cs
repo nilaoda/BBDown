@@ -225,6 +225,8 @@ namespace BBDown
         /// <returns></returns>
         public static async Task<string> FixAvidAsync(string avid)
         {
+            if (!Regex.IsMatch(avid, "^\\d+$"))
+                return avid;
             string api = $"https://api.bilibili.com/x/web-interface/archive/stat?aid={avid}";
             string json = await GetWebSourceAsync(api);
             using var jDoc = JsonDocument.Parse(json);
