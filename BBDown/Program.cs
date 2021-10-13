@@ -73,6 +73,7 @@ namespace BBDown
             public string AccessToken { get; set; } = "";
             public string Aria2cProxy { get; set; } = "";
             public string WorkDir { get; set; } = "";
+            public string DelayPerPage { get; set; } = "0";
         }
 
         public static async Task<int> Main(params string[] args)
@@ -165,7 +166,10 @@ namespace BBDown
                     "设置access_token用以下载TV/APP接口的会员内容"),
                 new Option<string>(
                     new string[]{ "--work-dir"},
-                    "设置程序的工作目录")
+                    "设置程序的工作目录"),
+                new Option<string>(
+                    new string[]{ "--delay-per-page"},
+                    "设置下载合集分P之间的下载间隔时间(单位: 秒, 默认无间隔)")
             };
 
             Command loginCommand = new Command(
@@ -336,6 +340,7 @@ namespace BBDown
                 string lang = myOption.Language;
                 string selectPage = myOption.SelectPage.ToUpper();
                 string aidOri = ""; //原始aid
+                int delay = Convert.ToInt32(myOption.DelayPerPage);
                 COOKIE = myOption.Cookie;
                 TOKEN = myOption.AccessToken.Replace("access_token=", "");
 
@@ -491,6 +496,12 @@ namespace BBDown
 
                 foreach (Page p in pagesInfo)
                 {
+                    if (pagesInfo.Count > 1 && delay > 0)
+                    {
+                        Log($"停顿{delay}秒...");
+                        Thread.Sleep(delay * 1000);
+                    }
+
                     Log($"开始解析P{p.index}...");
 
                     string webJsonStr = "";
