@@ -4,9 +4,7 @@
 一款命令行式哔哩哔哩下载器. Bilibili Downloader.
 
 # 注意
-本软件合并时需要使用[ffmpeg](https://www.gyan.dev/ffmpeg/builds/) ，非`win-x64`平台请自行下载配置，并加入环境变量.
-
-也可能需要使用[mp4box](https://gpac.wp.imt.fr/downloads/)，至少用于合并**杜比视界**.
+本软件合并时需要使用[ffmpeg](https://www.gyan.dev/ffmpeg/builds/) ，也可能需要使用[mp4box](https://gpac.wp.imt.fr/downloads/)，用于合并**杜比视界**.
 
 # 快速开始
 本软件已经以 [Dotnet Tool](https://www.nuget.org/packages/BBDown/) 形式发布  
@@ -19,48 +17,50 @@ dotnet tool install --global BBDown
 # 下载
 https://github.com/nilaoda/BBDown/releases
 
+https://github.com/nilaoda/BBDown/actions
+
 # 开始使用
 目前命令行参数支持情况
 ```
-BBDown:
+BBDown
   BBDown是一个免费且便捷高效的哔哩哔哩下载/解析软件.
 
 Usage:
   BBDown [options] <url> [command]
 
 Arguments:
-  <url>    视频地址 或 av|bv|BV|ep|ss
+  <url>  视频地址 或 av|bv|BV|ep|ss
 
 Options:
-  -tv, --use-tv-api                        使用TV端解析模式
-  -app, --use-app-api                      使用APP端解析模式
-  -intl, --use-intl-api                    使用国际版解析模式
-  --use-mp4box                             使用MP4Box来混流
-  -hevc, --only-hevc                       只下载hevc编码
-  -avc, --only-avc                         只下载avc编码
-  -info, --only-show-info                  仅解析而不进行下载
-  -hs, --hide-streams                      不要显示所有可用音视频流
-  -ia, --interactive                       交互式选择清晰度
-  --show-all                               展示所有分P标题
-  --use-aria2c                             调用aria2c进行下载(你需要自行准备好二进制可执行文件)
-  --aria2c-proxy <aria2c-proxy>            调用aria2c进行下载时的代理地址配置
-  -mt, --multi-thread                      使用多线程下载
-  -p, --select-page <select-page>          选择指定分p或分p范围：(-p 8 或 -p 1,2 或 -p 3-5 或 -p ALL)
-  --audio-only                             仅下载音频
-  --video-only                             仅下载视频
-  --sub-only                               仅下载字幕
-  --no-padding-page-num                    不给分P序号补零
-  --debug                                  输出调试日志
-  --skip-mux                               跳过混流步骤
-  --language <language>                    设置混流的音频语言(代码)，如chi, jpn等
-  -c, --cookie <cookie>                    设置字符串cookie用以下载网页接口的会员内容
-  -token, --access-token <access-token>    设置access_token用以下载TV/APP接口的会员内容
-  --version                                Show version information
-  -?, -h, --help                           Show help and usage information
-
-Commands:
-  login      通过APP扫描二维码以登录您的WEB账号
-  logintv    通过APP扫描二维码以登录您的TV账号
+  -tv, --use-tv-api                      使用TV端解析模式
+  -app, --use-app-api                    使用APP端解析模式
+  -intl, --use-intl-api                  使用国际版解析模式
+  --use-mp4box                           使用MP4Box来混流
+  -hevc, --only-hevc                     只下载hevc编码
+  -avc, --only-avc                       只下载avc编码
+  -info, --only-show-info                仅解析而不进行下载
+  -hs, --hide-streams                    不要显示所有可用音视频流
+  -ia, --interactive                     交互式选择清晰度
+  --show-all                             展示所有分P标题
+  --use-aria2c                           调用aria2c进行下载(你需要自行准备好二进制可执行文件)
+  --aria2c-proxy <aria2c-proxy>          调用aria2c进行下载时的代理地址配置
+  -mt, --multi-thread                    使用多线程下载
+  -p, --select-page <select-page>        选择指定分p或分p范围：(-p 8 或 -p 1,2 或 -p 3-5 或 -p ALL)
+  --audio-only                           仅下载音频
+  --video-only                           仅下载视频
+  --sub-only                             仅下载字幕
+  --no-padding-page-num                  不给分P序号补零
+  --debug                                输出调试日志
+  --skip-mux                             跳过混流步骤
+  --skip-subtitle                        跳过字幕下载
+  --skip-cover                           跳过封面下载
+  --language <language>                  设置混流的音频语言(代码)，如chi, jpn等
+  -c, --cookie <cookie>                  设置字符串cookie用以下载网页接口的会员内容
+  -token, --access-token <access-token>  设置access_token用以下载TV/APP接口的会员内容
+  --work-dir <work-dir>                  设置程序的工作目录
+  --delay-per-page <delay-per-page>      设置下载合集分P之间的下载间隔时间(单位: 秒, 默认无间隔)
+  --version                              Show version information
+  -?, -h, --help                         Show help and usage information
 ```
 
 # 功能
@@ -72,19 +72,20 @@ Commands:
 - [x] 选择指定清晰度进行下载
 - [x] 下载外挂字幕并转换为srt格式
 - [x] 自动合并音频+视频流+字幕流`(使用ffmpeg或mp4box)`
-- [x] 单独下载视频或音频轨道
+- [x] 单独下载视频/音频/字幕
 - [x] 二维码登录账号
 - [x] **多线程下载**
 - [x] 支持调用aria2c下载
 - [x] **支持HDR/杜比视界/杜比全景声下载**`(需要使用App接口且输入会员token)`
 
 # TODO
-- [ ] 支持更多自定义选项
 - [ ] 自动刷新cookie
+- [ ] 自定义HTTP代理
 - [ ] 下载指定收藏夹中的视频
 - [ ] 下载某个个人空间页的视频
 - [ ] 自定义存储文件名等
 - [ ] 弹幕下载&转换
+- [ ] 支持更多自定义选项
 
 # 使用教程
 
