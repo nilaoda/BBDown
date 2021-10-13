@@ -348,6 +348,7 @@ namespace BBDown
                     }
                     //设置工作目录
                     Environment.CurrentDirectory = dir;
+                    LogDebug("切换工作目录至：{0}", dir);
                 }
 
                 //audioOnly和videoOnly同时开启则全部忽视
