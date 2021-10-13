@@ -198,12 +198,15 @@ namespace BBDown
                 string url = "";
                 double size = 0;
                 double length = 0;
-                if (webJsonStr.Contains("\"data\":{"))
+                var nodeName = "data";
+            flvParse:
+                if (webJsonStr.Contains($"\"{nodeName}\":{{"))
                 {
-                    quality = respJson.RootElement.GetProperty("data").GetProperty("quality").ToString();
-                    videoCodecid = respJson.RootElement.GetProperty("data").GetProperty("video_codecid").ToString();
+                    var dataNode = respJson.RootElement.GetProperty(nodeName);
+                    quality = dataNode.GetProperty("quality").ToString();
+                    videoCodecid = dataNode.GetProperty("video_codecid").ToString();
                     //获取所有分段
-                    foreach (var node in respJson.RootElement.GetProperty("data").GetProperty("durl").EnumerateArray().ToList())
+                    foreach (var node in dataNode.GetProperty("durl").EnumerateArray().ToList())
                     {
                         clips.Add(node.GetProperty("url").ToString());
                         size += node.GetProperty("size").GetDouble();
@@ -212,14 +215,14 @@ namespace BBDown
                     //TV模式可用清晰度
                     JsonElement qnExtras;
                     JsonElement acceptQuality;
-                    if (respJson.RootElement.GetProperty("data").TryGetProperty("qn_extras", out qnExtras)) 
+                    if (dataNode.TryGetProperty("qn_extras", out qnExtras)) 
                     {
                         foreach (var node in qnExtras.EnumerateArray())
                         {
                             dfns.Add(node.GetProperty("qn").ToString());
                         }
                     }
-                    else if (respJson.RootElement.GetProperty("data").TryGetProperty("accept_quality", out acceptQuality)) //非tv模式可用清晰度
+                    else if (dataNode.TryGetProperty("accept_quality", out acceptQuality)) //非tv模式可用清晰度
                     {
                         foreach (var node in acceptQuality.EnumerateArray())
                         {
@@ -228,6 +231,11 @@ namespace BBDown
                                 dfns.Add(node.ToString());
                         }
                     }
+                }
+                else if (webJsonStr.Contains("\"result\":{"))
+                {
+                    nodeName = "result";
+                    goto flvParse;
                 }
                 else
                 {
