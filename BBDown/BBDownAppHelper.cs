@@ -16,7 +16,7 @@ namespace BBDown
     class BBDownAppHelper
     {
         private static string API = "https://grpc.biliapi.net/bilibili.app.playurl.v1.PlayURL/PlayView";
-        //private static string API2 = "https://app.bilibili.com/bilibili.pgc.gateway.player.v1.PlayURL/PlayView";
+        private static string API2 = "https://app.bilibili.com/bilibili.pgc.gateway.player.v1.PlayURL/PlayView";
         private static string dalvikVer = "2.1.0";
         private static string osVer = "11";
         private static string brand = "M2012K11AC";
@@ -45,14 +45,36 @@ namespace BBDown
         /// <param name="qn"></param>
         /// <param name="appkey"></param>
         /// <returns></returns>
-        public static async Task<string> DoReqAsync(string aid, string cid, string qn, bool bangumi, bool onlyAvc, string appkey = "")
+        public static async Task<string> DoReqAsync(string aid, string cid, string epId, string qn, bool bangumi, bool onlyAvc, string appkey = "")
         {
             var headers = GetHeader(appkey);
             LogDebug("App-Req-Headers: {0}", ConvertToString(headers));
             var body = GetPayload(Convert.ToInt64(aid), Convert.ToInt64(cid), Convert.ToInt64(qn), onlyAvc ? PlayViewReq.CodeType.Code264 : PlayViewReq.CodeType.Code265);
             //Console.WriteLine(ReadMessage<PlayViewReq>(body));
-            var data = await GetPostResponseAsync(bangumi ? API : API, body, headers);
-            var resp = ReadMessage<PlayViewReply>(data);
+            var data = await GetPostResponseAsync(API, body, headers);
+            PlayViewReply resp = null;
+            try
+            {
+                resp = ReadMessage<PlayViewReply>(data);
+            }
+            catch (Exception ex)
+            {
+                if (DEBUG_LOG)
+                {
+                    LogError(ex.Message);
+                }
+
+                if (bangumi)
+                {
+                    body = GetPayload(Convert.ToInt64(epId), Convert.ToInt64(cid), Convert.ToInt64(qn), onlyAvc ? PlayViewReq.CodeType.Code264 : PlayViewReq.CodeType.Code265);
+                    data = await GetPostResponseAsync(API2, body, headers);
+                    resp = ReadMessage<PlayViewReply>(data);
+                }
+                else
+                {
+                    throw;
+                }
+            }
             LogDebug("PlayViewReplyPlain: {0}", ConvertToString(resp));
             return ConvertToDashJson(resp);
         }
@@ -128,11 +150,14 @@ namespace BBDown
             var obj = new PlayViewReq();
             obj.epId = aid;
             obj.Cid = cid;
-            obj.Qn = qn;
+            //obj.Qn = qn;
+            obj.Qn = 126;
             obj.Fnval = 976;
             obj.Spmid = "main.ugc-video-detail.0.0";
             obj.fromSpmid = "main.my-history.0.0";
             obj.preferCodecType = codec;
+            obj.Download = 0; //0:播放 1:flv下载 2:dash下载
+            obj.forceHost = 2; //0:允许使用ip 1:使用http 2:使用https
             LogDebug("PayLoadPlain: {0}", ConvertToString(obj));
             return PackMessage(ObjectToBytes(obj));
         }
@@ -149,7 +174,7 @@ namespace BBDown
                 ["te"] = "trailers",
                 ["x-bili-fawkes-req-bin"] = GenerateFawkesReqBin(),
                 ["x-bili-metadata-bin"] = GenerateMetadataBin(appkey),
-                ["authorization"] = $"identify_v1 {appKey}",
+                ["authorization"] = $"identify_v1 {Program.TOKEN}",
                 ["x-bili-device-bin"] = GenerateDeviceBin(),
                 ["x-bili-network-bin"] = GenerateNetworkBin(),
                 ["x-bili-restriction-bin"] = "",
