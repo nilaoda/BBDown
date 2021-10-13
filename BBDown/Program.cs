@@ -537,7 +537,7 @@ namespace BBDown
                             subtitleInfo = await BBDownSubUtil.GetSubtitlesAsync(p.aid, p.cid, p.epid, intlApi);
                             foreach (Subtitle s in subtitleInfo)
                             {
-                                Log($"下载字幕 {s.lan} => {BBDownSubUtil.SubDescDic[s.lan]}...");
+                                Log($"下载字幕 {s.lan} => {BBDownSubUtil.GetSubtitleCode(s.lan).Item2}...");
                                 LogDebug("下载：{0}", s.url);
                                 await BBDownSubUtil.SaveSubtitleAsync(s.url, s.path);
                                 if (subOnly && File.Exists(s.path) && File.ReadAllText(s.path) != "")
@@ -545,7 +545,7 @@ namespace BBDown
                                     string _indexStr = p.index.ToString("0".PadRight(pagesInfo.OrderByDescending(_p => _p.index).First().index.ToString().Length, '0'));
                                     //处理文件夹以.结尾导致的异常情况
                                     if (title.EndsWith(".")) title += "_fix";
-                                    string _outSubPath = GetValidFileName(title) + (pagesInfo.Count > 1 ? $"/[P{_indexStr}]{GetValidFileName(p.title)}" : (vInfo.PagesInfo.Count > 1 ? $"[P{_indexStr}]{GetValidFileName(p.title)}" : "")) + $"_{BBDownSubUtil.SubDescDic[s.lan]}.srt";
+                                    string _outSubPath = GetValidFileName(title) + (pagesInfo.Count > 1 ? $"/[P{_indexStr}]{GetValidFileName(p.title)}" : (vInfo.PagesInfo.Count > 1 ? $"[P{_indexStr}]{GetValidFileName(p.title)}" : "")) + $"_{BBDownSubUtil.GetSubtitleCode(s.lan).Item2}.srt";
                                     if (_outSubPath.Contains("/"))
                                     {
                                         if (!Directory.Exists(Path.GetDirectoryName(_outSubPath)))
