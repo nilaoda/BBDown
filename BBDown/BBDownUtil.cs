@@ -50,21 +50,22 @@ namespace BBDown
 
         public static async Task<string> GetAvIdAsync(string input)
         {
+            var avid = input;
             if (input.StartsWith("http"))
             {
                 if (input.Contains("b23.tv"))
                     input = await Get302(input);
                 if (input.Contains("video/av"))
                 {
-                    return Regex.Match(input, "av(\\d{1,})").Groups[1].Value;
+                    avid = Regex.Match(input, "av(\\d{1,})").Groups[1].Value;
                 }
                 else if (input.Contains("video/BV"))
                 {
-                    return await GetAidByBVAsync(Regex.Match(input, "BV(\\w+)").Groups[1].Value);
+                    avid = await GetAidByBVAsync(Regex.Match(input, "BV(\\w+)").Groups[1].Value);
                 }
                 else if (input.Contains("video/bv"))
                 {
-                    return await GetAidByBVAsync(Regex.Match(input, "bv(\\w+)").Groups[1].Value);
+                    avid = await GetAidByBVAsync(Regex.Match(input, "bv(\\w+)").Groups[1].Value);
                 }
                 else if (input.Contains("/cheese/"))
                 {
@@ -77,27 +78,27 @@ namespace BBDown
                     {
                         epId = await GetEpidBySSIdAsync(Regex.Match(input, "/ss(\\d{1,})").Groups[1].Value);
                     }
-                    return $"cheese:{epId}";
+                    avid = $"cheese:{epId}";
                 }
                 else if (input.Contains("/ep"))
                 {
                     string epId = Regex.Match(input, "/ep(\\d{1,})").Groups[1].Value;
-                    return $"ep:{epId}";
+                    avid = $"ep:{epId}";
                 }
                 else if (input.Contains("/space.bilibili.com/"))
                 {
                     string mid = Regex.Match(input, "space.bilibili.com/(\\d{1,})").Groups[1].Value;
-                    return $"mid:{mid}";
+                    avid = $"mid:{mid}";
                 }
                 else if (input.Contains("ep_id="))
                 {
                     string epId = GetQueryString("ep_id", input);
-                    return $"ep:{epId}";
+                    avid = $"ep:{epId}";
                 }
                 else if (Regex.IsMatch(input, "global.bilibili.com/play/\\d+/(\\d+)"))
                 {
                     string epId = Regex.Match(input, "global.bilibili.com/play/\\d+/(\\d+)").Groups[1].Value;
-                    return $"ep:{epId}";
+                    avid = $"ep:{epId}";
                 }
                 else
                 {
@@ -106,25 +107,25 @@ namespace BBDown
                     string json = regex.Match(web).Groups[1].Value;
                     using var jDoc = JsonDocument.Parse(json);
                     string epId = jDoc.RootElement.GetProperty("epList").EnumerateArray().First().GetProperty("id").ToString();
-                    return $"ep:{epId}";
+                    avid = $"ep:{epId}";
                 }
             }
             else if (input.StartsWith("BV"))
             {
-                return await GetAidByBVAsync(input.Substring(2));
+                avid = await GetAidByBVAsync(input.Substring(2));
             }
             else if (input.StartsWith("bv"))
             {
-                return await GetAidByBVAsync(input.Substring(2));
+                avid = await GetAidByBVAsync(input.Substring(2));
             }
             else if (input.ToLower().StartsWith("av")) //av
             {
-                return input.ToLower().Substring(2);
+                avid = input.ToLower().Substring(2);
             }
             else if (input.StartsWith("ep"))
             {
                 string epId = Regex.Match(input, "ep(\\d{1,})").Groups[1].Value;
-                return $"ep:{epId}";
+                avid = $"ep:{epId}";
             }
             else if (input.StartsWith("ss"))
             {
@@ -133,12 +134,13 @@ namespace BBDown
                 string json = regex.Match(web).Groups[1].Value;
                 using var jDoc = JsonDocument.Parse(json);
                 string epId = jDoc.RootElement.GetProperty("epList").EnumerateArray().First().GetProperty("id").ToString();
-                return $"ep:{epId}";
+                avid = $"ep:{epId}";
             }
             else
             {
                 throw new Exception("输入有误");
             }
+            return await FixAvidAsync(avid);
         }
 
         public static string FormatFileSize(double fileSize)
@@ -214,6 +216,32 @@ namespace BBDown
             Stream myRequestStream = await webResponse.Content.ReadAsStreamAsync();
             htmlCode = await webResponse.Content.ReadAsStringAsync();
             return htmlCode;
+        }
+
+        /// <summary>
+        /// 通过avid检测是否为版权内容，如果是的话返回ep:xx格式
+        /// </summary>
+        /// <param name="avid"></param>
+        /// <returns></returns>
+        public static async Task<string> FixAvidAsync(string avid)
+        {
+            string api = $"https://api.bilibili.com/x/web-interface/archive/stat?aid={avid}";
+            string json = await GetWebSourceAsync(api);
+            using var jDoc = JsonDocument.Parse(json);
+            bool copyRight = jDoc.RootElement.GetProperty("data").GetProperty("copyright").GetInt32() == 2;
+            if (copyRight)
+            {
+                api = $"https://api.bilibili.com/x/web-interface/view?aid={avid}";
+                json = await GetWebSourceAsync(api);
+                using var infoJson = JsonDocument.Parse(json);
+                var data = infoJson.RootElement.GetProperty("data");
+                if (data.GetProperty("redirect_url").ToString().Contains("bangumi"))
+                {
+                    var epId = Regex.Match(data.GetProperty("redirect_url").ToString(), "ep(\\d+)").Groups[1].Value;
+                    return $"ep:{epId}";
+                }
+            }
+            return avid;
         }
 
         public static async Task<string> GetAidByBVAsync(string bv)
