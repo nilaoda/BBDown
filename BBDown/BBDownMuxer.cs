@@ -15,6 +15,10 @@ namespace BBDown
     {
         public static int RunExe(string app, string parms)
         {
+            if (File.Exists(Path.Combine(Program.APP_DIR, $"{app}.exe")))
+                app = Path.Combine(Program.APP_DIR, $"{app}.exe");
+            if (File.Exists(Path.Combine(Program.APP_DIR, $"{app}")))
+                app = Path.Combine(Program.APP_DIR, $"{app}");
             int code = 0;
             Process p = new Process();
             p.StartInfo.FileName = app;

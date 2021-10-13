@@ -72,6 +72,7 @@ namespace BBDown
             public string Cookie { get; set; } = "";
             public string AccessToken { get; set; } = "";
             public string Aria2cProxy { get; set; } = "";
+            public string WorkDir { get; set; } = "";
         }
 
         public static async Task<int> Main(params string[] args)
@@ -161,7 +162,10 @@ namespace BBDown
                     "设置字符串cookie用以下载网页接口的会员内容"),
                 new Option<string>(
                     new string[]{ "--access-token" ,"-token"},
-                    "设置access_token用以下载TV/APP接口的会员内容")
+                    "设置access_token用以下载TV/APP接口的会员内容"),
+                new Option<string>(
+                    new string[]{ "--work-dir"},
+                    "设置程序的工作目录")
             };
 
             Command loginCommand = new Command(
@@ -334,6 +338,17 @@ namespace BBDown
                 string aidOri = ""; //原始aid
                 COOKIE = myOption.Cookie;
                 TOKEN = myOption.AccessToken.Replace("access_token=", "");
+
+                if (!string.IsNullOrEmpty(myOption.WorkDir))
+                {
+                    var dir = Path.GetFullPath(myOption.WorkDir);
+                    if (!Directory.Exists(dir))
+                    {
+                        Directory.CreateDirectory(dir);
+                    }
+                    //设置工作目录
+                    Environment.CurrentDirectory = dir;
+                }
 
                 //audioOnly和videoOnly同时开启则全部忽视
                 if (audioOnly && videoOnly)
