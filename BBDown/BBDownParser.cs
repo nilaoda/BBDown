@@ -240,7 +240,7 @@ namespace BBDown
                 else
                 {
                     //如果获取数据失败，尝试从根路径获取数据
-                    string nodeinfo = respJson.ToString();
+                    string nodeinfo = respJson.RootElement.ToString();
                     var nodeJson = JsonDocument.Parse(nodeinfo).RootElement;
                     quality = nodeJson.GetProperty("quality").ToString();
                     videoCodecid = nodeJson.GetProperty("video_codecid").ToString();
