@@ -237,7 +237,7 @@ namespace BBDown
                 json = await GetWebSourceAsync(api);
                 using var infoJson = JsonDocument.Parse(json);
                 var data = infoJson.RootElement.GetProperty("data");
-                if (data.GetProperty("redirect_url").ToString().Contains("bangumi"))
+                if (data.TryGetProperty("redirect_url", out _) && data.GetProperty("redirect_url").ToString().Contains("bangumi")) 
                 {
                     var epId = Regex.Match(data.GetProperty("redirect_url").ToString(), "ep(\\d+)").Groups[1].Value;
                     return $"ep:{epId}";
