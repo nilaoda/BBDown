@@ -67,6 +67,7 @@ namespace BBDown
             public bool SkipMux { get; set; }
             public bool SkipSubtitle { get; set; }
             public bool SkipCover { get; set; }
+            public bool DownloadDanmaku { get; set; }
             public string SelectPage { get; set; } = "";
             public string Language { get; set; } = "";
             public string Cookie { get; set; } = "";
@@ -152,6 +153,9 @@ namespace BBDown
                 new Option<bool>(
                     new string[]{ "--skip-subtitle"},
                     "跳过字幕下载"),
+                new Option<bool>(
+                    new string[]{ "--download-danmaku", "-dd" },
+                    "下载弹幕, 需要自行下载danmaku2ass程序"),
                 new Option<bool>(
                     new string[]{ "--skip-cover"},
                     "跳过封面下载"),
@@ -331,6 +335,7 @@ namespace BBDown
                 bool subOnly = myOption.SubOnly;
                 bool skipMux = myOption.SkipMux;
                 bool skipSubtitle = myOption.SkipSubtitle;
+                bool downloadDanmaku = myOption.DownloadDanmaku;
                 bool skipCover = myOption.SkipCover;
                 bool showAll = myOption.ShowAll;
                 bool useAria2c = myOption.UseAria2c;
@@ -839,6 +844,36 @@ namespace BBDown
                         LogError("解析此分P失败(使用--debug查看详细信息)");
                         LogDebug("{0}", webJsonStr);
                         continue;
+                    }
+
+                    Log($"开始下载P{p.index}弹幕");
+                    //下载弹幕
+                    if (downloadDanmaku)
+                    {
+                        string danmakuUrl = "https://comment.bilibili.com/" + p.cid + ".xml";
+                        string outPathWithoutExt = outPath.Substring(0, outPath.Length - 4);
+                        string danmakuXmlPath = outPathWithoutExt + ".xml";
+                        string danmakuAssPath = outPathWithoutExt + ".ass";
+
+                        await DownloadFile(danmakuUrl, danmakuXmlPath, useAria2c, aria2cProxy);
+                        if (File.Exists(danmakuXmlPath) && new FileInfo(danmakuXmlPath).Length != 0)
+                        {
+                            String args = $"-s 1920x1080 -fs 40.0 -fn 宋体 -o \"{danmakuAssPath}\" \"{danmakuXmlPath}\"";
+                            RunExe("danmaku2ass", args);
+                            if (File.Exists(danmakuAssPath) && new FileInfo(danmakuAssPath).Length != 0)
+                            {
+                                Log($"P{p.index}弹幕下载完成");
+                                File.Delete(danmakuXmlPath);
+                            }
+                            else
+                            {
+                                Log($"P{p.index}弹幕已下载但转换出现问题，请自行转换...");
+                            }
+                        }
+                        else
+                        {
+                            Log($"P{p.index}弹幕下载失败...");
+                        }
                     }
                 }
                 Log("任务完成");
