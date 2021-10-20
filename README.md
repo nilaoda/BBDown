@@ -61,6 +61,10 @@ Options:
   --delay-per-page <delay-per-page>      设置下载合集分P之间的下载间隔时间(单位: 秒, 默认无间隔)
   --version                              Show version information
   -?, -h, --help                         Show help and usage information
+
+Commands:
+  login      通过APP扫描二维码以登录您的WEB账号
+  logintv    通过APP扫描二维码以登录您的TV账号
 ```
 
 # 功能
