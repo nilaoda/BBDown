@@ -858,7 +858,7 @@ namespace BBDown
                         await DownloadFile(danmakuUrl, danmakuXmlPath, useAria2c, aria2cProxy);
                         if (File.Exists(danmakuXmlPath) && new FileInfo(danmakuXmlPath).Length != 0)
                         {
-                            String args = $"-s 1920x1080 -fs 40.0 -fn 宋体 -o \"{danmakuAssPath}\" \"{danmakuXmlPath}\"";
+                            String args = $"-s 1920x1080 -fs 40.0 -fn 宋体 -dm 7 -ds 7 -p 540 -o \"{danmakuAssPath}\" \"{danmakuXmlPath}\"";
                             RunExe("danmaku2ass", args);
                             if (File.Exists(danmakuAssPath) && new FileInfo(danmakuAssPath).Length != 0)
                             {

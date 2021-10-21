@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "BBDown": {
+      "commandName": "Project",
+      "commandLineArgs": "-dd -ia -hevc \"https://b23.tv/zB8Iqb\""
+    }
+  }
+}
