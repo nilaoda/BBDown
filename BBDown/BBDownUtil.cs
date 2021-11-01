@@ -27,7 +27,10 @@ namespace BBDown
         {
             AllowAutoRedirect = true,
             AutomaticDecompression = DecompressionMethods.All
-        });
+        })
+        { 
+            Timeout = TimeSpan.FromMinutes(5) 
+        };
 
         public static async Task CheckUpdateAsync()
         {
