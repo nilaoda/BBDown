@@ -29,7 +29,7 @@ namespace BBDown
             string prefix = tvApi ? (bangumi ? "api.snm0516.aisee.tv/pgc/player/api/playurltv" : "api.snm0516.aisee.tv/x/tv/ugc/playurl")
                         : (bangumi ? "api.bilibili.com/pgc/player/web/playurl" : "api.bilibili.com/x/player/playurl");
             string api = $"https://{prefix}?avid={aid}&cid={cid}&qn={qn}&type=&otype=json" + (tvApi ? "" : "&fourk=1") +
-                $"&fnver=0&fnval=80" + (tvApi ? "&device=android&platform=android" +
+                $"&fnver=0&fnval=976" + (tvApi ? "&device=android&platform=android" +
                 "&mobi_app=android_tv_yst&npcybs=0&force_host=0&build=102801" +
                 (Program.TOKEN != "" ? $"&access_key={Program.TOKEN}" : "") : "") +
                 (bangumi ? $"&module=bangumi&ep_id={epId}&fourk=1" + "&session=" : "");
@@ -144,6 +144,19 @@ namespace BBDown
                 }
                 try { video = !tvApi ? respJson.RootElement.GetProperty(nodeName).GetProperty("dash").GetProperty("video").EnumerateArray().ToList() : respJson.RootElement.GetProperty("dash").GetProperty("video").EnumerateArray().ToList(); } catch { }
                 try { audio = !tvApi ? respJson.RootElement.GetProperty(nodeName).GetProperty("dash").GetProperty("audio").EnumerateArray().ToList() : respJson.RootElement.GetProperty("dash").GetProperty("audio").EnumerateArray().ToList(); } catch { }
+                //处理杜比音频
+                try
+                {
+                    if (!tvApi && respJson.RootElement.GetProperty(nodeName).GetProperty("dash").TryGetProperty("dolby", out JsonElement dolby))
+                    {
+                        if(dolby.TryGetProperty("audio", out JsonElement db))
+                        {
+                            audio.AddRange(db.EnumerateArray().ToList());
+                        }
+                    }
+                }
+                catch (Exception) { ; }
+                
                 if (video != null)
                 {
                     foreach (var node in video)
@@ -183,7 +196,7 @@ namespace BBDown
                         a.dur = pDur;
                         a.bandwith = Convert.ToInt64(node.GetProperty("bandwidth").ToString()) / 1000;
                         a.baseUrl = node.GetProperty("base_url").ToString();
-                        a.codecs = node.GetProperty("codecs").ToString().Replace("mp4a.40.2", "M4A");
+                        a.codecs = node.GetProperty("codecs").ToString().Replace("mp4a.40.2", "M4A").Replace("ec-3", "E-AC-3");
                         audioTracks.Add(a);
                     }
                 }

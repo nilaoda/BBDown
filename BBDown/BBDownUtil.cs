@@ -181,9 +181,9 @@ namespace BBDown
             try
             {
                 using var webRequest = new HttpRequestMessage(HttpMethod.Get, url);
-                webRequest.Headers.Add("UserAgent", "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36");
+                webRequest.Headers.Add("UserAgent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0 Safari/605.1.15");
                 webRequest.Headers.Add("Accept-Encoding", "gzip, deflate");
-                webRequest.Headers.Add("Cookie", (url.Contains("/ep") || url.Contains("/ss")) ? Program.COOKIE + ";CURRENT_FNVAL=80;" : Program.COOKIE);
+                webRequest.Headers.Add("Cookie", (url.Contains("/ep") || url.Contains("/ss")) ? Program.COOKIE + ";CURRENT_FNVAL=976;" : Program.COOKIE);
                 if (url.Contains("api.bilibili.com/pgc/player/web/playurl") || url.Contains("api.bilibili.com/pugv/player/web/playurl"))
                     webRequest.Headers.Add("Referer", "https://www.bilibili.com");
                 webRequest.Headers.CacheControl = CacheControlHeaderValue.Parse("no-cache");
