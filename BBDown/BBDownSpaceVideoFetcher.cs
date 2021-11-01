@@ -38,7 +38,7 @@ namespace BBDown
             Log("目前下载器不支持下载用户的全部投稿视频，不过程序已经获取到了该用户的全部投稿视频地址，你可以自行使用批处理脚本等手段调用本程序进行批量下载。如在Windows系统你可以使用如下代码：");
             Console.WriteLine();
             Console.WriteLine(@"@echo Off
-For / F %%a in (urls.txt) Do (BBDown.exe ""%%a"")
+For /F %%a in (urls.txt) Do (BBDown.exe ""%%a"")
 pause");
             Console.WriteLine();
             throw new Exception("暂不支持该功能");
