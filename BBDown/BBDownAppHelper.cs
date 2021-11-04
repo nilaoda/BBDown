@@ -113,6 +113,7 @@ namespace BBDown
                     audios.Add(new AudioInfoWithCodecName(
                         item.Id,
                         item.baseUrl,
+                        item.backupUrls,
                         item.Bandwidth,
                         "M4A"
                     ));
@@ -124,6 +125,7 @@ namespace BBDown
                 audios.Add(new AudioInfoWithCodecName(
                     resp.videoInfo.Dolby.Audio.Id,
                     resp.videoInfo.Dolby.Audio.baseUrl,
+                    resp.videoInfo.Dolby.Audio.backupUrls,
                     resp.videoInfo.Dolby.Audio.Bandwidth,
                     "E-AC-3"
                 ));
@@ -414,21 +416,24 @@ namespace BBDown
         public uint Id { get; }
         [JsonPropertyName("base_url")]
         public string BaseUrl { get; }
+        [JsonPropertyName("backup_url")]
+        public List<string> BackupUrl { get; }
         [JsonPropertyName("bandwidth")]
         public uint Bandwidth { get; }
         [JsonPropertyName("codecs")]
         public string Codecs { get; }
 
-        public AudioInfoWithCodecName(uint id, string base_url, uint bandwidth, string codecs)
+        public AudioInfoWithCodecName(uint id, string base_url,List<string> backup_url, uint bandwidth, string codecs)
         {
             Id = id;
             BaseUrl = base_url;
+            BackupUrl = backup_url;
             Bandwidth = bandwidth;
             Codecs = codecs;
         }
 
-        public override bool Equals(object obj) => obj is AudioInfoWithCodecName other && Id == other.Id && BaseUrl == other.BaseUrl && Bandwidth == other.Bandwidth && Codecs == other.Codecs;
-        public override int GetHashCode() => HashCode.Combine(Id, BaseUrl, Bandwidth, Codecs);
+        public override bool Equals(object obj) => obj is AudioInfoWithCodecName other && Id == other.Id && BaseUrl == other.BaseUrl && BackupUrl.SequenceEqual(other.BackupUrl) && Bandwidth == other.Bandwidth && Codecs == other.Codecs;
+        public override int GetHashCode() => HashCode.Combine(Id, BaseUrl, BackupUrl, Bandwidth, Codecs);
     }
 
     internal class AudioInfoWitCodecId
