@@ -30,7 +30,7 @@ namespace BBDown
                         : (bangumi ? "api.bilibili.com/pgc/player/web/playurl" : "api.bilibili.com/x/player/playurl");
             string api = $"https://{prefix}?avid={aid}&cid={cid}&qn={qn}&type=&otype=json" + (tvApi ? "" : "&fourk=1") +
                 $"&fnver=0&fnval=976" + (tvApi ? "&device=android&platform=android" +
-                "&mobi_app=android_tv_yst&npcybs=0&force_host=0&build=102801" +
+                "&mobi_app=android_tv_yst&npcybs=0&force_host=2&build=102801" +
                 (Program.TOKEN != "" ? $"&access_key={Program.TOKEN}" : "") : "") +
                 (bangumi ? $"&module=bangumi&ep_id={epId}&fourk=1" + "&session=" : "");
             if (tvApi && bangumi)
@@ -161,12 +161,17 @@ namespace BBDown
                 {
                     foreach (var node in video)
                     {
+                        var urlList = new List<string>() { node.GetProperty("base_url").ToString() };
+                        if(node.TryGetProperty("backup_url", out JsonElement element))
+                        {
+                            urlList.AddRange(element.EnumerateArray().ToList().Select(i => i.ToString()));
+                        }
                         Video v = new Video();
                         v.dur = pDur;
                         v.id = node.GetProperty("id").ToString();
                         v.dfn = Program.qualitys[v.id];
                         v.bandwith = Convert.ToInt64(node.GetProperty("bandwidth").ToString()) / 1000;
-                        v.baseUrl = node.GetProperty("base_url").ToString();
+                        v.baseUrl = urlList.FirstOrDefault(i => !Regex.IsMatch(i, "http.*:\\d+"), urlList.First());
                         v.codecs = node.GetProperty("codecid").ToString() == "12" ? "HEVC" : "AVC";
                         if (!tvApi && !appApi)
                         {
@@ -190,12 +195,17 @@ namespace BBDown
                 {
                     foreach (var node in audio)
                     {
+                        var urlList = new List<string>() { node.GetProperty("base_url").ToString() };
+                        if (node.TryGetProperty("backup_url", out JsonElement element))
+                        {
+                            urlList.AddRange(element.EnumerateArray().ToList().Select(i => i.ToString()));
+                        }
                         Audio a = new Audio();
                         a.id = node.GetProperty("id").ToString();
                         a.dfn = a.id;
                         a.dur = pDur;
                         a.bandwith = Convert.ToInt64(node.GetProperty("bandwidth").ToString()) / 1000;
-                        a.baseUrl = node.GetProperty("base_url").ToString();
+                        a.baseUrl = urlList.FirstOrDefault(i => !Regex.IsMatch(i, "http.*:\\d+"), urlList.First());
                         a.codecs = node.GetProperty("codecs").ToString().Replace("mp4a.40.2", "M4A").Replace("ec-3", "E-AC-3");
                         audioTracks.Add(a);
                     }
