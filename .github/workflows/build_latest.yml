@@ -3,7 +3,7 @@ name: Build Latest
 on: [push]
 
 env:
-  DOTNET_SDK_VERSION: '6.0.100-rc.1.21463.6'
+  DOTNET_SDK_VERSION: '6.0.100'
 
 jobs:
 
