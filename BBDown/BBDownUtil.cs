@@ -184,7 +184,7 @@ namespace BBDown
             try
             {
                 using var webRequest = new HttpRequestMessage(HttpMethod.Get, url);
-                webRequest.Headers.Add("UserAgent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0 Safari/605.1.15");
+                webRequest.Headers.Add("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0 Safari/605.1.15");
                 webRequest.Headers.Add("Accept-Encoding", "gzip, deflate");
                 webRequest.Headers.Add("Cookie", (url.Contains("/ep") || url.Contains("/ss")) ? Program.COOKIE + ";CURRENT_FNVAL=976;" : Program.COOKIE);
                 if (url.Contains("api.bilibili.com/pgc/player/web/playurl") || url.Contains("api.bilibili.com/pugv/player/web/playurl"))
@@ -210,9 +210,9 @@ namespace BBDown
             LogDebug("Post to: {0}, data: {1}", Url, Convert.ToBase64String(postData));
             string htmlCode = string.Empty;
             using HttpRequestMessage request = new(HttpMethod.Post, Url);
-            request.Headers.Add("ContentType", "application/grpc");
-            request.Headers.Add("ContentLength", postData.Length.ToString());
-            request.Headers.Add("UserAgent", "Dalvik/2.1.0 (Linux; U; Android 6.0.1; oneplus a5010 Build/V417IR) 6.10.0 os/android model/oneplus a5010 mobi_app/android build/6100500 channel/bili innerVer/6100500 osVer/6.0.1 network/2");
+            request.Headers.Add("Content-Type", "application/grpc");
+            request.Headers.Add("Content-Length", postData.Length.ToString());
+            request.Headers.Add("User-Agent", "Dalvik/2.1.0 (Linux; U; Android 6.0.1; oneplus a5010 Build/V417IR) 6.10.0 os/android model/oneplus a5010 mobi_app/android build/6100500 channel/bili innerVer/6100500 osVer/6.0.1 network/2");
             request.Headers.Add("Cookie", Program.COOKIE);
             request.Content = new ByteArrayContent(postData);
             var webResponse = await AppHttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
