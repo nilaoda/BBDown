@@ -162,7 +162,7 @@ namespace BBDown
                     foreach (var node in video)
                     {
                         var urlList = new List<string>() { node.GetProperty("base_url").ToString() };
-                        if(node.TryGetProperty("backup_url", out JsonElement element))
+                        if(node.TryGetProperty("backup_url", out JsonElement element) && element.ValueKind != JsonValueKind.Null)
                         {
                             urlList.AddRange(element.EnumerateArray().ToList().Select(i => i.ToString()));
                         }
@@ -196,7 +196,7 @@ namespace BBDown
                     foreach (var node in audio)
                     {
                         var urlList = new List<string>() { node.GetProperty("base_url").ToString() };
-                        if (node.TryGetProperty("backup_url", out JsonElement element))
+                        if (node.TryGetProperty("backup_url", out JsonElement element) && element.ValueKind != JsonValueKind.Null)
                         {
                             urlList.AddRange(element.EnumerateArray().ToList().Select(i => i.ToString()));
                         }
