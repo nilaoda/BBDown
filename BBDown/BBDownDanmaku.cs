@@ -12,17 +12,18 @@ namespace BBDown
 {
     class BBDownDanmaku
     {
-        private const int MONITOR_WIDTH = 1920;
-        private const int MONITOR_HEIGHT = 1080;
-        private const int FONT_SIZE = 40;
-        private const double MOVE_SPEND_TIME = 8.00;
-        private const double TOP_SPEND_TIME = 4.00;
-        private const int PROTECT_LENGTH = 50;
+        private const int MONITOR_WIDTH = 1920;         //渲染字幕时的渲染范围的高度
+        private const int MONITOR_HEIGHT = 1080;        //渲染字幕时的渲染范围的高度
+        private const int FONT_SIZE = 40;               //字体大小
+        private const double MOVE_SPEND_TIME = 8.00;    //单条条滚动弹幕存在时间（控制速度）
+        private const double TOP_SPEND_TIME = 4.00;     //单条顶部或底部弹幕存在时间
+        private const int PROTECT_LENGTH = 50;          //滚动弹幕屏占百分比
 
         private static List<Danmaku> danmakus = new List<Danmaku>();
 
         public static async Task DownloadDanmaku(Page p, string mp4Path)
         {
+            // 下载弹幕
             string danmakuUrl = "https://comment.bilibili.com/" + p.cid + ".xml";
             string xmlPath = mp4Path.Substring(0, mp4Path.Length - 4) + ".xml";
             string assPath = mp4Path.Substring(0, mp4Path.Length - 4) + ".ass";
@@ -48,7 +49,7 @@ namespace BBDown
 
         public static Task ParsingXml(string xmlPath)
         {
-            Log(xmlPath);
+            // 解析xml文件
             if (!File.Exists(xmlPath) || new FileInfo(xmlPath).Length == 0)
             {
                 return Task.CompletedTask;
@@ -58,14 +59,12 @@ namespace BBDown
             settings.IgnoreComments = true;//忽略文档里面的注释
             try
             {
-                //xml文件路径
                 XmlReader reader = XmlReader.Create(xmlPath, settings);
                 xmlFile.Load(reader);
             }
             catch (Exception ex)
             {
-                //MessageBox.Show("读取文件失败！");
-                Log(ex);
+                Log(ex.Message);
             }
             XmlNode? rootNode = xmlFile.SelectSingleNode("i");
             if (rootNode != null)
@@ -96,7 +95,8 @@ namespace BBDown
 
         public static Task saveAsAss(string outputPath)
         {
-            string header = "[Script Info]" + Environment.NewLine +
+            // 保存为ASS字幕文件
+            string header = "[Script Info]" + Environment.NewLine +         // ASS字幕文件头
            "Script Updated By: BBDown(https://github.com/nilaoda/BBDown)" + Environment.NewLine +
            "ScriptType: v4.00+" + Environment.NewLine +
            $"PlayResX: {MONITOR_WIDTH}" + Environment.NewLine +
@@ -111,7 +111,7 @@ namespace BBDown
            $"Style: BBDOWN_Style, 宋体, {FONT_SIZE}, &H00FFFFFF, &H00FFFFFF, &H00000000, &H00000000, 0, 0, 0, 0, 100, 100, 0.00, 0.00, 1, 2, 0, 7, 0, 0, 0, 0" + Environment.NewLine + Environment.NewLine +
            "[Events]" + Environment.NewLine +
            "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text" + Environment.NewLine;
-            PositionController controller = new PositionController();
+            PositionController controller = new PositionController();   // 弹幕位置控制器
             List<string> lines = new List<string>();
             danmakus.Sort(new DanmakuComparer());
             foreach (Danmaku danmaku in danmakus)
@@ -161,7 +161,8 @@ namespace BBDown
 
         protected class PositionController
         {
-            int maxLine = MONITOR_HEIGHT * PROTECT_LENGTH / FONT_SIZE / 100;
+            int maxLine = MONITOR_HEIGHT * PROTECT_LENGTH / FONT_SIZE / 100;    //总行数
+            // 三个位置的弹幕队列，记录弹幕结束时间
             List<double> moveQueue = new List<double>();
             List<double> topQueue = new List<double>();
             List<double> bottomQueue = new List<double>();
@@ -178,6 +179,7 @@ namespace BBDown
 
             public int updatePosition(int type, double time, int length)
             {
+                // 获取可用位置
                 List<double> vs;
                 double displayTime = TOP_SPEND_TIME;
                 if (type == POS_BOTTOM)
@@ -196,7 +198,7 @@ namespace BBDown
                 for (int i = 0; i < maxLine; i++)
                 {
                     if (time >= vs[i])
-                    {   // 此条弹幕已结束
+                    {   // 此条弹幕已结束，更新该位置信息
                         vs[i] = time + displayTime;
                         return i * FONT_SIZE;
                     }
@@ -255,12 +257,13 @@ namespace BBDown
             public string Content { get; set; } = "";
             // 弹幕内容
             public string StartTime { get; set; } = "";
-            public double Second { get; set; } = 0.00;
             // 出现时间
+            public double Second { get; set; } = 0.00;
+            // 出现时间（秒为单位）
             public string EndTime { get; set; } = "";
             // 消失时间
             public int DanmakuMode { get; set; } = POS_MOVE;
-            // 1 滚动弹幕 2 顶端弹幕 3 底端弹幕 
+            // 弹幕类型
             public string FontSize { get; set; } = "";
             // 字号
             public string Color { get; set; } = "";
@@ -279,8 +282,8 @@ namespace BBDown
             }
         }
 
-        private const int POS_MOVE = 1;
-        private const int POS_TOP = 2;
-        private const int POS_BOTTOM = 3;
+        private const int POS_MOVE = 1;     //滚动弹幕
+        private const int POS_TOP = 2;      //顶部弹幕
+        private const int POS_BOTTOM = 3;   //底部弹幕
     }
 }
