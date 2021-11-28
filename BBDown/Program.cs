@@ -14,6 +14,7 @@ using static BBDown.BBDownUtil;
 using static BBDown.BBDownParser;
 using static BBDown.BBDownLogger;
 using static BBDown.BBDownMuxer;
+using static BBDown.BBDownDanmaku;
 using System.Text;
 using System.Linq;
 using System.Text.Json;
@@ -67,6 +68,7 @@ namespace BBDown
             public bool SkipMux { get; set; }
             public bool SkipSubtitle { get; set; }
             public bool SkipCover { get; set; }
+            public bool DownloadDanmaku { get; set; }
             public string SelectPage { get; set; } = "";
             public string Language { get; set; } = "";
             public string Cookie { get; set; } = "";
@@ -155,6 +157,9 @@ namespace BBDown
                 new Option<bool>(
                     new string[]{ "--skip-cover"},
                     "跳过封面下载"),
+                new Option<bool>(
+                    new string[]{ "--download-danmaku", "-dd"},
+                    "下载弹幕"),
                 new Option<string>(
                     new string[]{ "--language"},
                     "设置混流的音频语言(代码)，如chi, jpn等"),
@@ -332,6 +337,7 @@ namespace BBDown
                 bool skipMux = myOption.SkipMux;
                 bool skipSubtitle = myOption.SkipSubtitle;
                 bool skipCover = myOption.SkipCover;
+                bool downloadDanmaku = myOption.DownloadDanmaku;
                 bool showAll = myOption.ShowAll;
                 bool useAria2c = myOption.UseAria2c;
                 string aria2cProxy = myOption.Aria2cProxy;
@@ -839,6 +845,12 @@ namespace BBDown
                         LogError("解析此分P失败(使用--debug查看详细信息)");
                         LogDebug("{0}", webJsonStr);
                         continue;
+                    }
+
+                    if (downloadDanmaku)
+                    {
+                        // 下载弹幕
+                        await DownloadDanmaku(p, outPath);
                     }
                 }
                 Log("任务完成");
