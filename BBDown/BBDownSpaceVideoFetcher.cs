@@ -17,7 +17,7 @@ namespace BBDown
             string userInfoApi = $"https://api.bilibili.com/x/space/acc/info?mid={id}&jsonp=jsonp";
             string userName = GetValidFileName(JsonDocument.Parse(await GetWebSourceAsync(userInfoApi)).RootElement.GetProperty("data").GetProperty("name").ToString());
             List<string> urls = new List<string>();
-            int pageSize = 100;
+            int pageSize = 50;
             int pageNumber = 1;
             string api = $"https://api.bilibili.com/x/space/arc/search?mid={id}&ps={pageSize}&tid=0&pn={pageNumber}&keyword=&order=pubdate&jsonp=jsonp";
             string json = await GetWebSourceAsync(api);
