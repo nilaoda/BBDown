@@ -17,7 +17,7 @@ namespace BBDown
             id = id.Substring(3);
             string index = "";
             //string api = $"https://api.global.bilibili.com/intl/gateway/ogv/m/view?ep_id={id}&s_locale=ja_JP";
-            string api = $"https://api.global.bilibili.com/intl/gateway/v2/ogv/view/app/season?ep_id={id}&platform=android&s_locale=zh_SG&mobi_app=bstar_a" + (Program.TOKEN != "" ? $"&access_key={Program.TOKEN}" : "");
+            string api = $"https://api.bilibili.tv/intl/gateway/v2/ogv/view/app/season?ep_id={id}&platform=android&s_locale=zh_SG&mobi_app=bstar_a" + (Program.TOKEN != "" ? $"&access_key={Program.TOKEN}" : "");
             string json = await GetWebSourceAsync(api);
             using var infoJson = JsonDocument.Parse(json);
             var result = infoJson.RootElement.GetProperty("result");

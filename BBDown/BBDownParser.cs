@@ -62,7 +62,7 @@ namespace BBDown
 
         private static async Task<string> GetPlayJsonAsync(string aid, string cid, string epId, string qn)
         {
-            string api = $"https://api.global.bilibili.com/intl/gateway/v2/ogv/playurl?" +
+            string api = $"https://api.bilibili.tv/intl/gateway/v2/ogv/playurl?" +
                 $"aid={aid}&cid={cid}&ep_id={epId}&platform=android&prefer_code_type=0&qn={qn}" + (Program.TOKEN != "" ? $"&access_key={Program.TOKEN}" : "");
             string webJson = await GetWebSourceAsync(api);
             return webJson;
