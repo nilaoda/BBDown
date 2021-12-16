@@ -129,6 +129,7 @@ namespace BBDown
                  (audioOnly ? " -vn " : "") + (videoOnly ? " -an " : "") +
                  $"-c copy " +
                  (subs != null ? " -c:s mov_text " : "") +
+                 "-movflags faststart " +
                  $"\"{outPath}\"";
             LogDebug("ffmpeg命令：{0}", arguments);
             return RunExe("ffmpeg", arguments);
