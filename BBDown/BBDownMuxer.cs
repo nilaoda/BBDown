@@ -48,7 +48,7 @@ namespace BBDown
         {
             StringBuilder inputArg = new StringBuilder();
             StringBuilder metaArg = new StringBuilder();
-            inputArg.Append(" -inter 0 -noprog ");
+            inputArg.Append(" -inter 500 -noprog ");
             if (!string.IsNullOrEmpty(videoPath))
                 inputArg.Append($" -add \"{videoPath}#trackID=1:name=\" ");
             if (!string.IsNullOrEmpty(audioPath))
