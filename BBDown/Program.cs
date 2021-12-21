@@ -75,6 +75,8 @@ namespace BBDown
             public string AccessToken { get; set; } = "";
             public string Aria2cProxy { get; set; } = "";
             public string WorkDir { get; set; } = "";
+            public string FFmpegPath { get; set; } = "";
+            public string Mp4boxPath { get; set; } = "";
             public string DelayPerPage { get; set; } = "0";
         }
 
@@ -172,6 +174,12 @@ namespace BBDown
                 new Option<string>(
                     new string[]{ "--work-dir"},
                     "设置程序的工作目录"),
+                new Option<string>(
+                    new string[]{ "--ffmpeg-path"},
+                    "设置ffmpeg的路径"),
+                new Option<string>(
+                    new string[]{ "--mp4box-path"},
+                    "设置mp4box的路径"),
                 new Option<string>(
                     new string[]{ "--delay-per-page"},
                     "设置下载合集分P之间的下载间隔时间(单位: 秒, 默认无间隔)")
@@ -360,6 +368,16 @@ namespace BBDown
                     //设置工作目录
                     Environment.CurrentDirectory = dir;
                     LogDebug("切换工作目录至：{0}", dir);
+                }
+
+                if (!string.IsNullOrEmpty(myOption.FFmpegPath))
+                {
+                    BBDownMuxer.FFMPEG = myOption.FFmpegPath;
+                }
+
+                if (!string.IsNullOrEmpty(myOption.Mp4boxPath))
+                {
+                    BBDownMuxer.MP4BOX = myOption.Mp4boxPath;
                 }
 
                 //audioOnly和videoOnly同时开启则全部忽视

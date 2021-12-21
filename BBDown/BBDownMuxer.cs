@@ -13,12 +13,19 @@ namespace BBDown
 {
     class BBDownMuxer
     {
-        public static int RunExe(string app, string parms)
+        public static string FFMPEG = "ffmpeg";
+        public static string MP4BOX = "mp4box";
+
+        public static int RunExe(string app, string parms, bool customBin = false)
         {
-            if (File.Exists(Path.Combine(Program.APP_DIR, $"{app}")))
-                app = Path.Combine(Program.APP_DIR, $"{app}");
-            if (File.Exists(Path.Combine(Program.APP_DIR, $"{app}.exe")))
-                app = Path.Combine(Program.APP_DIR, $"{app}.exe");
+            // 若不是手动指定，则自动寻找可执行文件
+            if (!customBin)
+            {
+                if (File.Exists(Path.Combine(Program.APP_DIR, $"{app}")))
+                    app = Path.Combine(Program.APP_DIR, $"{app}");
+                if (File.Exists(Path.Combine(Program.APP_DIR, $"{app}.exe")))
+                    app = Path.Combine(Program.APP_DIR, $"{app}.exe");
+            }
             int code = 0;
             Process p = new Process();
             p.StartInfo.FileName = app;
@@ -76,7 +83,7 @@ namespace BBDown
             //----分析完毕
             var arguments = inputArg.ToString() + (metaArg.ToString() == "" ? "" : " -itags tools=\"\"" + metaArg.ToString()) + $" \"{outPath}\"";
             LogDebug("mp4box命令：{0}", arguments);
-            return RunExe("mp4box", arguments);
+            return RunExe(MP4BOX, arguments, MP4BOX != "mp4box");
         }
 
         public static int MuxAV(bool useMp4box, string videoPath, string audioPath, string outPath, string desc = "", string title = "", string episodeId = "", string pic = "", string lang = "", List<Subtitle> subs = null, bool audioOnly = false, bool videoOnly = false)
@@ -132,7 +139,7 @@ namespace BBDown
                  "-movflags faststart " +
                  $"\"{outPath}\"";
             LogDebug("ffmpeg命令：{0}", arguments);
-            return RunExe("ffmpeg", arguments);
+            return RunExe(FFMPEG, arguments, FFMPEG != "ffmpeg");
         }
 
         public static void MergeFLV(string[] files, string outPath)
