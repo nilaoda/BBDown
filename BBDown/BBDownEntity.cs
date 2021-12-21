@@ -6,7 +6,7 @@ namespace BBDown
 {
     class BBDownEntity
     {
-        public struct Page
+        public class Page
         {
             public int index;
             public string aid;
@@ -28,7 +28,7 @@ namespace BBDown
             }
         }
 
-        public struct Video
+        public class Video
         {
             public string id;
             public string dfn;
@@ -58,7 +58,7 @@ namespace BBDown
             }
         }
 
-        public struct Audio
+        public class Audio
         {
             public string id;
             public string dfn;
@@ -83,14 +83,14 @@ namespace BBDown
             }
         }
 
-        public struct Subtitle
+        public class Subtitle
         {
             public string lan;
             public string url;
             public string path;
         }
 
-        public struct Clip
+        public class Clip
         {
             public int index;
             public long from;
