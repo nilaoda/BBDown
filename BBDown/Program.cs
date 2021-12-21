@@ -528,6 +528,9 @@ namespace BBDown
 
                     Log($"开始解析P{p.index}...");
 
+                    LogDebug("尝试获取章节信息...");
+                    p.points = await FetchPointsAsync(p.cid, p.aid);
+
                     string webJsonStr = "";
                     List<Video> videoTracks = new List<Video>();
                     List<Audio> audioTracks = new List<Audio>();
@@ -739,7 +742,7 @@ namespace BBDown
                             vInfo.PagesInfo.Count > 1 ? ($"P{indexStr}.{p.title}") : "",
                             File.Exists($"{p.aid}/{p.aid}.jpg") ? $"{p.aid}/{p.aid}.jpg" : "",
                             lang,
-                            subtitleInfo, audioOnly, videoOnly);
+                            subtitleInfo, audioOnly, videoOnly, p.points);
                         if (code != 0 || !File.Exists(outPath) || new FileInfo(outPath).Length == 0)
                         {
                             LogError("合并失败"); continue;
@@ -748,6 +751,7 @@ namespace BBDown
                         Thread.Sleep(200);
                         if (videoTracks.Count > 0) File.Delete(videoPath);
                         if (audioTracks.Count > 0) File.Delete(audioPath);
+                        if (p.points.Count > 0) File.Delete(Path.Combine(Path.GetDirectoryName(videoPath), "chapters"));
                         foreach (var s in subtitleInfo) File.Delete(s.path);
                         if (pagesInfo.Count == 1 || p.index == pagesInfo.Last().index || p.aid != pagesInfo.Last().aid)
                             File.Delete($"{p.aid}/{p.aid}.jpg");
@@ -833,7 +837,7 @@ namespace BBDown
                             vInfo.PagesInfo.Count > 1 ? ($"P{indexStr}.{p.title}") : "",
                             File.Exists($"{p.aid}/{p.aid}.jpg") ? $"{p.aid}/{p.aid}.jpg" : "",
                             lang,
-                            subtitleInfo, audioOnly, videoOnly);
+                            subtitleInfo, audioOnly, videoOnly, p.points);
                         if (code != 0 || !File.Exists(outPath) || new FileInfo(outPath).Length == 0)
                         {
                             LogError("合并失败"); continue;
@@ -842,6 +846,7 @@ namespace BBDown
                         Thread.Sleep(200);
                         if (videoTracks.Count != 0) File.Delete(videoPath);
                         foreach (var s in subtitleInfo) File.Delete(s.path);
+                        if (p.points.Count > 0) File.Delete(Path.Combine(Path.GetDirectoryName(videoPath), "chapters"));
                         if (pagesInfo.Count == 1 || p.index == pagesInfo.Last().index || p.aid != pagesInfo.Last().aid)
                             File.Delete($"{p.aid}/{p.aid}.jpg");
                         if (Directory.Exists(p.aid) && Directory.GetFiles(p.aid).Length == 0) Directory.Delete(p.aid, true);

@@ -15,6 +15,7 @@ namespace BBDown
             public string title;
             public int dur;
             public string res;
+            public List<ViewPoint> points = new List<ViewPoint>();
 
             public Page(int index, string aid, string cid, string epid, string title, int dur, string res)
             {
@@ -26,6 +27,13 @@ namespace BBDown
                 this.dur = dur;
                 this.res = res;
             }
+        }
+
+        public class ViewPoint
+        {
+            public string title;
+            public int start;
+            public int end;
         }
 
         public class Video

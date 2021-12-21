@@ -170,11 +170,14 @@ namespace BBDown
             }
         }
 
-        public static string FormatTime(int time)
+        public static string FormatTime(int time, bool absolute = false)
         {
             TimeSpan ts = new TimeSpan(0, 0, time);
             string str = "";
+            if (!absolute)
             str = (ts.Hours.ToString("00") == "00" ? "" : ts.Hours.ToString("00") + "h") + ts.Minutes.ToString("00") + "m" + ts.Seconds.ToString("00") + "s";
+            else
+                str = ts.Hours.ToString("00") + ":" + ts.Minutes.ToString("00") + ":" + ts.Seconds.ToString("00");
             return str;
         }
 
@@ -664,6 +667,74 @@ namespace BBDown
             sb.Add($"sign", GetSign(ToQueryString(sb)));
 
             return sb;
+        }
+
+        /// <summary>
+        /// 获取章节信息
+        /// </summary>
+        /// <param name="cid"></param>
+        /// <param name="aid"></param>
+        /// <returns></returns>
+        public static async Task<List<ViewPoint>> FetchPointsAsync(string cid, string aid)
+        {
+            var ponints = new List<ViewPoint>();
+            try
+            {
+                string api = $"https://api.bilibili.com/x/player/v2?cid={cid}&aid={aid}";
+                string json = await GetWebSourceAsync(api);
+                using var infoJson = JsonDocument.Parse(json);
+                if (infoJson.RootElement.GetProperty("data").TryGetProperty("view_points", out JsonElement vPoint))
+                {
+                    foreach (var point in vPoint.EnumerateArray())
+                    {
+                        ponints.Add(new ViewPoint()
+                        {
+                            title = point.GetProperty("content").GetString(),
+                            start = int.Parse(point.GetProperty("from").ToString()),
+                            end = int.Parse(point.GetProperty("to").ToString())
+                        });
+                    }
+                }
+            }
+            catch (Exception) { }
+            return ponints;
+        }
+
+        /// <summary>
+        /// 生成metadata文件，用于ffmpeg混流章节信息
+        /// </summary>
+        /// <param name="points"></param>
+        /// <returns></returns>
+        public static string GetFFmpegMetaString(List<ViewPoint> points)
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine(";FFMETADATA");
+            foreach (var p in points)
+            {
+                var time = 1000; //固定 1000
+                sb.AppendLine("[CHAPTER]");
+                sb.AppendLine($"TIMEBASE=1/{time}");
+                sb.AppendLine($"START={p.start * time}");
+                sb.AppendLine($"END={p.end * time}");
+                sb.AppendLine($"title={p.title}");
+                sb.AppendLine();
+            }
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// 生成metadata文件，用于mp4box混流章节信息
+        /// </summary>
+        /// <param name="points"></param>
+        /// <returns></returns>
+        public static string GetMp4boxMetaString(List<ViewPoint> points)
+        {
+            StringBuilder sb = new StringBuilder();
+            foreach (var p in points)
+            {
+                sb.AppendLine($"{FormatTime(p.start, true)} {p.title}");
+            }
+            return sb.ToString();
         }
     }
 }
