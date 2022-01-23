@@ -477,6 +477,14 @@ namespace BBDown
                 {
                     fetcher = new BBDownSpaceVideoFetcher();
                 }
+                else if (aidOri.StartsWith("listBizId"))
+                {
+                    fetcher = new BBDownMediaListFetcher();
+                }
+                else if (aidOri.StartsWith("seriesBizId"))
+                {
+                    fetcher = new BBDownSeriesListFetcher();
+                }
                 var vInfo = await fetcher.FetchAsync(aidOri);
                 string title = vInfo.Title;
                 string desc = vInfo.Desc;
@@ -564,8 +572,9 @@ namespace BBDown
                         if (!skipCover && !subOnly && !File.Exists($"{p.aid}/{p.aid}.jpg")) 
                         {
                             Log("下载封面...");
-                            LogDebug("下载：{0}", pic);
-                            await using var response = await AppHttpClient.GetStreamAsync(pic);
+                            var cover = pic == "" ? p.cover : pic;
+                            LogDebug("下载：{0}", cover);
+                            await using var response = await AppHttpClient.GetStreamAsync(cover);
                             await using var fs = new FileStream($"{p.aid}/{p.aid}.jpg", FileMode.OpenOrCreate);
                             await response.CopyToAsync(fs);
                         }

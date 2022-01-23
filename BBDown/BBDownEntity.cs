@@ -15,6 +15,7 @@ namespace BBDown
             public string title;
             public int dur;
             public string res;
+            public string cover;
             public List<ViewPoint> points = new List<ViewPoint>();
 
             public Page(int index, string aid, string cid, string epid, string title, int dur, string res)
@@ -26,6 +27,31 @@ namespace BBDown
                 this.title = title;
                 this.dur = dur;
                 this.res = res;
+            }
+
+            public Page(int index, string aid, string cid, string epid, string title, int dur, string res, string cover)
+            {
+                this.aid = aid;
+                this.index = index;
+                this.cid = cid;
+                this.epid = epid;
+                this.title = title;
+                this.dur = dur;
+                this.res = res;
+                this.cover = cover;
+            }
+
+            public override bool Equals(object obj)
+            {
+                return obj is Page page &&
+                       aid == page.aid &&
+                       cid == page.cid &&
+                       epid == page.epid;
+            }
+
+            public override int GetHashCode()
+            {
+                return HashCode.Combine(aid, cid, epid);
             }
         }
 

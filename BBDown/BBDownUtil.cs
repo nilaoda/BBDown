@@ -89,6 +89,22 @@ namespace BBDown
                     string epId = Regex.Match(input, "/ep(\\d{1,})").Groups[1].Value;
                     avid = $"ep:{epId}";
                 }
+                else if (input.Contains("/medialist/") && input.Contains("business_id=")) //medialist
+                {
+                    string bizId = GetQueryString("business_id", input);
+                    avid = $"listBizId:{bizId}";
+                }
+                else if (input.Contains("/channel/collectiondetail?sid="))
+                {
+                    string bizId = GetQueryString("sid", input);
+                    avid = $"listBizId:{bizId}";
+                }
+                else if (input.Contains("/channel/seriesdetail?sid="))
+                {
+                    string mid = Regex.Match(input, "space.bilibili.com/(\\d{1,})").Groups[1].Value;
+                    string bizId = GetQueryString("sid", input);
+                    avid = $"seriesBizId:{bizId}:{mid}";
+                }
                 else if (input.Contains("/space.bilibili.com/"))
                 {
                     string mid = Regex.Match(input, "space.bilibili.com/(\\d{1,})").Groups[1].Value;
