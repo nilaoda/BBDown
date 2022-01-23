@@ -3,6 +3,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -667,6 +668,43 @@ namespace BBDown
             sb.Add($"sign", GetSign(ToQueryString(sb)));
 
             return sb;
+        }
+
+        /// <summary>
+        /// 检测ffmpeg是否识别杜比视界
+        /// </summary>
+        /// <returns></returns>
+        public static bool CheckFFmpegDOVI()
+        {
+            try
+            {
+                var process = new Process
+                {
+                    StartInfo = new ProcessStartInfo
+                    {
+                        FileName = "ffmpeg",
+                        Arguments = "-version",
+                        UseShellExecute = false,
+                        RedirectStandardError = true,
+                        RedirectStandardOutput = true,
+                        CreateNoWindow = true
+                    }
+                };
+                process.Start();
+                string info = process.StandardOutput.ReadToEnd() + Environment.NewLine + process.StandardError.ReadToEnd();
+                process.WaitForExit();
+                var match = Regex.Match(info, "libavutil\\s+(\\d+)\\. (\\d+)\\.");
+                if (!match.Success) return false;
+                if((Convert.ToInt32(match.Groups[1].Value)==57 && Convert.ToInt32(match.Groups[1].Value) >= 17)
+                    || Convert.ToInt32(match.Groups[1].Value) > 57)
+                {
+                    return true;
+                }
+            }
+            catch (Exception)
+            {
+            }
+            return false;
         }
 
         /// <summary>

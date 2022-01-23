@@ -688,10 +688,10 @@ namespace BBDown
 
                         if (videoTracks.Count > 0)
                         {
-                            //杜比视界，使用mp4box封装
-                            if (videoTracks[vIndex].dfn == qualitys["126"] && !useMp4box)
+                            //杜比视界，若ffmpeg版本小于5.0，使用mp4box封装
+                            if (videoTracks[vIndex].dfn == qualitys["126"] && !useMp4box && !CheckFFmpegDOVI())
                             {
-                                LogError($"检测到杜比视界清晰度,将强制使用mp4box混流...");
+                                LogError($"检测到杜比视界清晰度且您的ffmpeg版本小于5.0,将使用mp4box混流...");
                                 useMp4box = true;
                             }
                             if (multiThread && !videoTracks[vIndex].baseUrl.Contains("-cmcc-"))
