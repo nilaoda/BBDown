@@ -4,7 +4,10 @@
 一款命令行式哔哩哔哩下载器. Bilibili Downloader.
 
 # 注意
-本软件合并时需要使用[ffmpeg](https://www.gyan.dev/ffmpeg/builds/) ，也可能需要使用[mp4box](https://gpac.wp.imt.fr/downloads/)，用于合并**杜比视界**.
+本软件混流时需要外部程序：
+
+* 普通视频：[ffmpeg](https://www.gyan.dev/ffmpeg/builds/) ，或 [mp4box](https://gpac.wp.imt.fr/downloads/)
+* 杜比视界：ffmpeg5.0以上或新版mp4box.
 
 # 快速开始
 本软件已经以 [Dotnet Tool](https://www.nuget.org/packages/BBDown/) 形式发布  
