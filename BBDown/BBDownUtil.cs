@@ -206,7 +206,7 @@ namespace BBDown
                 using var webRequest = new HttpRequestMessage(HttpMethod.Get, url);
                 webRequest.Headers.Add("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0 Safari/605.1.15");
                 webRequest.Headers.Add("Accept-Encoding", "gzip, deflate");
-                webRequest.Headers.Add("Cookie", (url.Contains("/ep") || url.Contains("/ss")) ? Program.COOKIE + ";CURRENT_FNVAL=2000;" : Program.COOKIE);
+                webRequest.Headers.Add("Cookie", (url.Contains("/ep") || url.Contains("/ss")) ? Program.COOKIE + ";CURRENT_FNVAL=4048;" : Program.COOKIE);
                 if (url.Contains("api.bilibili.com/pgc/player/web/playurl") || url.Contains("api.bilibili.com/pugv/player/web/playurl"))
                     webRequest.Headers.Add("Referer", "https://www.bilibili.com");
                 webRequest.Headers.CacheControl = CacheControlHeaderValue.Parse("no-cache");
@@ -789,6 +789,22 @@ namespace BBDown
                 sb.AppendLine($"{FormatTime(p.start, true)} {p.title}");
             }
             return sb.ToString();
+        }
+
+        /// <summary>
+        /// 编码转换
+        /// </summary>
+        /// <param name="code"></param>
+        /// <returns></returns>
+        public static string GetVideoCodec(string code)
+        {
+            return code switch
+            {
+                "13" => "AV1",
+                "12" => "HEVC",
+                "7" => "AVC",
+                _ => "UNKNOW"
+            };
         }
     }
 }

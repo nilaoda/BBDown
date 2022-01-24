@@ -29,7 +29,7 @@ namespace BBDown
             string prefix = tvApi ? (bangumi ? "api.snm0516.aisee.tv/pgc/player/api/playurltv" : "api.snm0516.aisee.tv/x/tv/ugc/playurl")
                         : (bangumi ? "api.bilibili.com/pgc/player/web/playurl" : "api.bilibili.com/x/player/playurl");
             string api = $"https://{prefix}?avid={aid}&cid={cid}&qn={qn}&type=&otype=json" + (tvApi ? "" : "&fourk=1") +
-                $"&fnver=0&fnval=2000" + (tvApi ? "&device=android&platform=android" +
+                $"&fnver=0&fnval=4048" + (tvApi ? "&device=android&platform=android" +
                 "&mobi_app=android_tv_yst&npcybs=0&force_host=2&build=102801" +
                 (Program.TOKEN != "" ? $"&access_key={Program.TOKEN}" : "") : "") +
                 (bangumi ? $"&module=bangumi&ep_id={epId}&fourk=1" + "&session=" : "");
@@ -68,7 +68,7 @@ namespace BBDown
             return webJson;
         }
 
-        public static async Task<(string, List<Video>, List<Audio>, List<string>, List<string>)> ExtractTracksAsync(bool onlyHevc, bool onlyAvc, string aidOri, string aid, string cid, string epId, bool tvApi, bool intlApi, bool appApi, string qn = "0")
+        public static async Task<(string, List<Video>, List<Audio>, List<string>, List<string>)> ExtractTracksAsync(bool onlyHevc, bool onlyAvc, bool onlyAv1, string aidOri, string aid, string cid, string epId, bool tvApi, bool intlApi, bool appApi, string qn = "0")
         {
             List<Video> videoTracks = new List<Video>();
             List<Audio> audioTracks = new List<Audio>();
@@ -99,8 +99,7 @@ namespace BBDown
                             v.dfn = Program.qualitys[v.id];
                             v.bandwith = Convert.ToInt64(dashVideo.GetProperty("bandwidth").ToString()) / 1000;
                             v.baseUrl = dashVideo.GetProperty("base_url").ToString();
-                            v.codecs = dashVideo.GetProperty("codecid").ToString() == "12" ? "HEVC" : "AVC";
-                            if (onlyHevc && v.codecs == "AVC") continue;
+                            v.codecs = GetVideoCodec(dashVideo.GetProperty("codecid").ToString());
                             if (!videoTracks.Contains(v)) videoTracks.Add(v);
                         }
                     }
@@ -172,14 +171,12 @@ namespace BBDown
                         v.dfn = Program.qualitys[v.id];
                         v.bandwith = Convert.ToInt64(node.GetProperty("bandwidth").ToString()) / 1000;
                         v.baseUrl = urlList.FirstOrDefault(i => !Regex.IsMatch(i, "http.*:\\d+"), urlList.First());
-                        v.codecs = node.GetProperty("codecid").ToString() == "12" ? "HEVC" : "AVC";
+                        v.codecs = GetVideoCodec(node.GetProperty("codecid").ToString());
                         if (!tvApi && !appApi)
                         {
                             v.res = node.GetProperty("width").ToString() + "x" + node.GetProperty("height").ToString();
                             v.fps = node.GetProperty("frame_rate").ToString();
                         }
-                        if (onlyHevc && v.codecs == "AVC") continue;
-                        if (onlyAvc && v.codecs == "HEVC") continue;
                         if (!videoTracks.Contains(v)) videoTracks.Add(v);
                     }
                 }
@@ -300,12 +297,20 @@ namespace BBDown
                 v.id = quality;
                 v.dfn = Program.qualitys[quality];
                 v.baseUrl = url;
-                v.codecs = videoCodecid == "12" ? "HEVC" : "AVC";
+                v.codecs = GetVideoCodec(videoCodecid);
                 v.dur = (int)length / 1000;
                 v.size = size;
-                if (onlyHevc && v.codecs == "AVC") { }
                 if (!videoTracks.Contains(v)) videoTracks.Add(v);
             }
+
+            //筛选编码
+            if (onlyAvc)
+                videoTracks = videoTracks.Where(v => v.codecs == "AVC").ToList();
+            else if (onlyHevc)
+                videoTracks = videoTracks.Where(v => v.codecs == "HEVC").ToList();
+            else if (onlyAv1)
+                videoTracks = videoTracks.Where(v => v.codecs == "AV1").ToList();
+
 
             return (webJsonStr, videoTracks, audioTracks, clips, dfns);
         }

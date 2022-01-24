@@ -54,6 +54,7 @@ namespace BBDown
             public bool UseMP4box { get; set; }
             public bool OnlyHevc { get; set; }
             public bool OnlyAvc { get; set; }
+            public bool OnlyAv1 { get; set; }
             public bool OnlyShowInfo { get; set; }
             public bool ShowAll { get; set; }
             public bool UseAria2c { get; set; }
@@ -111,6 +112,9 @@ namespace BBDown
                 new Option<bool>(
                     new string[]{ "--only-avc" ,"-avc"},
                     "只下载avc编码"),
+                new Option<bool>(
+                    new string[]{ "--only-av1" ,"-av1"},
+                    "只下载av1编码"),
                 new Option<bool>(
                     new string[]{ "--only-show-info" ,"-info"},
                     "仅解析而不进行下载"),
@@ -337,6 +341,7 @@ namespace BBDown
                 bool useMp4box = myOption.UseMP4box;
                 bool onlyHevc = myOption.OnlyHevc;
                 bool onlyAvc = myOption.OnlyAvc;
+                bool onlyAv1 = myOption.OnlyAv1;
                 bool hideStreams = myOption.HideStreams;
                 bool multiThread = myOption.MultiThread;
                 bool audioOnly = myOption.AudioOnly;
@@ -387,12 +392,9 @@ namespace BBDown
                     videoOnly = false;
                 }
 
-                //OnlyHevc和OnlyAvc同时开启则全部忽视
-                if (onlyAvc && onlyHevc)
-                {
-                    onlyAvc = false;
-                    onlyHevc = false;
-                }
+                //OnlyHevc/OnlyAvc/只能开启一个，否则全部无视
+                bool selected = new List<bool> { onlyAvc, onlyHevc, onlyAv1 }.Where(o => o == true).Count() == 1;
+                if (selected == false) onlyAvc = onlyHevc = onlyAv1 = false;
 
                 if (skipSubtitle)
                     subOnly = false;
@@ -614,7 +616,7 @@ namespace BBDown
                     }
 
                     //调用解析
-                    (webJsonStr, videoTracks, audioTracks, clips, dfns) = await ExtractTracksAsync(onlyHevc, onlyAvc, aidOri, p.aid, p.cid, p.epid, tvApi, intlApi, appApi);
+                    (webJsonStr, videoTracks, audioTracks, clips, dfns) = await ExtractTracksAsync(onlyHevc, onlyAvc, onlyAv1, aidOri, p.aid, p.cid, p.epid, tvApi, intlApi, appApi);
 
                     //File.WriteAllText($"debug.json", JObject.Parse(webJson).ToString());
                     
@@ -784,7 +786,7 @@ namespace BBDown
                             Console.ResetColor();
                             //重新解析
                             videoTracks.Clear();
-                            (webJsonStr, videoTracks, audioTracks, clips, dfns) = await ExtractTracksAsync(onlyHevc, onlyAvc, aidOri, p.aid, p.cid, p.epid, tvApi, intlApi, appApi, dfns[vIndex]);
+                            (webJsonStr, videoTracks, audioTracks, clips, dfns) = await ExtractTracksAsync(onlyHevc, onlyAvc, onlyAv1, aidOri, p.aid, p.cid, p.epid, tvApi, intlApi, appApi, dfns[vIndex]);
                             flag = true;
                             goto reParse;
                         }
