@@ -70,6 +70,7 @@ namespace BBDown
             public bool SkipSubtitle { get; set; }
             public bool SkipCover { get; set; }
             public bool DownloadDanmaku { get; set; }
+            public bool NoPartPrefix { get; set; }
             public string SelectPage { get; set; } = "";
             public string Language { get; set; } = "";
             public string Cookie { get; set; } = "";
@@ -166,6 +167,9 @@ namespace BBDown
                 new Option<bool>(
                     new string[]{ "--download-danmaku", "-dd"},
                     "下载弹幕"),
+                new Option<bool>(
+                    new string[]{ "--no-part-prefix"},
+                    "多P时，不要加入分P前缀，如[P1],[P2]等"),
                 new Option<string>(
                     new string[]{ "--language"},
                     "设置混流的音频语言(代码)，如chi, jpn等"),
@@ -351,6 +355,7 @@ namespace BBDown
                 bool skipSubtitle = myOption.SkipSubtitle;
                 bool skipCover = myOption.SkipCover;
                 bool downloadDanmaku = myOption.DownloadDanmaku;
+                bool noPartPrefix = myOption.NoPartPrefix;
                 bool showAll = myOption.ShowAll;
                 bool useAria2c = myOption.UseAria2c;
                 string aria2cProxy = myOption.Aria2cProxy;
@@ -553,7 +558,8 @@ namespace BBDown
 
                     //处理文件夹以.结尾导致的异常情况
                     if (title.EndsWith(".")) title += "_fix";
-                    string outPath = GetValidFileName(title) + (pagesInfo.Count > 1 ? $"/[P{indexStr}]{GetValidFileName(p.title)}" : (vInfo.PagesInfo.Count > 1 ? $"[P{indexStr}]{GetValidFileName(p.title)}" : "")) + ".mp4";
+                    string prefix = noPartPrefix ? "" : $"[P{indexStr}]";
+                    string outPath = GetValidFileName(title) + (pagesInfo.Count > 1 ? $"/{prefix}{GetValidFileName(p.title)}" : (vInfo.PagesInfo.Count > 1 ? $"{prefix}{GetValidFileName(p.title)}" : "")) + ".mp4";
                     if (!infoMode && File.Exists(outPath) && new FileInfo(outPath).Length != 0)
                     {
                         Log($"{outPath}已存在, 跳过下载...");
@@ -593,9 +599,10 @@ namespace BBDown
                                 if (subOnly && File.Exists(s.path) && File.ReadAllText(s.path) != "")
                                 {
                                     string _indexStr = p.index.ToString("0".PadRight(pagesInfo.OrderByDescending(_p => _p.index).First().index.ToString().Length, '0'));
+                                    string _prefix = noPartPrefix ? "" : $"[P{indexStr}]";
                                     //处理文件夹以.结尾导致的异常情况
                                     if (title.EndsWith(".")) title += "_fix";
-                                    string _outSubPath = GetValidFileName(title) + (pagesInfo.Count > 1 ? $"/[P{_indexStr}]{GetValidFileName(p.title)}" : (vInfo.PagesInfo.Count > 1 ? $"[P{_indexStr}]{GetValidFileName(p.title)}" : "")) + $"_{BBDownSubUtil.GetSubtitleCode(s.lan).Item2}.srt";
+                                    string _outSubPath = GetValidFileName(title) + (pagesInfo.Count > 1 ? $"/{_prefix}{GetValidFileName(p.title)}" : (vInfo.PagesInfo.Count > 1 ? $"{_prefix}{GetValidFileName(p.title)}" : "")) + $"_{BBDownSubUtil.GetSubtitleCode(s.lan).Item2}.srt";
                                     if (_outSubPath.Contains("/"))
                                     {
                                         if (!Directory.Exists(Path.GetDirectoryName(_outSubPath)))
@@ -750,7 +757,7 @@ namespace BBDown
                         int code = MuxAV(useMp4box, videoPath, audioPath, outPath,
                             desc,
                             title,
-                            vInfo.PagesInfo.Count > 1 ? ($"P{indexStr}.{p.title}") : "",
+                            vInfo.PagesInfo.Count > 1 ? ($"{prefix}{p.title}") : "",
                             File.Exists($"{p.aid}/{p.aid}.jpg") ? $"{p.aid}/{p.aid}.jpg" : "",
                             lang,
                             subtitleInfo, audioOnly, videoOnly, p.points);
@@ -845,7 +852,7 @@ namespace BBDown
                         int code = MuxAV(false, videoPath, "", outPath,
                             desc,
                             title,
-                            vInfo.PagesInfo.Count > 1 ? ($"P{indexStr}.{p.title}") : "",
+                            vInfo.PagesInfo.Count > 1 ? ($"{prefix}{p.title}") : "",
                             File.Exists($"{p.aid}/{p.aid}.jpg") ? $"{p.aid}/{p.aid}.jpg" : "",
                             lang,
                             subtitleInfo, audioOnly, videoOnly, p.points);
