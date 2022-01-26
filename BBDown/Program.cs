@@ -498,7 +498,6 @@ namespace BBDown
                 }
                 var vInfo = await fetcher.FetchAsync(aidOri);
                 string title = vInfo.Title;
-                string desc = vInfo.Desc;
                 string pic = vInfo.Pic;
                 string pubTime = vInfo.PubTime;
                 LogColor("视频标题: " + title);
@@ -539,6 +538,7 @@ namespace BBDown
 
                 foreach (Page p in pagesInfo)
                 {
+                    string desc = p.desc == "" ? vInfo.Desc : p.desc;
                     if (pagesInfo.Count > 1 && delay > 0)
                     {
                         Log($"停顿{delay}秒...");

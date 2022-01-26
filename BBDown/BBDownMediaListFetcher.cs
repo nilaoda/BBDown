@@ -42,6 +42,7 @@ namespace BBDown
                 foreach (var m in data.GetProperty("media_list").EnumerateArray())
                 {
                     var pageCount = m.GetProperty("page").GetInt32();
+                    var desc = m.GetProperty("intro").GetString();
                     foreach (var page in m.GetProperty("pages").EnumerateArray())
                     {
                         Page p = new Page(index++,
@@ -51,7 +52,8 @@ namespace BBDown
                         pageCount == 1 ? m.GetProperty("title").ToString() : $"{m.GetProperty("title").ToString()}_P{page.GetProperty("page").ToString()}_{page.GetProperty("title")}", //单P使用外层标题 多P则拼接内层子标题
                         page.GetProperty("duration").GetInt32(),
                         page.GetProperty("dimension").GetProperty("width").ToString() + "x" + page.GetProperty("dimension").GetProperty("height").ToString(),
-                        m.GetProperty("cover").ToString());
+                        m.GetProperty("cover").ToString(),
+                        desc);
                         if (!pagesInfo.Contains(p)) pagesInfo.Add(p);
                         else index--;
                     }

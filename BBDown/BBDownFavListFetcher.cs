@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using static BBDown.BBDownEntity;
 using static BBDown.BBDownLogger;
 using static BBDown.BBDownUtil;
 
@@ -31,7 +32,8 @@ namespace BBDown
             }
 
             int pageSize = 20;
-            var aids = new List<string>();
+            int index = 1;
+            List<Page> pagesInfo = new List<Page>();
 
             var api = $"https://api.bilibili.com/x/v3/fav/resource/list?media_id={favId}&pn=1&ps={pageSize}&keyword=&order=mtime&type=0&tid=0&platform=web&jsonp=jsonp";
             var json = await GetWebSourceAsync(api);
@@ -40,26 +42,60 @@ namespace BBDown
             int totalCount = data.GetProperty("info").GetProperty("media_count").GetInt32();
             int totalPage = (int)Math.Ceiling((double)totalCount / pageSize);
             var title = GetValidFileName(data.GetProperty("info").GetProperty("title").ToString());
+            var intro = GetValidFileName(data.GetProperty("info").GetProperty("intro").GetString());
+            string pubTime = data.GetProperty("info").GetProperty("ctime").ToString();
+            pubTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc).AddSeconds(Convert.ToDouble(pubTime)).ToLocalTime().ToString();
             var userName = GetValidFileName(data.GetProperty("info").GetProperty("upper").GetProperty("name").ToString());
-            aids.AddRange(data.GetProperty("medias").EnumerateArray().ToArray().Select(o => o.GetProperty("id").ToString()));
+            var medias = data.GetProperty("medias").EnumerateArray().ToList();
+            
             for (int page = 2; page <= totalPage; page++)
             {
                 api = $"https://api.bilibili.com/x/v3/fav/resource/list?media_id={favId}&pn={page}&ps={pageSize}&keyword=&order=mtime&type=0&tid=0&platform=web&jsonp=jsonp";
                 json = await GetWebSourceAsync(api);
                 using var jsonDoc = JsonDocument.Parse(json);
                 data = jsonDoc.RootElement.GetProperty("data");
-                aids.AddRange(data.GetProperty("medias").EnumerateArray().ToArray().Select(o => o.GetProperty("id").ToString()));
+                medias.AddRange(data.GetProperty("medias").EnumerateArray().ToList());
             }
 
-            var urls = aids.Select(o => $"https://www.bilibili.com/video/av{o}");
-            File.WriteAllText($"{userName}所创建的收藏夹[{title}]的所有视频.txt", string.Join(Environment.NewLine, urls));
-            Log("目前下载器不支持下载用户创建的收藏夹，不过程序已经获取到了该收藏夹的全部投稿视频地址，你可以自行使用批处理脚本等手段调用本程序进行批量下载。如在Windows系统你可以使用如下代码：");
-            Console.WriteLine();
-            Console.WriteLine(@"@echo Off
-For /F %%a in (urls.txt) Do (BBDown.exe ""%%a"")
-pause");
-            Console.WriteLine();
-            throw new Exception("暂不支持该功能");
+            foreach (var m in medias)
+            {
+                var pageCount = m.GetProperty("page").GetInt32();
+                if (pageCount > 1)
+                {
+                    var tmpInfo = await new BBDownNormalInfoFetcher().FetchAsync(m.GetProperty("id").ToString());
+                    foreach (var item in tmpInfo.PagesInfo)
+                    {
+                        Page p = new Page(index++, item);
+                        p.title = m.GetProperty("title").ToString() + $"_P{item.index}_{item.title}";
+                        p.cover = tmpInfo.Pic;
+                        p.desc = m.GetProperty("intro").ToString();
+                        if (!pagesInfo.Contains(p)) pagesInfo.Add(p);
+                    }
+                }
+                else
+                {
+                    Page p = new Page(index++,
+                        m.GetProperty("id").ToString(),
+                        m.GetProperty("ugc").GetProperty("first_cid").ToString(),
+                        "", //epid
+                        m.GetProperty("title").ToString(),
+                        m.GetProperty("duration").GetInt32(),
+                        "",
+                        m.GetProperty("cover").ToString(),
+                        m.GetProperty("intro").ToString());
+                    if (!pagesInfo.Contains(p)) pagesInfo.Add(p);
+                }
+            }
+
+            var info = new BBDownVInfo();
+            info.Title = title.Trim();
+            info.Desc = intro.Trim();
+            info.Pic = "";
+            info.PubTime = pubTime;
+            info.PagesInfo = pagesInfo;
+            info.IsBangumi = false;
+
+            return info;
         }
     }
 }
