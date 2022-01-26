@@ -23,7 +23,7 @@ namespace BBDown
             var json = await GetWebSourceAsync(api);
             using var infoJson = JsonDocument.Parse(json);
             var data = infoJson.RootElement.GetProperty("data");
-            var listTitle = data.GetProperty("title").GetString();
+            var listTitle = GetValidFileName(data.GetProperty("title").GetString());
             var intro = data.GetProperty("intro").GetString();
             string pubTime = data.GetProperty("ctime").ToString();
             pubTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc).AddSeconds(Convert.ToDouble(pubTime)).ToLocalTime().ToString();

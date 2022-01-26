@@ -492,6 +492,10 @@ namespace BBDown
                 {
                     fetcher = new BBDownSeriesListFetcher();
                 }
+                else if (aidOri.StartsWith("favId"))
+                {
+                    fetcher = new BBDownFavListFetcher();
+                }
                 var vInfo = await fetcher.FetchAsync(aidOri);
                 string title = vInfo.Title;
                 string desc = vInfo.Desc;

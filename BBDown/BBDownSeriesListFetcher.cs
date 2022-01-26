@@ -40,7 +40,7 @@ namespace BBDown
                 aids.AddRange(data.GetProperty("aids").EnumerateArray().ToArray().Select(o => o.ToString()));
             }
             var urls = aids.Select(o => $"https://www.bilibili.com/video/av{o}");
-            File.WriteAllText($"用户{mid}所创建的列表{seriesId}的所有视频.txt", string.Join('\n', string.Join(Environment.NewLine, urls)));
+            File.WriteAllText($"用户{mid}所创建的列表{seriesId}的所有视频.txt", string.Join(Environment.NewLine, urls));
             Log("目前下载器不支持下载用户创建的列表视频，不过程序已经获取到了该列表的全部投稿视频地址，你可以自行使用批处理脚本等手段调用本程序进行批量下载。如在Windows系统你可以使用如下代码：");
             Console.WriteLine();
             Console.WriteLine(@"@echo Off

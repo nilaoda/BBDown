@@ -105,6 +105,12 @@ namespace BBDown
                     string bizId = GetQueryString("sid", input);
                     avid = $"seriesBizId:{bizId}:{mid}";
                 }
+                else if (input.Contains("/space.bilibili.com/") && input.Contains("/favlist"))
+                {
+                    string mid = Regex.Match(input, "space.bilibili.com/(\\d{1,})").Groups[1].Value;
+                    string fid = GetQueryString("fid", input);
+                    avid = $"favId:{fid}:{mid}";
+                }
                 else if (input.Contains("/space.bilibili.com/"))
                 {
                     string mid = Regex.Match(input, "space.bilibili.com/(\\d{1,})").Groups[1].Value;
@@ -803,7 +809,7 @@ namespace BBDown
                 "13" => "AV1",
                 "12" => "HEVC",
                 "7" => "AVC",
-                _ => "UNKNOW"
+                _ => "UNKNOWN"
             };
         }
     }
