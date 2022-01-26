@@ -71,6 +71,7 @@ namespace BBDown
             public bool SkipCover { get; set; }
             public bool DownloadDanmaku { get; set; }
             public bool NoPartPrefix { get; set; }
+            public bool AddDfnSubfix { get; set; }
             public string SelectPage { get; set; } = "";
             public string Language { get; set; } = "";
             public string Cookie { get; set; } = "";
@@ -168,6 +169,9 @@ namespace BBDown
                 new Option<bool>(
                     new string[]{ "--download-danmaku", "-dd"},
                     "下载弹幕"),
+                new Option<bool>(
+                    new string[]{ "--add-dfn-subfix"},
+                    "为文件加入清晰度后缀，如XXX[1080P 高码率]"),
                 new Option<bool>(
                     new string[]{ "--no-part-prefix"},
                     "多P时，不要加入分P前缀，如[P1],[P2]等"),
@@ -359,6 +363,7 @@ namespace BBDown
                 bool skipSubtitle = myOption.SkipSubtitle;
                 bool skipCover = myOption.SkipCover;
                 bool downloadDanmaku = myOption.DownloadDanmaku;
+                bool addDfnSubfix = myOption.AddDfnSubfix;
                 bool noPartPrefix = myOption.NoPartPrefix;
                 bool showAll = myOption.ShowAll;
                 bool useAria2c = myOption.UseAria2c;
@@ -573,7 +578,7 @@ namespace BBDown
                     if (title.EndsWith(".")) title += "_fix";
                     string prefix = noPartPrefix ? "" : $"[P{indexStr}]";
                     string outPath = GetValidFileName(title) + (pagesInfo.Count > 1 ? $"/{prefix}{GetValidFileName(p.title)}" : (vInfo.PagesInfo.Count > 1 ? $"{prefix}{GetValidFileName(p.title)}" : "")) + ".mp4";
-                    if (!infoMode && File.Exists(outPath) && new FileInfo(outPath).Length != 0)
+                    if (!addDfnSubfix && !infoMode && File.Exists(outPath) && new FileInfo(outPath).Length != 0)
                     {
                         Log($"{outPath}已存在, 跳过下载...");
                         if (pagesInfo.Count == 1 && Directory.Exists(p.aid)) 
@@ -719,6 +724,20 @@ namespace BBDown
 
                         if (videoTracks.Count > 0)
                         {
+                            if (addDfnSubfix && !infoMode)
+                            {
+                                //新的文件名
+                                outPath = outPath.Substring(0, outPath.LastIndexOf(".")) + "[" + videoTracks[vIndex].dfn + "]" + outPath.Substring(outPath.LastIndexOf("."));
+                                if (File.Exists(outPath) && new FileInfo(outPath).Length != 0)
+                                {
+                                    Log($"{outPath}已存在, 跳过下载...");
+                                    if (pagesInfo.Count == 1 && Directory.Exists(p.aid))
+                                    {
+                                        Directory.Delete(p.aid, true);
+                                    }
+                                    continue;
+                                }
+                            }
                             //杜比视界，若ffmpeg版本小于5.0，使用mp4box封装
                             if (videoTracks[vIndex].dfn == qualitys["126"] && !useMp4box && !CheckFFmpegDOVI())
                             {
@@ -791,6 +810,7 @@ namespace BBDown
                     else if (clips.Count > 0 && dfns.Count > 0)   //flv
                     {
                         bool flag = false;
+                        int vIndex = 0;
                     reParse:
                         //降序
                         videoTracks.Sort(Compare);
@@ -801,7 +821,7 @@ namespace BBDown
                             dfns.ForEach(key => LogColor($"{i++}.{qualitys[key]}"));
                             Log("请选择最想要的清晰度(输入序号): ", false);
                             Console.ForegroundColor = ConsoleColor.Cyan;
-                            var vIndex = Convert.ToInt32(Console.ReadLine());
+                            vIndex = Convert.ToInt32(Console.ReadLine());
                             if (vIndex > dfns.Count || vIndex < 0) vIndex = 0;
                             Console.ResetColor();
                             //重新解析
@@ -822,10 +842,28 @@ namespace BBDown
                             }
                         }
                         if (infoMode) continue;
-                        if (File.Exists(outPath) && new FileInfo(outPath).Length != 0)
+                        if (!addDfnSubfix && File.Exists(outPath) && new FileInfo(outPath).Length != 0)
                         {
                             Log($"{outPath}已存在, 跳过下载...");
+                            if (pagesInfo.Count == 1 && Directory.Exists(p.aid))
+                            {
+                                Directory.Delete(p.aid, true);
+                            }
                             continue;
+                        }
+                        if (addDfnSubfix)
+                        {
+                            //新的文件名
+                            outPath = outPath.Substring(0, outPath.LastIndexOf(".")) + "[" + videoTracks[vIndex].dfn + "]" + outPath.Substring(outPath.LastIndexOf("."));
+                            if (File.Exists(outPath) && new FileInfo(outPath).Length != 0)
+                            {
+                                Log($"{outPath}已存在, 跳过下载...");
+                                if (pagesInfo.Count == 1 && Directory.Exists(p.aid))
+                                {
+                                    Directory.Delete(p.aid, true);
+                                }
+                                continue;
+                            }
                         }
                         var pad = string.Empty.PadRight(clips.Count.ToString().Length, '0');
                         for (int i = 0; i < clips.Count; i++)
