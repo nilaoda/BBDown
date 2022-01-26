@@ -379,6 +379,7 @@ namespace BBDown
 
         public static async Task MultiThreadDownloadFileAsync(string url, string path, bool aria2c, string aria2cProxy)
         {
+            LogDebug("Start downloading: {0}", url);
             if (aria2c)
             {
                 await BBDownAria2c.DownloadFileByAria2cAsync(url, path, aria2cProxy);
