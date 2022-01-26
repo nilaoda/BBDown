@@ -18,9 +18,9 @@ dotnet tool install --global BBDown
 ```
 
 # 下载
-https://github.com/nilaoda/BBDown/releases
+Release版本：https://github.com/nilaoda/BBDown/releases
 
-https://github.com/nilaoda/BBDown/actions
+自动构建的测试版本：https://github.com/nilaoda/BBDown/actions
 
 # 开始使用
 目前命令行参数支持情况
@@ -41,6 +41,7 @@ Options:
   --use-mp4box                           使用MP4Box来混流
   -hevc, --only-hevc                     只下载hevc编码
   -avc, --only-avc                       只下载avc编码
+  -av1, --only-av1                       只下载av1编码
   -info, --only-show-info                仅解析而不进行下载
   -hs, --hide-streams                    不要显示所有可用音视频流
   -ia, --interactive                     交互式选择清晰度
@@ -57,40 +58,45 @@ Options:
   --skip-mux                             跳过混流步骤
   --skip-subtitle                        跳过字幕下载
   --skip-cover                           跳过封面下载
+  -dd, --download-danmaku                下载弹幕
+  --add-dfn-subfix                       为文件加入清晰度后缀，如XXX[1080P 高码率]
+  --no-part-prefix                       多P时，不要加入分P前缀，如[P1],[P2]等
   --language <language>                  设置混流的音频语言(代码)，如chi, jpn等
   -c, --cookie <cookie>                  设置字符串cookie用以下载网页接口的会员内容
   -token, --access-token <access-token>  设置access_token用以下载TV/APP接口的会员内容
   --work-dir <work-dir>                  设置程序的工作目录
+  --ffmpeg-path <ffmpeg-path>            设置ffmpeg的路径
+  --mp4box-path <mp4box-path>            设置mp4box的路径
+  --aria2c-path <aria2c-path>            设置aria2c的路径
   --delay-per-page <delay-per-page>      设置下载合集分P之间的下载间隔时间(单位: 秒, 默认无间隔)
   --version                              Show version information
   -?, -h, --help                         Show help and usage information
 
 Commands:
-  login      通过APP扫描二维码以登录您的WEB账号
-  logintv    通过APP扫描二维码以登录您的TV账号
+  login    通过APP扫描二维码以登录您的WEB账号
+  logintv  通过APP扫描二维码以登录您的TV账号
 ```
 
 # 功能
 - [x] 番剧下载(Web|TV|App)
 - [x] 课程下载(Web)
 - [x] 普通内容下载(Web|TV|App) `(TV接口可以下载部分UP主的无水印内容)`
+- [x] 合集/列表/收藏夹/个人空间解析
 - [x] 多分P自动下载
 - [x] 选择指定分P进行下载
 - [x] 选择指定清晰度进行下载
 - [x] 下载外挂字幕并转换为srt格式
-- [x] 自动合并音频+视频流+字幕流`(使用ffmpeg或mp4box)`
+- [x] 自动合并音频+视频流+字幕流+**章节信息**`(使用ffmpeg或mp4box)`
 - [x] 单独下载视频/音频/字幕
 - [x] 二维码登录账号
-- [x] **多线程下载**
+- [x] 多线程下载
 - [x] 支持调用aria2c下载
+- [x] 支持AVC/HEVC/AV1编码
 - [x] **支持8K/HDR/杜比视界/杜比全景声下载**
 
 # TODO
 - [ ] 自动刷新cookie
-- [ ] 自定义HTTP代理
-- [ ] 下载指定收藏夹中的视频
-- [ ] 下载某个个人空间页的视频
-- [ ] 自定义存储文件名等
+- [ ] 自定义存储文件名
 - [ ] 支持更多自定义选项
 
 # 使用教程
