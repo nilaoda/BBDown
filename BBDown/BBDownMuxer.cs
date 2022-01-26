@@ -48,7 +48,7 @@ namespace BBDown
 
         private static string EscapeString(string str)
         {
-            return str.Replace("\"", "'");
+            return string.IsNullOrEmpty(str) ? str : str.Replace("\"", "'");
         }
 
         public static int MuxByMp4box(string videoPath, string audioPath, string outPath, string desc, string title, string episodeId, string pic, string lang, List<Subtitle> subs, bool audioOnly, bool videoOnly, List<ViewPoint> points)
