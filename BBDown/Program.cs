@@ -79,6 +79,7 @@ namespace BBDown
             public string WorkDir { get; set; } = "";
             public string FFmpegPath { get; set; } = "";
             public string Mp4boxPath { get; set; } = "";
+            public string Aria2cPath { get; set; } = "";
             public string DelayPerPage { get; set; } = "0";
         }
 
@@ -188,6 +189,9 @@ namespace BBDown
                 new Option<string>(
                     new string[]{ "--mp4box-path"},
                     "设置mp4box的路径"),
+                new Option<string>(
+                    new string[]{ "--aria2c-path"},
+                    "设置aria2c的路径"),
                 new Option<string>(
                     new string[]{ "--delay-per-page"},
                     "设置下载合集分P之间的下载间隔时间(单位: 秒, 默认无间隔)")
@@ -388,6 +392,11 @@ namespace BBDown
                 if (!string.IsNullOrEmpty(myOption.Mp4boxPath))
                 {
                     BBDownMuxer.MP4BOX = myOption.Mp4boxPath;
+                }
+
+                if (!string.IsNullOrEmpty(myOption.Aria2cPath))
+                {
+                    BBDownAria2c.ARIA2C = myOption.Aria2cPath;
                 }
 
                 //audioOnly和videoOnly同时开启则全部忽视

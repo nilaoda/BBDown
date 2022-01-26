@@ -6,6 +6,8 @@ namespace BBDown
 {
     class BBDownAria2c
     {
+        public static string ARIA2C = "aria2c";
+
         public static async Task<int> RunCommandCodeAsync(string command, string args)
         {
             if (File.Exists(Path.Combine(Program.APP_DIR, $"{command}")))
@@ -29,7 +31,7 @@ namespace BBDown
                 headerArgs += " --header=\"Referer: https://www.bilibili.com\"";
             headerArgs += " --header=\"User-Agent: Mozilla/5.0\"";
             headerArgs += $" --header=\"Cookie: {Program.COOKIE}\"";
-            await RunCommandCodeAsync("aria2c", $"{(proxy == "" ? "" : "--all-proxy=" + proxy)} --auto-file-renaming=false --download-result=hide --allow-overwrite=true --console-log-level=warn -x16 -s16 -k5M {headerArgs} \"{url}\" -d \"{Path.GetDirectoryName(path)}\" -o \"{Path.GetFileName(path)}\"");
+            await RunCommandCodeAsync(ARIA2C, $"{(proxy == "" ? "" : "--all-proxy=" + proxy)} --auto-file-renaming=false --download-result=hide --allow-overwrite=true --console-log-level=warn -x16 -s16 -k5M {headerArgs} \"{url}\" -d \"{Path.GetDirectoryName(path)}\" -o \"{Path.GetFileName(path)}\"");
         }
     }
 }
