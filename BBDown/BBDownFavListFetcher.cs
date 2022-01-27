@@ -52,7 +52,7 @@ namespace BBDown
             {
                 api = $"https://api.bilibili.com/x/v3/fav/resource/list?media_id={favId}&pn={page}&ps={pageSize}&keyword=&order=mtime&type=0&tid=0&platform=web&jsonp=jsonp";
                 json = await GetWebSourceAsync(api);
-                using var jsonDoc = JsonDocument.Parse(json);
+                var jsonDoc = JsonDocument.Parse(json);
                 data = jsonDoc.RootElement.GetProperty("data");
                 medias.AddRange(data.GetProperty("medias").EnumerateArray().ToList());
             }
