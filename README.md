@@ -4,6 +4,7 @@
 一款命令行式哔哩哔哩下载器. Bilibili Downloader.
 
 # 注意
+
 本软件混流时需要外部程序：
 
 * 普通视频：[ffmpeg](https://www.gyan.dev/ffmpeg/builds/) ，或 [mp4box](https://gpac.wp.imt.fr/downloads/)
@@ -102,29 +103,55 @@ Commands:
 # 使用教程
 
 <details>
-<summary>WEB/TV鉴权</summary>  
+<summary>Web/TV 鉴权：你有以下 4 种方案可供选择</summary>  
 
 ---
-  
-扫码登录网页账号：
+
+## 1.   扫码登录网页账号：
+
 ```
 BBDown login
 ```
-然后按照提示操作
+​	然后按照提示操作。
 
-扫码登录云视听小电视账号：
+## 2.   扫码登录云视听小电视账号：
+
 ```
 BBDown logintv
 ```
-然后按照提示操作
- 
-*PS: 如果登录报错`The type initializer for 'Gdip' threw an exception`，请参考 [#37](https://github.com/nilaoda/BBDown/issues/37) 解决*
+​	然后按照提示操作。
 
-手动加载网页cookie：
+>   请特别关注⚠️
+>
+>   对于 macOS 与 Linux，由于 .Net 的 System.Drawing.dll 内部需要依赖 gdiplus.dll，Windows 操作系统自带，而 macOS 与 Linux 未曾预置，所以需要手动安装 gdiplus。
+
+对于 macOS，使用 Homebrew 安装  `mono-libgdiplus`:
+
+```Shell
+brew install mono-libgdiplus
+```
+
+对于 Ubuntu 等使用 apt 包管理器的 GNU/Linux 发行版，安装  `libgdiplus`:
+
+```Shell
+sudo apt install libgdiplus
+```
+
+对于 Arch、Manjaro 等使用 pacman 包管理器的 GNU/Linux 发行版，安装  `libgdiplus`:
+
+```Shell
+pacman -S libgdiplus
+```
+
+
+
+## 3.   手动加载网页 Cookie：
+
 ```
 BBDown -c "SESSDATA=******" "https://www.bilibili.com/video/BV1qt4y1X7TW"
 ```
-手动加载云视听小电视token：
+## 4.   手动加载云视听小电视 Token：
+
 ```
 BBDown -tv -token "******" "https://www.bilibili.com/video/BV1qt4y1X7TW"
 ```
@@ -143,7 +170,7 @@ BBDown -tv -token "******" "https://www.bilibili.com/video/BV1qt4y1X7TW"
 在请求Header中寻找键为`authorization`的项，其值形为`identify_v1 5227************1`，其中的`5227************1`就是token(access_key)
 
 获取后手动通过`-token`命令加载, 或写入`BBDownApp.data`使程序自动读取.
-  
+
 ```
 BBDown -app -token "******" "https://www.bilibili.com/video/BV1qt4y1X7TW"
 ```
