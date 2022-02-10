@@ -37,6 +37,7 @@ namespace BBDown
             await DownloadFile(danmakuUrl, xmlPath, false, "");
             if (File.Exists(xmlPath) && new FileInfo(xmlPath).Length != 0)
             {
+                danmakus.Clear(); // Clear the list first
                 await ParsingXml(xmlPath);
                 await saveAsAss(assPath);
                 Log($"P{p.index}弹幕下载完成");
