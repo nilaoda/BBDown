@@ -64,6 +64,7 @@ namespace BBDown
             public bool VideoOnly { get; set; }
             public bool AudioOnly { get; set; }
             public bool SubOnly { get; set; }
+            public bool DanmakuOnly { get; set; }
             public bool NoPaddingPageNum { get; set; }
             public bool Debug { get; set; }
             public bool SkipMux { get; set; }
@@ -151,6 +152,9 @@ namespace BBDown
                 new Option<bool>(
                     new string[]{ "--sub-only"},
                     "仅下载字幕"),
+                new Option<bool>(
+                    new string[]{ "--danmaku-only"},
+                    "仅下载弹幕"),
                 new Option<bool>(
                     new string[]{ "--no-padding-page-num"},
                     "不给分P序号补零"),
@@ -359,6 +363,7 @@ namespace BBDown
                 bool audioOnly = myOption.AudioOnly;
                 bool videoOnly = myOption.VideoOnly;
                 bool subOnly = myOption.SubOnly;
+                bool danmakuOnly = myOption.DanmakuOnly;
                 bool skipMux = myOption.SkipMux;
                 bool skipSubtitle = myOption.SkipSubtitle;
                 bool skipCover = myOption.SkipCover;
@@ -404,20 +409,28 @@ namespace BBDown
                     BBDownAria2c.ARIA2C = myOption.Aria2cPath;
                 }
 
-                //audioOnly和videoOnly同时开启则全部忽视
+               /* //audioOnly和videoOnly同时开启则全部忽视
                 if (audioOnly && videoOnly)
                 {
                     audioOnly = false;
                     videoOnly = false;
                 }
-
+                */
                 //OnlyHevc/OnlyAvc/只能开启一个，否则全部无视
-                bool selected = new List<bool> { onlyAvc, onlyHevc, onlyAv1 }.Where(o => o == true).Count() == 1;
-                if (selected == false) onlyAvc = onlyHevc = onlyAv1 = false;
-
+                bool multiSelect = new List<bool> { onlyAvc, onlyHevc, onlyAv1 }.Where(o => o == true).Count() - 1 > 0;
+                if (multiSelect) {
+                    onlyAvc = onlyHevc = onlyAv1 = false;
+                    Log("OnlyHevc/OnlyAvc/OnlyAv1只能开启一个,故全部无视");
+                }
                 if (skipSubtitle)
                     subOnly = false;
 
+                multiSelect = new List<bool> { audioOnly, videoOnly,subOnly,danmakuOnly }.Where(o => o == true).Count() - 1 > 0;
+                if (multiSelect) {
+                    audioOnly = videoOnly = subOnly = danmakuOnly = false;
+                    Log("audioOnly/videoOnly/subOnly/danmakuOnly只能开启一个,故全部无视");
+                }
+                
                 List<string> selectedPages = null;
                 if (!string.IsNullOrEmpty(GetQueryString("p", input)))
                 {
@@ -588,14 +601,14 @@ namespace BBDown
                         continue;
                     }
 
-                    //处理封面&&字幕
+                    //处理封面&&字幕&&弹幕
                     if (!infoMode)
                     {
                         if (!Directory.Exists(p.aid))
                         {
                             Directory.CreateDirectory(p.aid);
                         }
-                        if (!skipCover && !subOnly && !File.Exists($"{p.aid}/{p.aid}.jpg")) 
+                        if (!skipCover && !subOnly && !danmakuOnly && !File.Exists($"{p.aid}/{p.aid}.jpg")) 
                         {
                             Log("下载封面...");
                             var cover = pic == "" ? p.cover : pic;
@@ -605,7 +618,7 @@ namespace BBDown
                             await response.CopyToAsync(fs);
                         }
 
-                        if (!skipSubtitle)
+                        if (!skipSubtitle && !danmakuOnly)
                         {
                             LogDebug("获取字幕...");
                             subtitleInfo = await BBDownSubUtil.GetSubtitlesAsync(p.aid, p.cid, p.epid, intlApi);
@@ -632,7 +645,12 @@ namespace BBDown
                                 }
                             }
                         }
-
+                        if (downloadDanmaku||danmakuOnly)
+                        {
+                            // 下载弹幕
+                            await DownloadDanmaku(p, outPath);
+                            if(danmakuOnly) continue;
+                        }
                         if (subOnly)
                         {
                             if (Directory.Exists(p.aid) && Directory.GetFiles(p.aid).Length == 0) Directory.Delete(p.aid, true);
@@ -937,12 +955,6 @@ namespace BBDown
                         LogError("解析此分P失败(使用--debug查看详细信息)");
                         LogDebug("{0}", webJsonStr);
                         continue;
-                    }
-
-                    if (downloadDanmaku)
-                    {
-                        // 下载弹幕
-                        await DownloadDanmaku(p, outPath);
                     }
                 }
                 Log("任务完成");
