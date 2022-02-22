@@ -68,7 +68,7 @@ namespace BBDown
             return webJson;
         }
 
-        public static async Task<(string, List<Video>, List<Audio>, List<string>, List<string>)> ExtractTracksAsync(bool onlyHevc, bool onlyAvc, bool onlyAv1, string aidOri, string aid, string cid, string epId, bool tvApi, bool intlApi, bool appApi, string qn = "0")
+        public static async Task<(string, List<Video>, List<Audio>, List<string>, List<string>)> ExtractTracksAsync(string aidOri, string aid, string cid, string epId, bool tvApi, bool intlApi, bool appApi, string qn = "0")
         {
             List<Video> videoTracks = new List<Video>();
             List<Audio> audioTracks = new List<Audio>();
@@ -76,7 +76,7 @@ namespace BBDown
             List<string> dfns = new List<string>();
 
             //调用解析
-            string webJsonStr = await GetPlayJsonAsync(onlyAvc, aidOri, aid, cid, epId, tvApi, intlApi, appApi, qn);
+            string webJsonStr = await GetPlayJsonAsync(false, aidOri, aid, cid, epId, tvApi, intlApi, appApi, qn);
 
             var respJson = JsonDocument.Parse(webJsonStr);
             var data = respJson.RootElement;
@@ -138,7 +138,7 @@ namespace BBDown
             reParse:
                 if (reParse)
                 {
-                    webJsonStr = await GetPlayJsonAsync(onlyAvc, aidOri, aid, cid, epId, tvApi, intlApi, appApi, GetMaxQn());
+                    webJsonStr = await GetPlayJsonAsync(false, aidOri, aid, cid, epId, tvApi, intlApi, appApi, GetMaxQn());
                     respJson = JsonDocument.Parse(webJsonStr);
                 }
                 try { video = !tvApi ? respJson.RootElement.GetProperty(nodeName).GetProperty("dash").GetProperty("video").EnumerateArray().ToList() : respJson.RootElement.GetProperty("dash").GetProperty("video").EnumerateArray().ToList(); } catch { }
@@ -211,7 +211,7 @@ namespace BBDown
             else if (webJsonStr.Contains("\"durl\":[")) //flv
             {
                 //默认以最高清晰度解析
-                webJsonStr = await GetPlayJsonAsync(onlyAvc, aidOri, aid, cid, epId, tvApi, intlApi, appApi, GetMaxQn());
+                webJsonStr = await GetPlayJsonAsync(false, aidOri, aid, cid, epId, tvApi, intlApi, appApi, GetMaxQn());
                 respJson = JsonDocument.Parse(webJsonStr);
                 string quality = "";
                 string videoCodecid = "";
@@ -302,15 +302,6 @@ namespace BBDown
                 v.size = size;
                 if (!videoTracks.Contains(v)) videoTracks.Add(v);
             }
-
-            //筛选编码
-            if (onlyAvc)
-                videoTracks = videoTracks.Where(v => v.codecs == "AVC").ToList();
-            else if (onlyHevc)
-                videoTracks = videoTracks.Where(v => v.codecs == "HEVC").ToList();
-            else if (onlyAv1)
-                videoTracks = videoTracks.Where(v => v.codecs == "AV1").ToList();
-
 
             return (webJsonStr, videoTracks, audioTracks, clips, dfns);
         }
