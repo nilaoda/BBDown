@@ -119,3 +119,26 @@ jobs:
         with:
           name: BBDown_osx-x64
           path: artifact/BBDown
+          
+  build-mac-arm64:
+    
+    runs-on: macOS-latest
+    
+    steps:
+      
+      - uses: actions/checkout@v2
+      - run: rm BBDown/Directory.Build.props
+      
+      - name: Set up dotnet
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: ${{ env.DOTNET_SDK_VERSION }}
+          include-prerelease: true
+      - run: dotnet publish -r osx-arm64 -c Release -o artifact-arm64 -p:PublishTrimmed=true -p:PublishReadyToRun=true -p:PublishSingleFile=true --self-contained true
+      - run: strip artifact/BBDown
+      
+      - name: Upload Artifact[osx-x64]
+        uses: actions/upload-artifact@v1.0.0
+        with:
+          name: BBDown_osx-arm64
+          path: artifact-arm64/BBDown
