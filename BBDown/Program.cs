@@ -61,9 +61,6 @@ namespace BBDown
             public bool UseAppApi { get; set; }
             public bool UseIntlApi { get; set; }
             public bool UseMP4box { get; set; }
-            /*public bool OnlyHevc { get; set; }
-            public bool OnlyAvc { get; set; }
-            public bool OnlyAv1 { get; set; }*/
             public string EncodingPriority { get; set; }
             public bool OnlyShowInfo { get; set; }
             public bool ShowAll { get; set; }
@@ -74,14 +71,12 @@ namespace BBDown
             public bool VideoOnly { get; set; }
             public bool AudioOnly { get; set; }
             public bool SubOnly { get; set; }
-            public bool NoPaddingPageNum { get; set; }
             public bool Debug { get; set; }
             public bool SkipMux { get; set; }
             public bool SkipSubtitle { get; set; }
             public bool SkipCover { get; set; }
             public bool DownloadDanmaku { get; set; }
-            public bool NoPartPrefix { get; set; }
-            public bool AddDfnSubfix { get; set; }
+            public string SavePath { get; set; } = "<videoTitle>/[P<pageNumberWithZero>]<pageTitle>";
             public string SelectPage { get; set; } = "";
             public string Language { get; set; } = "";
             public string Cookie { get; set; } = "";
@@ -119,15 +114,6 @@ namespace BBDown
                 new Option<bool>(
                     new string[]{ "--use-mp4box"},
                     "使用MP4Box来混流"),
-                /*new Option<bool>(
-                    new string[]{ "--only-hevc" ,"-hevc"},
-                    "只下载hevc编码"),
-                new Option<bool>(
-                    new string[]{ "--only-avc" ,"-avc"},
-                    "只下载avc编码"),
-                new Option<bool>(
-                    new string[]{ "--only-av1" ,"-av1"},
-                    "只下载av1编码"),*/
                 new Option<string>(
                     new string[]{ "--encoding-priority" },
                     "视频编码的选择优先级,用逗号分割 例:\"hevc,av1,avc\""
@@ -166,9 +152,6 @@ namespace BBDown
                     new string[]{ "--sub-only"},
                     "仅下载字幕"),
                 new Option<bool>(
-                    new string[]{ "--no-padding-page-num"},
-                    "不给分P序号补零"),
-                new Option<bool>(
                     new string[]{ "--debug"},
                     "输出调试日志"),
                 new Option<bool>(
@@ -183,12 +166,9 @@ namespace BBDown
                 new Option<bool>(
                     new string[]{ "--download-danmaku", "-dd"},
                     "下载弹幕"),
-                new Option<bool>(
-                    new string[]{ "--add-dfn-subfix"},
-                    "为文件加入清晰度后缀，如XXX[1080P 高码率]"),
-                new Option<bool>(
-                    new string[]{ "--no-part-prefix"},
-                    "多P时，不要加入分P前缀，如[P1],[P2]等"),
+                new Option<string>(
+                    new string[] {"--save-path", "-sp"},
+                    "自定义存储文件名, 默认为: " + new MyOption().SavePath),
                 new Option<string>(
                     new string[]{ "--language"},
                     "设置混流的音频语言(代码)，如chi, jpn等"),
@@ -365,10 +345,6 @@ namespace BBDown
                 bool appApi = myOption.UseAppApi;
                 bool intlApi = myOption.UseIntlApi;
                 bool useMp4box = myOption.UseMP4box;
-                /*bool onlyHevc = myOption.OnlyHevc;
-                bool onlyAvc = myOption.OnlyAvc;
-                bool onlyAv1 = myOption.OnlyAv1;*/
-
                 
                 Dictionary<string, byte> encodingPriority = null;
                 if (myOption.EncodingPriority != null)
@@ -393,13 +369,12 @@ namespace BBDown
                 bool skipSubtitle = myOption.SkipSubtitle;
                 bool skipCover = myOption.SkipCover;
                 bool downloadDanmaku = myOption.DownloadDanmaku;
-                bool addDfnSubfix = myOption.AddDfnSubfix;
-                bool noPartPrefix = myOption.NoPartPrefix;
                 bool showAll = myOption.ShowAll;
                 bool useAria2c = myOption.UseAria2c;
                 string aria2cProxy = myOption.Aria2cProxy;
                 DEBUG_LOG = myOption.Debug;
                 string input = myOption.Url;
+                string savePath = myOption.SavePath;
                 string lang = myOption.Language;
                 string selectPage = myOption.SelectPage.ToUpper();
                 string aidOri = ""; //原始aid
@@ -600,23 +575,11 @@ namespace BBDown
                     List<string> clips = new List<string>();
                     List<string> dfns = new List<string>();
 
-                    string indexStr = myOption.NoPaddingPageNum ? p.index.ToString() : p.index.ToString("0".PadRight(pagesInfo.OrderByDescending(_p => _p.index).First().index.ToString().Length, '0'));
-                    string videoPath = $"{p.aid}/{p.aid}.P{indexStr}.{p.cid}.mp4";
-                    string audioPath = $"{p.aid}/{p.aid}.P{indexStr}.{p.cid}.m4a";
+                    string videoPath = $"{p.aid}/{p.aid}.P{p.index}.{p.cid}.mp4";
+                    string audioPath = $"{p.aid}/{p.aid}.P{p.index}.{p.cid}.m4a";
 
                     //处理文件夹以.结尾导致的异常情况
-                    if (title.EndsWith(".")) title += "_fix";
-                    string prefix = noPartPrefix ? "" : $"[P{indexStr}]";
-                    string outPath = GetValidFileName(title) + (pagesInfo.Count > 1 ? $"/{prefix}{GetValidFileName(p.title)}" : (vInfo.PagesInfo.Count > 1 ? $"{prefix}{GetValidFileName(p.title)}" : "")) + ".mp4";
-                    if (!addDfnSubfix && !infoMode && File.Exists(outPath) && new FileInfo(outPath).Length != 0)
-                    {
-                        Log($"{outPath}已存在, 跳过下载...");
-                        if (pagesInfo.Count == 1 && Directory.Exists(p.aid)) 
-                        {
-                            Directory.Delete(p.aid, true);
-                        }
-                        continue;
-                    }
+                    //if (title.EndsWith(".")) title += "_fix";
 
                     //处理封面&&字幕
                     if (!infoMode)
@@ -647,7 +610,7 @@ namespace BBDown
                                 if (subOnly && File.Exists(s.path) && File.ReadAllText(s.path) != "")
                                 {
                                     string _indexStr = p.index.ToString("0".PadRight(pagesInfo.OrderByDescending(_p => _p.index).First().index.ToString().Length, '0'));
-                                    string _prefix = noPartPrefix ? "" : $"[P{indexStr}]";
+                                    string _prefix = "[P{indexStr}]";
                                     //处理文件夹以.结尾导致的异常情况
                                     if (title.EndsWith(".")) title += "_fix";
                                     string _outSubPath = GetValidFileName(title) + (pagesInfo.Count > 1 ? $"/{_prefix}{GetValidFileName(p.title)}" : (vInfo.PagesInfo.Count > 1 ? $"{_prefix}{GetValidFileName(p.title)}" : "")) + $"_{BBDownSubUtil.GetSubtitleCode(s.lan).Item2}.srt";
@@ -754,20 +717,35 @@ namespace BBDown
 
                         if (videoTracks.Count > 0)
                         {
-                            if (addDfnSubfix && !infoMode)
+                            savePath = savePath.Replace('\\', '/')
+                                .Replace("<videoTitle>", title)
+                                .Replace("<pageNumber>", p.index.ToString())
+                                .Replace("<pageNumberWithZero>", p.index.ToString().PadLeft((int)Math.Log10(pagesInfo.Count) + 1, '0'))
+                                .Replace("<pageTitle>", p.title)
+                                .Replace("<aid>", p.aid)
+                                .Replace("<cid>", p.cid)
+                                .Replace("<dfn>", videoTracks[vIndex].dfn)
+                                .Replace("<res>", videoTracks[vIndex].res)
+                                .Replace("<fps>", videoTracks[vIndex].fps)
+                                .Replace("<videoCodecs>", videoTracks[vIndex].codecs)
+                                .Replace("<videoBandwidth>", videoTracks[vIndex].bandwith.ToString())
+                                .Replace("<audioCodecs>", audioTracks[aIndex].codecs)
+                                .Replace("<audioBandwidth>", audioTracks[aIndex].bandwith.ToString());
+                            // 后续还可以加入时间之类的
+
+                            savePath = string.Join('/', savePath.Split('/').Select(s => GetValidFileName(s.Trim())).Where(s => !string.IsNullOrEmpty(s)));
+                            if (string.IsNullOrEmpty(Path.GetExtension(savePath))) { savePath += ".mp4"; }
+
+                            if (!infoMode && File.Exists(savePath) && new FileInfo(savePath).Length != 0)
                             {
-                                //新的文件名
-                                outPath = outPath.Substring(0, outPath.LastIndexOf(".")) + "[" + videoTracks[vIndex].dfn + "]" + outPath.Substring(outPath.LastIndexOf("."));
-                                if (File.Exists(outPath) && new FileInfo(outPath).Length != 0)
+                                Log($"{savePath}已存在, 跳过下载...");
+                                if (pagesInfo.Count == 1 && Directory.Exists(p.aid))
                                 {
-                                    Log($"{outPath}已存在, 跳过下载...");
-                                    if (pagesInfo.Count == 1 && Directory.Exists(p.aid))
-                                    {
-                                        Directory.Delete(p.aid, true);
-                                    }
-                                    continue;
+                                    Directory.Delete(p.aid, true);
                                 }
+                                continue;
                             }
+
                             //杜比视界，若ffmpeg版本小于5.0，使用mp4box封装
                             if (videoTracks[vIndex].dfn == qualitys["126"] && !useMp4box && !CheckFFmpegDOVI())
                             {
@@ -816,14 +794,14 @@ namespace BBDown
                         if (audioTracks.Count == 0) audioPath = "";
                         if (skipMux) continue;
                         Log("开始合并音视频" + (subtitleInfo.Count > 0 ? "和字幕" : "") + "...");
-                        int code = MuxAV(useMp4box, videoPath, audioPath, outPath,
+                        int code = MuxAV(useMp4box, videoPath, audioPath, savePath,
                             desc,
                             title,
-                            vInfo.PagesInfo.Count > 1 ? ($"{prefix}{p.title}") : "",
+                            vInfo.PagesInfo.Count > 1 ? savePath.Substring(Math.Max(0, savePath.LastIndexOf("/"))) : "",
                             File.Exists($"{p.aid}/{p.aid}.jpg") ? $"{p.aid}/{p.aid}.jpg" : "",
                             lang,
                             subtitleInfo, audioOnly, videoOnly, p.points);
-                        if (code != 0 || !File.Exists(outPath) || new FileInfo(outPath).Length == 0)
+                        if (code != 0 || !File.Exists(savePath) || new FileInfo(savePath).Length == 0)
                         {
                             LogError("合并失败"); continue;
                         }
@@ -872,34 +850,38 @@ namespace BBDown
                             }
                         }
                         if (infoMode) continue;
-                        if (!addDfnSubfix && File.Exists(outPath) && new FileInfo(outPath).Length != 0)
+                        savePath = savePath.Replace('\\', '/')
+                                .Replace("<videoTitle>", title)
+                                .Replace("<pageNumber>", p.index.ToString())
+                                .Replace("<pageNumberWithZero>", p.index.ToString().PadLeft((int)Math.Log10(pagesInfo.Count) + 1, '0'))
+                                .Replace("<pageTitle>", p.title)
+                                .Replace("<aid>", p.aid)
+                                .Replace("<cid>", p.cid)
+                                .Replace("<dfn>", videoTracks[vIndex].dfn)
+                                .Replace("<res>", videoTracks[vIndex].res)
+                                .Replace("<fps>", videoTracks[vIndex].fps)
+                                .Replace("<videoCodecs>", videoTracks[vIndex].codecs)
+                                .Replace("<videoBandwidth>", videoTracks[vIndex].bandwith.ToString())
+                                .Replace("<audioCodecs>", "")
+                                .Replace("<audioBandwidth>", "");
+                        // 后续还可以加入时间之类的
+
+                        savePath = string.Join('/', savePath.Split('/').Select(s => GetValidFileName(s.Trim())).Where(s => !string.IsNullOrEmpty(s)));
+                        if (string.IsNullOrEmpty(Path.GetExtension(savePath))) { savePath += ".mp4"; }
+                        if (File.Exists(savePath) && new FileInfo(savePath).Length != 0)
                         {
-                            Log($"{outPath}已存在, 跳过下载...");
+                            Log($"{savePath}已存在, 跳过下载...");
                             if (pagesInfo.Count == 1 && Directory.Exists(p.aid))
                             {
                                 Directory.Delete(p.aid, true);
                             }
                             continue;
                         }
-                        if (addDfnSubfix)
-                        {
-                            //新的文件名
-                            outPath = outPath.Substring(0, outPath.LastIndexOf(".")) + "[" + videoTracks[vIndex].dfn + "]" + outPath.Substring(outPath.LastIndexOf("."));
-                            if (File.Exists(outPath) && new FileInfo(outPath).Length != 0)
-                            {
-                                Log($"{outPath}已存在, 跳过下载...");
-                                if (pagesInfo.Count == 1 && Directory.Exists(p.aid))
-                                {
-                                    Directory.Delete(p.aid, true);
-                                }
-                                continue;
-                            }
-                        }
                         var pad = string.Empty.PadRight(clips.Count.ToString().Length, '0');
                         for (int i = 0; i < clips.Count; i++)
                         {
                             var link = clips[i];
-                            videoPath = $"{p.aid}/{p.aid}.P{indexStr}.{p.cid}.{i.ToString(pad)}.mp4";
+                            videoPath = $"{p.aid}/{p.aid}.P{p.index}.{p.cid}.{i.ToString(pad)}.mp4";
                             if (multiThread && !link.Contains("-cmcc-"))
                             {
                                 if (videoTracks.Count != 0)
@@ -926,18 +908,18 @@ namespace BBDown
                         Log($"下载P{p.index}完毕");
                         Log("开始合并分段...");
                         var files = GetFiles(Path.GetDirectoryName(videoPath), ".mp4");
-                        videoPath = $"{p.aid}/{p.aid}.P{indexStr}.{p.cid}.mp4";
+                        videoPath = $"{p.aid}/{p.aid}.P{p.index}.{p.cid}.mp4";
                         MergeFLV(files, videoPath);
                         if (skipMux) continue;
                         Log("开始混流视频" + (subtitleInfo.Count > 0 ? "和字幕" : "") + "...");
-                        int code = MuxAV(false, videoPath, "", outPath,
+                        int code = MuxAV(false, videoPath, "", savePath,
                             desc,
                             title,
-                            vInfo.PagesInfo.Count > 1 ? ($"{prefix}{p.title}") : "",
+                            vInfo.PagesInfo.Count > 1 ? savePath.Substring(Math.Max(0, savePath.LastIndexOf("/"))) : "",
                             File.Exists($"{p.aid}/{p.aid}.jpg") ? $"{p.aid}/{p.aid}.jpg" : "",
                             lang,
                             subtitleInfo, audioOnly, videoOnly, p.points);
-                        if (code != 0 || !File.Exists(outPath) || new FileInfo(outPath).Length == 0)
+                        if (code != 0 || !File.Exists(savePath) || new FileInfo(savePath).Length == 0)
                         {
                             LogError("合并失败"); continue;
                         }
@@ -972,7 +954,7 @@ namespace BBDown
                     if (downloadDanmaku)
                     {
                         // 下载弹幕
-                        await DownloadDanmaku(p, outPath);
+                        await DownloadDanmaku(p, savePath);
                     }
                 }
                 Log("任务完成");
