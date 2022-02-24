@@ -34,16 +34,20 @@ namespace BBDown
 
         public static string APP_DIR = Path.GetDirectoryName(System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName);
 
-        private static int Compare(Video r1, Video r2, Dictionary<string, byte> encodingPriority)
+        private static int Compare(Video r1, Video r2, Dictionary<string, byte> encodingPriority, Dictionary<string, int> dfnPriority)
         {
-            if (encodingPriority != null)
+            if (r1.codecs != r2.codecs)
             {
-                if (r1.codecs != r2.codecs)
-                {
-                    if (!encodingPriority.TryGetValue(r1.codecs, out byte r1Priority)) { r1Priority = byte.MaxValue; }
-                    if (!encodingPriority.TryGetValue(r2.codecs, out byte r2Priority)) { r2Priority = byte.MaxValue; }
-                    return r1Priority < r2Priority ? -1 : 1;
-                }
+                if (!encodingPriority.TryGetValue(r1.codecs, out byte r1Priority)) { r1Priority = byte.MaxValue; }
+                if (!encodingPriority.TryGetValue(r2.codecs, out byte r2Priority)) { r2Priority = byte.MaxValue; }
+                if (r1Priority != r2Priority) { return r1Priority < r2Priority ? -1 : 1; }
+                
+            }
+            if (r1.dfn != r2.dfn)
+            {
+                if (!dfnPriority.TryGetValue(r1.dfn, out int r1Priority)) { r1Priority = int.MaxValue; }
+                if (!dfnPriority.TryGetValue(r2.dfn, out int r2Priority)) { r2Priority = int.MaxValue; }
+                if (r1Priority != r2Priority) { return r1Priority < r2Priority ? -1 : 1; }
             }
             return (Convert.ToInt32(r1.id) * 100000 + r1.bandwith) > (Convert.ToInt32(r2.id) * 100000 + r2.bandwith) ? -1 : 1;
         }
@@ -61,6 +65,7 @@ namespace BBDown
             public bool UseIntlApi { get; set; }
             public bool UseMP4box { get; set; }
             public string EncodingPriority { get; set; }
+            public string DfnPriority { get; set; }
             public bool OnlyShowInfo { get; set; }
             public bool ShowAll { get; set; }
             public bool UseAria2c { get; set; }
@@ -116,6 +121,10 @@ namespace BBDown
                 new Option<string>(
                     new string[]{ "--encoding-priority" },
                     "视频编码的选择优先级,用逗号分割 例:\"hevc,av1,avc\""
+                    ),
+                new Option<string>(
+                    new string[] { "--dfn-priority" },
+                    "画质优先级,用逗号分隔 例:\"8K 超高清, 1080P 高码率, HDR 真彩, 杜比视界\""
                     ),
                 new Option<bool>(
                     new string[]{ "--only-show-info" ,"-info"},
@@ -348,19 +357,34 @@ namespace BBDown
                 bool intlApi = myOption.UseIntlApi;
                 bool useMp4box = myOption.UseMP4box;
                 
-                Dictionary<string, byte> encodingPriority = null;
+                var encodingPriority = new Dictionary<string, byte>();
                 if (myOption.EncodingPriority != null)
                 {
-                    encodingPriority = new Dictionary<string, byte>();
-                    var encodingPriorityTemp = myOption.EncodingPriority.Split(',').Select(s => s.ToUpper());
+                    var encodingPriorityTemp = myOption.EncodingPriority.Split(',').Select(s => s.ToUpper().Trim()).Where(s => !string.IsNullOrEmpty(s));
                     byte index = 0;
                     foreach (string encoding in encodingPriorityTemp)
                     {
-                        if (string.IsNullOrEmpty(encoding) || encodingPriority.ContainsKey(encoding)) { continue; }
+                        if (encodingPriority.ContainsKey(encoding)) { continue; }
                         encodingPriority[encoding] = index;
                         index++;
                     }
                 }
+                var dfnPriority = new Dictionary<string, int>();
+                if (myOption.DfnPriority != null)
+				{
+                    var dfnPriorityTemp = myOption.DfnPriority.Split(',').Select(s => s.ToUpper().Trim()).Where(s => !string.IsNullOrEmpty(s));
+                    int index = 0;
+                    foreach (string dfn in dfnPriorityTemp)
+					{
+                        if (dfnPriority.ContainsKey(dfn)) { continue; }
+                        dfnPriority[dfn] = index;
+                        index++;
+					}
+				}
+                foreach (KeyValuePair<string, int> kvp in dfnPriority)
+				{
+                    Log(kvp.Key + "  " + kvp.Value.ToString());
+				}
 
                 bool hideStreams = myOption.HideStreams;
                 bool multiThread = myOption.MultiThread;
@@ -655,7 +679,7 @@ namespace BBDown
                             if (!videoOnly) continue;
                         }
                         //排序
-                        videoTracks.Sort((v1, v2) => Compare(v1, v2, encodingPriority));
+                        videoTracks.Sort((v1, v2) => Compare(v1, v2, encodingPriority, dfnPriority));
                         audioTracks.Sort(Compare);
 
                         if (audioOnly) videoTracks.Clear();
@@ -823,7 +847,7 @@ namespace BBDown
                         int vIndex = 0;
                     reParse:
                         //排序
-                        videoTracks.Sort((v1, v2) => Compare(v1, v2, encodingPriority));
+                        videoTracks.Sort((v1, v2) => Compare(v1, v2, encodingPriority, dfnPriority));
 
                         if (interactMode && !flag)
                         {
