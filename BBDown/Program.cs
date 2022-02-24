@@ -14,7 +14,6 @@ using static BBDown.BBDownUtil;
 using static BBDown.BBDownParser;
 using static BBDown.BBDownLogger;
 using static BBDown.BBDownMuxer;
-using static BBDown.BBDownDanmaku;
 using System.Text;
 using System.Linq;
 using System.Text.Json;
@@ -953,8 +952,33 @@ namespace BBDown
 
                     if (downloadDanmaku)
                     {
-                        // 下载弹幕
-                        await DownloadDanmaku(p, savePath);
+                        var danmakuXmlPath = savePath.Substring(0, savePath.LastIndexOf('.') + 1) + ".xml";
+                        var danmakuAssPath = savePath.Substring(0, savePath.LastIndexOf('.') + 1) + ".ass";
+                        if (!File.Exists(danmakuAssPath))
+						{
+                            if (File.Exists(danmakuXmlPath)) { Log("弹幕Xml文件已存在，跳过下载..."); }
+                            else
+                            {
+                                Log("正在下载弹幕Xml文件");
+                                await BBDownDanmaku.DownloadAsync(p, danmakuXmlPath, useAria2c, aria2cProxy);
+                            }
+
+                            var danmakus = BBDownDanmaku.ParseXml(danmakuXmlPath);
+                            if (danmakus != null)
+                            {
+                                Log("正在保存弹幕Ass文件...");
+                                await BBDownDanmaku.SaveAsAssAsync(danmakus, danmakuAssPath);
+                            }
+                            else
+                            {
+                                Log("弹幕Xml解析失败, 删除Xml...");
+                                File.Delete(danmakuXmlPath);
+                            }
+                        }
+						else
+						{
+                            Log("弹幕Ass文件已存在，跳过生成");
+						}
                     }
                 }
                 Log("任务完成");
