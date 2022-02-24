@@ -220,10 +220,12 @@ namespace BBDown
                     Log("生成二维码...");
                     QRCodeGenerator qrGenerator = new QRCodeGenerator();
                     QRCodeData qrCodeData = qrGenerator.CreateQrCode(url, QRCodeGenerator.ECCLevel.Q);
-                    QRCode qrCode = new QRCode(qrCodeData);
-                    Bitmap qrCodeImage = qrCode.GetGraphic(7);
-                    qrCodeImage.Save("qrcode.png", System.Drawing.Imaging.ImageFormat.Png);
-                    Log("生成二维码成功：qrcode.png, 请打开并扫描");
+                    PngByteQRCode pngByteCode = new PngByteQRCode(qrCodeData);
+                    File.WriteAllBytes("qrcode.png", pngByteCode.GetGraphic(7));
+                    Log("生成二维码成功：qrcode.png, 请打开并扫描, 或扫描打印的二维码");
+                    var consoleQRCode = new ConsoleQRCode(qrCodeData);
+                    consoleQRCode.GetGraphic();
+
                     while (true)
                     {
                         await Task.Delay(1000);
@@ -276,10 +278,11 @@ namespace BBDown
                     Log("生成二维码...");
                     QRCodeGenerator qrGenerator = new QRCodeGenerator();
                     QRCodeData qrCodeData = qrGenerator.CreateQrCode(url, QRCodeGenerator.ECCLevel.Q);
-                    QRCode qrCode = new QRCode(qrCodeData);
-                    Bitmap qrCodeImage = qrCode.GetGraphic(7);
-                    qrCodeImage.Save("qrcode.png", System.Drawing.Imaging.ImageFormat.Png);
-                    Log("生成二维码成功：qrcode.png, 请打开并扫描");
+                    PngByteQRCode pngByteCode = new PngByteQRCode(qrCodeData);
+                    File.WriteAllBytes("qrcode.png", pngByteCode.GetGraphic(7));
+                    Log("生成二维码成功：qrcode.png, 请打开并扫描, 或扫描打印的二维码");
+                    var consoleQRCode = new ConsoleQRCode(qrCodeData);
+                    consoleQRCode.GetGraphic();
                     parms.Set("auth_code", authCode);
                     parms.Set("ts", GetTimeStamp(true));
                     parms.Remove("sign");
