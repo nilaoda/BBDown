@@ -233,7 +233,7 @@ namespace BBDown
                         Subtitle subtitle = new Subtitle();
                         subtitle.url = sub.GetProperty("url").ToString();
                         subtitle.lan = sub.GetProperty("key").ToString();
-                        subtitle.path = $"{aid}/{aid}.{cid}.{subtitle.lan}.srt";
+                        subtitle.path = $"{aid}/{aid}.{cid}.{subtitle.lan}{(subtitle.url.Contains(".json") ? ".srt" : ".ass")}";
                         subtitles.Add(subtitle);
                     }
                     return subtitles;
@@ -308,7 +308,10 @@ namespace BBDown
 
         public static async Task SaveSubtitleAsync(string url, string path)
         {
-            await File.WriteAllTextAsync(path, ConvertSubFromJson(await GetWebSourceAsync(url)), new UTF8Encoding());
+            if (path.EndsWith(".srt"))
+                await File.WriteAllTextAsync(path, ConvertSubFromJson(await GetWebSourceAsync(url)), new UTF8Encoding());
+            else
+                await File.WriteAllTextAsync(path, await GetWebSourceAsync(url), new UTF8Encoding());
         }
 
         private static string ConvertSubFromJson(string jsonString)
