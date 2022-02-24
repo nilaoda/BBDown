@@ -725,7 +725,7 @@ namespace BBDown
                                 .Replace("<cid>", p.cid)
                                 .Replace("<dfn>", videoTracks[vIndex].dfn)
                                 .Replace("<res>", videoTracks[vIndex].res)
-                                .Replace("<fps>", videoTracks[vIndex].fps)
+                                .Replace("<fps>", ((int)double.Parse(videoTracks[vIndex].fps)).ToString())
                                 .Replace("<videoCodecs>", videoTracks[vIndex].codecs)
                                 .Replace("<videoBandwidth>", videoTracks[vIndex].bandwith.ToString())
                                 .Replace("<audioCodecs>", audioTracks[aIndex].codecs)
@@ -858,7 +858,7 @@ namespace BBDown
                                 .Replace("<cid>", p.cid)
                                 .Replace("<dfn>", videoTracks[vIndex].dfn)
                                 .Replace("<res>", videoTracks[vIndex].res)
-                                .Replace("<fps>", videoTracks[vIndex].fps)
+                                .Replace("<fps>", ((int)double.Parse(videoTracks[vIndex].fps)).ToString())
                                 .Replace("<videoCodecs>", videoTracks[vIndex].codecs)
                                 .Replace("<videoBandwidth>", videoTracks[vIndex].bandwith.ToString())
                                 .Replace("<audioCodecs>", "")
@@ -952,8 +952,8 @@ namespace BBDown
 
                     if (downloadDanmaku)
                     {
-                        var danmakuXmlPath = savePath.Substring(0, savePath.LastIndexOf('.') + 1) + ".xml";
-                        var danmakuAssPath = savePath.Substring(0, savePath.LastIndexOf('.') + 1) + ".ass";
+                        var danmakuXmlPath = savePath.Substring(0, savePath.LastIndexOf('.')) + ".xml";
+                        var danmakuAssPath = savePath.Substring(0, savePath.LastIndexOf('.')) + ".ass";
                         if (!File.Exists(danmakuAssPath))
 						{
                             if (File.Exists(danmakuXmlPath)) { Log("弹幕Xml文件已存在，跳过下载..."); }
