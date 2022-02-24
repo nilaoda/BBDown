@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.CommandLine.Parsing;
-using System.Drawing;
 using System.IO;
 using System.Net;
 using System.Threading;
@@ -380,10 +379,6 @@ namespace BBDown
                         dfnPriority[dfn] = index;
                         index++;
 					}
-				}
-                foreach (KeyValuePair<string, int> kvp in dfnPriority)
-				{
-                    Log(kvp.Key + "  " + kvp.Value.ToString());
 				}
 
                 bool hideStreams = myOption.HideStreams;
