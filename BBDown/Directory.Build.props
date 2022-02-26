@@ -6,7 +6,7 @@
     <StaticallyLinked Condition="$(RuntimeIdentifier.StartsWith('win'))">true</StaticallyLinked>
     <TrimMode>Link</TrimMode>
     <TrimmerDefaultAction>link</TrimmerDefaultAction>
-    <NativeAotCompilerVersion>7.0.0-*</NativeAotCompilerVersion>
+    <NativeAotCompilerVersion>7.0.0-preview.2.*</NativeAotCompilerVersion>
   </PropertyGroup>
 
   <ItemGroup>
