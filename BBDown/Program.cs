@@ -395,7 +395,7 @@ namespace BBDown
                 string aria2cProxy = myOption.Aria2cProxy;
                 DEBUG_LOG = myOption.Debug;
                 string input = myOption.Url;
-                string savePath = myOption.SavePath;
+                string savePathFormat = myOption.SavePath;
                 string lang = myOption.Language;
                 string selectPage = myOption.SelectPage.ToUpper();
                 string aidOri = ""; //原始aid
@@ -571,6 +571,7 @@ namespace BBDown
                 }
 
                 Log($"共计 {pagesInfo.Count} 个分P, 已选择：" + (selectedPages == null ? "ALL" : string.Join(",", selectedPages)));
+                var pagesCount = pagesInfo.Count;
 
                 //过滤不需要的分P
                 if (selectedPages != null)
@@ -658,7 +659,8 @@ namespace BBDown
                     (webJsonStr, videoTracks, audioTracks, clips, dfns) = await ExtractTracksAsync(aidOri, p.aid, p.cid, p.epid, tvApi, intlApi, appApi);
 
                     //File.WriteAllText($"debug.json", JObject.Parse(webJson).ToString());
-                    
+
+                    var savePath = "";
 
                     //此处代码简直灾难，后续优化吧
                     if ((videoTracks.Count != 0 || audioTracks.Count != 0) && clips.Count == 0)   //dash
@@ -736,24 +738,24 @@ namespace BBDown
                         if (audioTracks.Count > 0)
                             LogColor($"[音频] [{audioTracks[aIndex].codecs}] [{audioTracks[aIndex].bandwith} kbps] [~{FormatFileSize(audioTracks[aIndex].dur * audioTracks[aIndex].bandwith * 1024 / 8)}]", false);
 
+                        savePath = savePathFormat.Replace('\\', '/')
+                            .Replace("<videoTitle>", title)
+                            .Replace("<pageNumber>", p.index.ToString())
+                            .Replace("<pageNumberWithZero>", p.index.ToString().PadLeft((int)Math.Log10(pagesCount) + 1, '0'))
+                            .Replace("<pageTitle>", p.title)
+                            .Replace("<aid>", p.aid)
+                            .Replace("<cid>", p.cid)
+                            .Replace("<dfn>", videoTracks[vIndex].dfn)
+                            .Replace("<res>", videoTracks[vIndex].res)
+                            .Replace("<fps>", ((int)double.Parse(videoTracks[vIndex].fps)).ToString())
+                            .Replace("<videoCodecs>", videoTracks[vIndex].codecs)
+                            .Replace("<videoBandwidth>", videoTracks[vIndex].bandwith.ToString())
+                            .Replace("<audioCodecs>", audioTracks[aIndex].codecs)
+                            .Replace("<audioBandwidth>", audioTracks[aIndex].bandwith.ToString());
+                        // 后续还可以加入时间之类的
+
                         if (videoTracks.Count > 0)
                         {
-                            savePath = savePath.Replace('\\', '/')
-                                .Replace("<videoTitle>", title)
-                                .Replace("<pageNumber>", p.index.ToString())
-                                .Replace("<pageNumberWithZero>", p.index.ToString().PadLeft((int)Math.Log10(pagesInfo.Count) + 1, '0'))
-                                .Replace("<pageTitle>", p.title)
-                                .Replace("<aid>", p.aid)
-                                .Replace("<cid>", p.cid)
-                                .Replace("<dfn>", videoTracks[vIndex].dfn)
-                                .Replace("<res>", videoTracks[vIndex].res)
-                                .Replace("<fps>", ((int)double.Parse(videoTracks[vIndex].fps)).ToString())
-                                .Replace("<videoCodecs>", videoTracks[vIndex].codecs)
-                                .Replace("<videoBandwidth>", videoTracks[vIndex].bandwith.ToString())
-                                .Replace("<audioCodecs>", audioTracks[aIndex].codecs)
-                                .Replace("<audioBandwidth>", audioTracks[aIndex].bandwith.ToString());
-                            // 后续还可以加入时间之类的
-
                             savePath = string.Join('/', savePath.Split('/').Select(s => GetValidFileName(s.Trim())).Where(s => !string.IsNullOrEmpty(s)));
                             if (string.IsNullOrEmpty(Path.GetExtension(savePath))) { savePath += ".mp4"; }
 
@@ -871,20 +873,20 @@ namespace BBDown
                             }
                         }
                         if (infoMode) continue;
-                        savePath = savePath.Replace('\\', '/')
-                                .Replace("<videoTitle>", title)
-                                .Replace("<pageNumber>", p.index.ToString())
-                                .Replace("<pageNumberWithZero>", p.index.ToString().PadLeft((int)Math.Log10(pagesInfo.Count) + 1, '0'))
-                                .Replace("<pageTitle>", p.title)
-                                .Replace("<aid>", p.aid)
-                                .Replace("<cid>", p.cid)
-                                .Replace("<dfn>", videoTracks[vIndex].dfn)
-                                .Replace("<res>", videoTracks[vIndex].res)
-                                .Replace("<fps>", ((int)double.Parse(videoTracks[vIndex].fps)).ToString())
-                                .Replace("<videoCodecs>", videoTracks[vIndex].codecs)
-                                .Replace("<videoBandwidth>", videoTracks[vIndex].bandwith.ToString())
-                                .Replace("<audioCodecs>", "")
-                                .Replace("<audioBandwidth>", "");
+                        savePath = savePathFormat.Replace('\\', '/')
+                            .Replace("<videoTitle>", title)
+                            .Replace("<pageNumber>", p.index.ToString())
+                            .Replace("<pageNumberWithZero>", p.index.ToString().PadLeft((int)Math.Log10(pagesInfo.Count) + 1, '0'))
+                            .Replace("<pageTitle>", p.title)
+                            .Replace("<aid>", p.aid)
+                            .Replace("<cid>", p.cid)
+                            .Replace("<dfn>", videoTracks[vIndex].dfn)
+                            .Replace("<res>", videoTracks[vIndex].res)
+                            .Replace("<fps>", ((int)double.Parse(videoTracks[vIndex].fps)).ToString())
+                            .Replace("<videoCodecs>", videoTracks[vIndex].codecs)
+                            .Replace("<videoBandwidth>", videoTracks[vIndex].bandwith.ToString())
+                            .Replace("<audioCodecs>", "")
+                            .Replace("<audioBandwidth>", "");
                         // 后续还可以加入时间之类的
 
                         savePath = string.Join('/', savePath.Split('/').Select(s => GetValidFileName(s.Trim())).Where(s => !string.IsNullOrEmpty(s)));
