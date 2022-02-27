@@ -7,6 +7,7 @@ using System.Text;
 using System.Xml;
 using System.Collections.Generic;
 using System;
+using System.Linq;
 
 namespace BBDown
 {
@@ -18,54 +19,34 @@ namespace BBDown
         private const double MOVE_SPEND_TIME = 8.00;    //单条条滚动弹幕存在时间（控制速度）
         private const double TOP_SPEND_TIME = 4.00;     //单条顶部或底部弹幕存在时间
         private const int PROTECT_LENGTH = 50;          //滚动弹幕屏占百分比
+        public static readonly DanmakuComparer comparer = new DanmakuComparer();
 
-        private static List<Danmaku> danmakus = new List<Danmaku>();
-
-        public static async Task DownloadDanmaku(Page p, string mp4Path)
+        public static async Task DownloadAsync(Page p, string xmlPath, bool aria2c, string aria2cProxy)
         {
-            // 下载弹幕
             string danmakuUrl = "https://comment.bilibili.com/" + p.cid + ".xml";
-            string xmlPath = mp4Path.Substring(0, mp4Path.Length - 4) + ".xml";
-            string assPath = mp4Path.Substring(0, mp4Path.Length - 4) + ".ass";
-
-            if (File.Exists(xmlPath) && new FileInfo(xmlPath).Length != 0)
-            {
-                Log("弹幕文件已存在，跳过...");
-            }
-
-            Log($"开始下载P{p.index}弹幕");
-            await DownloadFile(danmakuUrl, xmlPath, false, "");
-            if (File.Exists(xmlPath) && new FileInfo(xmlPath).Length != 0)
-            {
-                await ParsingXml(xmlPath);
-                await saveAsAss(assPath);
-                Log($"P{p.index}弹幕下载完成");
-            }
-            else
-            {
-                Log($"P{p.index}弹幕下载失败...");
-            }
+            await DownloadFile(danmakuUrl, xmlPath, aria2c, aria2cProxy);
         }
 
-        public static Task ParsingXml(string xmlPath)
+        public static Danmaku[] ParseXml(string xmlPath)
         {
             // 解析xml文件
-            if (!File.Exists(xmlPath) || new FileInfo(xmlPath).Length == 0)
-            {
-                return Task.CompletedTask;
-            }
             XmlDocument xmlFile = new XmlDocument();
             XmlReaderSettings settings = new XmlReaderSettings();
             settings.IgnoreComments = true;//忽略文档里面的注释
-            try
-            {
-                XmlReader reader = XmlReader.Create(xmlPath, settings);
-                xmlFile.Load(reader);
+            var danmakus = new List<Danmaku>();
+            using (var reader = XmlReader.Create(xmlPath, settings))
+			{
+                try
+                {
+                    xmlFile.Load(reader);
+                }
+                catch (Exception ex)
+                {
+                    LogDebug("解析字幕xml时出现异常: {0}", ex.ToString());
+                    return null;
+				}
             }
-            catch (Exception ex)
-            {
-                Log(ex.Message);
-            }
+
             XmlNode? rootNode = xmlFile.SelectSingleNode("i");
             if (rootNode != null)
             {
@@ -89,31 +70,37 @@ namespace BBDown
                     }
                 }
             }
-
-            return Task.CompletedTask;
+            return danmakus.ToArray();
         }
 
-        public static Task saveAsAss(string outputPath)
+        /// <summary>
+        /// 保存为ASS字幕文件
+        /// </summary>
+        /// <param name="danmakus">弹幕</param>
+        /// <param name="outputPath">保存路径</param>
+        /// <returns></returns>
+        public static async Task SaveAsAssAsync(Danmaku[] danmakus, string outputPath)
         {
-            // 保存为ASS字幕文件
-            string header = "[Script Info]" + Environment.NewLine +         // ASS字幕文件头
-           "Script Updated By: BBDown(https://github.com/nilaoda/BBDown)" + Environment.NewLine +
-           "ScriptType: v4.00+" + Environment.NewLine +
-           $"PlayResX: {MONITOR_WIDTH}" + Environment.NewLine +
-           $"PlayResY: {MONITOR_HEIGHT}" + Environment.NewLine +
-           $"Aspect Ratio: {MONITOR_WIDTH}:{MONITOR_HEIGHT}" + Environment.NewLine +
-           "Collisions: Normal" + Environment.NewLine +
-           "WrapStyle: 2" + Environment.NewLine +
-           "ScaledBorderAndShadow: yes" + Environment.NewLine +
-           "YCbCr Matrix: TV.601" + Environment.NewLine + Environment.NewLine +
-           "[V4+ Styles]" + Environment.NewLine +
-           "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding" + Environment.NewLine +
-           $"Style: BBDOWN_Style, 宋体, {FONT_SIZE}, &H00FFFFFF, &H00FFFFFF, &H00000000, &H00000000, 0, 0, 0, 0, 100, 100, 0.00, 0.00, 1, 2, 0, 7, 0, 0, 0, 0" + Environment.NewLine + Environment.NewLine +
-           "[Events]" + Environment.NewLine +
-           "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text" + Environment.NewLine;
+            var sb = new StringBuilder();
+            // ASS字幕文件头
+            sb.AppendLine("[Script Info]");
+            sb.AppendLine("Script Updated By: BBDown(https://github.com/nilaoda/BBDown)");
+            sb.AppendLine("ScriptType: v4.00+");
+            sb.AppendLine($"PlayResX: {MONITOR_WIDTH}");
+            sb.AppendLine($"PlayResY: {MONITOR_HEIGHT}");
+            sb.AppendLine($"Aspect Ratio: {MONITOR_WIDTH}:{MONITOR_HEIGHT}");
+            sb.AppendLine("Collisions: Normal");
+            sb.AppendLine("WrapStyle: 2");
+            sb.AppendLine("ScaledBorderAndShadow: yes");
+            sb.AppendLine("YCbCr Matrix: TV.601");
+            sb.AppendLine("[V4+ Styles]");
+            sb.AppendLine("Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding");
+            sb.AppendLine($"Style: BBDOWN_Style, 宋体, {FONT_SIZE}, &H00FFFFFF, &H00FFFFFF, &H00000000, &H00000000, 0, 0, 0, 0, 100, 100, 0.00, 0.00, 1, 2, 0, 7, 0, 0, 0, 0");
+            sb.AppendLine("[Events]");
+            sb.AppendLine("Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text");
+            
             PositionController controller = new PositionController();   // 弹幕位置控制器
-            List<string> lines = new List<string>();
-            danmakus.Sort(new DanmakuComparer());
+            Array.Sort(danmakus, comparer);
             foreach (Danmaku danmaku in danmakus)
             {
                 int height = controller.updatePosition(danmaku.DanmakuMode, danmaku.Second, danmaku.Content.Length);
@@ -135,28 +122,10 @@ namespace BBDown
                 {
                     effect += $"\\c&{danmaku.Color}&";
                 }
-                string format = $"Dialogue: 2,{danmaku.StartTime},{danmaku.EndTime},BBDOWN_Style,,0000,0000,0000,,{{{effect}}}{danmaku.Content}";
-                lines.Add(format);
+                sb.AppendLine($"Dialogue: 2,{danmaku.StartTime},{danmaku.EndTime},BBDOWN_Style,,0000,0000,0000,,{{{effect}}}{danmaku.Content}");
             }
 
-            try
-            {
-                using (FileStream fs = File.Create(outputPath))
-                {
-                    byte[] info = new UTF8Encoding(true).GetBytes(header);
-                    fs.Write(info, 0, info.Length);
-                    foreach (string line in lines)
-                    {
-                        info = new UTF8Encoding(true).GetBytes(line + Environment.NewLine);
-                        fs.Write(info, 0, info.Length);
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                Log(e.Message);
-            }
-            return Task.CompletedTask;
+            await File.WriteAllTextAsync(outputPath, sb.ToString(), Encoding.UTF8);
         }
 
         protected class PositionController
@@ -207,7 +176,7 @@ namespace BBDown
             }
         }
 
-        protected class Danmaku
+        public class Danmaku
         {
             public Danmaku(string[] attrs, string content)
             {
@@ -272,7 +241,7 @@ namespace BBDown
             // 时间戳
         }
 
-        protected class DanmakuComparer : IComparer<Danmaku>
+        public class DanmakuComparer : IComparer<Danmaku>
         {
             public int Compare(Danmaku? x, Danmaku? y)
             {
