@@ -63,7 +63,7 @@ namespace BBDown
             if (points != null && points.Count > 0)
             {
                 var meta = GetMp4boxMetaString(points);
-                var metaFile = Path.Combine(Path.GetDirectoryName(videoPath), "chapters");
+                var metaFile = Path.Combine(Path.GetDirectoryName(string.IsNullOrEmpty(videoPath) ? audioPath : videoPath), "chapters");
                 File.WriteAllText(metaFile, meta);
                 inputArg.Append($" -chap  \"{metaFile}\"  ");
             }
@@ -133,7 +133,7 @@ namespace BBDown
             if (points != null && points.Count > 0)
             {
                 var meta = GetFFmpegMetaString(points);
-                var metaFile = Path.Combine(Path.GetDirectoryName(videoPath), "chapters");
+                var metaFile = Path.Combine(Path.GetDirectoryName(string.IsNullOrEmpty(videoPath) ? audioPath : videoPath), "chapters");
                 File.WriteAllText(metaFile, meta);
                 inputArg.Append($" -i \"{metaFile}\" -map_chapters {inputCount} ");
             }
