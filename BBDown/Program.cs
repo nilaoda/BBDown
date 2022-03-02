@@ -17,6 +17,7 @@ using System.Text;
 using System.Linq;
 using System.Text.Json;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 
 namespace BBDown
 {
@@ -738,26 +739,12 @@ namespace BBDown
                         if (audioTracks.Count > 0)
                             LogColor($"[音频] [{audioTracks[aIndex].codecs}] [{audioTracks[aIndex].bandwith} kbps] [~{FormatFileSize(audioTracks[aIndex].dur * audioTracks[aIndex].bandwith * 1024 / 8)}]", false);
 
-                        savePath = savePathFormat.Replace('\\', '/')
-                            .Replace("<videoTitle>", title)
-                            .Replace("<pageNumber>", p.index.ToString())
-                            .Replace("<pageNumberWithZero>", p.index.ToString().PadLeft((int)Math.Log10(pagesCount) + 1, '0'))
-                            .Replace("<pageTitle>", p.title)
-                            .Replace("<aid>", p.aid)
-                            .Replace("<cid>", p.cid)
-                            .Replace("<dfn>", videoTracks[vIndex].dfn)
-                            .Replace("<res>", videoTracks[vIndex].res)
-                            .Replace("<fps>", ((int)double.Parse(videoTracks[vIndex].fps)).ToString())
-                            .Replace("<videoCodecs>", videoTracks[vIndex].codecs)
-                            .Replace("<videoBandwidth>", videoTracks[vIndex].bandwith.ToString())
-                            .Replace("<audioCodecs>", audioTracks[aIndex].codecs)
-                            .Replace("<audioBandwidth>", audioTracks[aIndex].bandwith.ToString());
-                        // 后续还可以加入时间之类的
+                        savePath = FormatSavePath(savePathFormat, title, videoTracks, vIndex, audioTracks, aIndex, p, pagesCount);
+                        savePath = string.Join('/', savePath.Split('/').Select(s => GetValidFileName(s.Trim())).Where(s => !string.IsNullOrEmpty(s)));
+                        if (!savePath.EndsWith(".mp4")) { savePath += ".mp4"; }
 
                         if (videoTracks.Count > 0)
                         {
-                            savePath = string.Join('/', savePath.Split('/').Select(s => GetValidFileName(s.Trim())).Where(s => !string.IsNullOrEmpty(s)));
-                            if (string.IsNullOrEmpty(Path.GetExtension(savePath))) { savePath += ".mp4"; }
 
                             if (!infoMode && File.Exists(savePath) && new FileInfo(savePath).Length != 0)
                             {
@@ -832,7 +819,7 @@ namespace BBDown
                         Thread.Sleep(200);
                         if (videoTracks.Count > 0) File.Delete(videoPath);
                         if (audioTracks.Count > 0) File.Delete(audioPath);
-                        if (p.points.Count > 0) File.Delete(Path.Combine(Path.GetDirectoryName(videoPath), "chapters"));
+                        if (p.points.Count > 0) File.Delete(Path.Combine(Path.GetDirectoryName(string.IsNullOrEmpty(videoPath) ? audioPath : videoPath), "chapters"));
                         foreach (var s in subtitleInfo) File.Delete(s.path);
                         if (pagesInfo.Count == 1 || p.index == pagesInfo.Last().index || p.aid != pagesInfo.Last().aid)
                             File.Delete($"{p.aid}/{p.aid}.jpg");
@@ -873,24 +860,10 @@ namespace BBDown
                             }
                         }
                         if (infoMode) continue;
-                        savePath = savePathFormat.Replace('\\', '/')
-                            .Replace("<videoTitle>", title)
-                            .Replace("<pageNumber>", p.index.ToString())
-                            .Replace("<pageNumberWithZero>", p.index.ToString().PadLeft((int)Math.Log10(pagesInfo.Count) + 1, '0'))
-                            .Replace("<pageTitle>", p.title)
-                            .Replace("<aid>", p.aid)
-                            .Replace("<cid>", p.cid)
-                            .Replace("<dfn>", videoTracks[vIndex].dfn)
-                            .Replace("<res>", videoTracks[vIndex].res)
-                            .Replace("<fps>", ((int)double.Parse(videoTracks[vIndex].fps)).ToString())
-                            .Replace("<videoCodecs>", videoTracks[vIndex].codecs)
-                            .Replace("<videoBandwidth>", videoTracks[vIndex].bandwith.ToString())
-                            .Replace("<audioCodecs>", "")
-                            .Replace("<audioBandwidth>", "");
-                        // 后续还可以加入时间之类的
+                        savePath = FormatSavePath(savePathFormat, title, videoTracks, vIndex, null, 0, p, pagesCount);
 
                         savePath = string.Join('/', savePath.Split('/').Select(s => GetValidFileName(s.Trim())).Where(s => !string.IsNullOrEmpty(s)));
-                        if (string.IsNullOrEmpty(Path.GetExtension(savePath))) { savePath += ".mp4"; }
+                        if (!savePath.EndsWith(".mp4")) { savePath += ".mp4"; }
                         if (File.Exists(savePath) && new FileInfo(savePath).Length != 0)
                         {
                             Log($"{savePath}已存在, 跳过下载...");
@@ -950,7 +923,7 @@ namespace BBDown
                         Thread.Sleep(200);
                         if (videoTracks.Count != 0) File.Delete(videoPath);
                         foreach (var s in subtitleInfo) File.Delete(s.path);
-                        if (p.points.Count > 0) File.Delete(Path.Combine(Path.GetDirectoryName(videoPath), "chapters"));
+                        if (p.points.Count > 0) File.Delete(Path.Combine(Path.GetDirectoryName(string.IsNullOrEmpty(videoPath) ? audioPath : videoPath), "chapters"));
                         if (pagesInfo.Count == 1 || p.index == pagesInfo.Last().index || p.aid != pagesInfo.Last().aid)
                             File.Delete($"{p.aid}/{p.aid}.jpg");
                         if (Directory.Exists(p.aid) && Directory.GetFiles(p.aid).Length == 0) Directory.Delete(p.aid, true);
@@ -1016,6 +989,35 @@ namespace BBDown
                 Console.WriteLine();
                 Thread.Sleep(1);
             }
+        }
+
+        private static string FormatSavePath(string savePathFormat, string title, List<Video> videoTracks, int vIndex, List<Audio> audioTracks, int aIndex, Page p, int pagesCount)
+        {
+            var result = savePathFormat.Replace('\\', '/');
+            var regex = new Regex("<(\\w+?)>");
+            foreach (Match m in regex.Matches(result))
+            {
+                var key = m.Groups[1].Value;
+                var v = key switch
+                {
+                    "videoTitle" => title,
+                    "pageNumber" => p.index.ToString(),
+                    "pageNumberWithZero" => p.index.ToString().PadLeft((int)Math.Log10(pagesCount) + 1, '0'),
+                    "pageTitle" => p.title,
+                    "aid" => p.aid,
+                    "cid" => p.cid,
+                    "dfn" => videoTracks == null ? "" : videoTracks[vIndex].dfn,
+                    "res" => videoTracks == null ? "" : videoTracks[vIndex].res,
+                    "fps" => videoTracks == null ? "" : videoTracks[vIndex].fps,
+                    "videoCodecs" => videoTracks == null ? "" : videoTracks[vIndex].codecs,
+                    "videoBandwidth" => videoTracks == null ? "" : videoTracks[vIndex].bandwith.ToString(),
+                    "audioCodecs" => audioTracks == null ? "" : audioTracks[aIndex].codecs,
+                    "audioBandwidth" => audioTracks == null ? "" : audioTracks[aIndex].bandwith.ToString(),                    
+                    _ => key
+                };
+                result = result.Replace(m.Value, v);
+            }
+            return result;
         }
     }
 }
