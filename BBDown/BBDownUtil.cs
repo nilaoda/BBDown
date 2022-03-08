@@ -57,6 +57,7 @@ namespace BBDown
             var avid = input;
             if (input.StartsWith("http"))
             {
+                Match match = null;
                 if (input.Contains("b23.tv"))
                     input = await Get302(input);
                 if (input.Contains("video/av"))
@@ -101,19 +102,19 @@ namespace BBDown
                 }
                 else if (input.Contains("/channel/seriesdetail?sid="))
                 {
-                    string mid = Regex.Match(input, "space.bilibili.com/(\\d{1,})").Groups[1].Value;
+                    string mid = Regex.Match(input, "space\\.bilibili\\.com/(\\d{1,})").Groups[1].Value;
                     string bizId = GetQueryString("sid", input);
                     avid = $"seriesBizId:{bizId}:{mid}";
                 }
                 else if (input.Contains("/space.bilibili.com/") && input.Contains("/favlist"))
                 {
-                    string mid = Regex.Match(input, "space.bilibili.com/(\\d{1,})").Groups[1].Value;
+                    string mid = Regex.Match(input, "space\\.bilibili\\.com/(\\d{1,})").Groups[1].Value;
                     string fid = GetQueryString("fid", input);
                     avid = $"favId:{fid}:{mid}";
                 }
                 else if (input.Contains("/space.bilibili.com/"))
                 {
-                    string mid = Regex.Match(input, "space.bilibili.com/(\\d{1,})").Groups[1].Value;
+                    string mid = Regex.Match(input, "space\\.bilibili\\.com/(\\d{1,})").Groups[1].Value;
                     avid = $"mid:{mid}";
                 }
                 else if (input.Contains("ep_id="))
@@ -121,10 +122,15 @@ namespace BBDown
                     string epId = GetQueryString("ep_id", input);
                     avid = $"ep:{epId}";
                 }
-                else if (Regex.IsMatch(input, "global.bilibili.com/play/\\d+/(\\d+)"))
+                else if ((match = Regex.Match(input, "global\\.bilibili\\.com/play/\\d+/(\\d+)")).Success)
                 {
-                    string epId = Regex.Match(input, "global.bilibili.com/play/\\d+/(\\d+)").Groups[1].Value;
+                    string epId = match.Groups[1].Value;
                     avid = $"ep:{epId}";
+                }
+                else if ((match = Regex.Match(input, "bangumi/media/(md\\d+)")).Success)
+                {
+                    var mdId = match.Groups[1].Value;
+                    avid = await GetAvIdAsync(mdId);
                 }
                 else
                 {
@@ -158,9 +164,28 @@ namespace BBDown
                 string web = await GetWebSourceAsync("https://www.bilibili.com/bangumi/play/" + input);
                 Regex regex = new Regex("window.__INITIAL_STATE__=([\\s\\S].*?);\\(function\\(\\)");
                 string json = regex.Match(web).Groups[1].Value;
-                using var jDoc = JsonDocument.Parse(json);
-                string epId = jDoc.RootElement.GetProperty("epList").EnumerateArray().First().GetProperty("id").ToString();
-                avid = $"ep:{epId}";
+                try
+                {
+                    using var jDoc = JsonDocument.Parse(json);
+                    string epId = jDoc.RootElement.GetProperty("epList").EnumerateArray().First().GetProperty("id").ToString();
+                    avid = $"ep:{epId}";
+                }
+                catch (JsonException)
+                {
+                    throw new Exception("输入有误");
+                }
+            }
+            else if (input.StartsWith("md"))
+            {
+                string mdId = Regex.Match(input, "md(\\d{1,})").Groups[1].Value;
+                try
+                {
+                    avid = await GetAvIdAsync(await GetSSIdByMDAsync(mdId));
+                }
+                catch (JsonException)
+                {
+                    throw new Exception("输入有误");
+                }
             }
             else
             {
@@ -291,6 +316,15 @@ namespace BBDown
             using var jDoc = JsonDocument.Parse(json);
             string epId = jDoc.RootElement.GetProperty("data").GetProperty("episodes").EnumerateArray().First().GetProperty("id").ToString();
             return epId;
+        }
+
+        public static async Task<string> GetSSIdByMDAsync(string mdId)
+		{
+            var api = $"https://api.bilibili.com/pgc/review/user?media_id={mdId}";
+            var json = await GetWebSourceAsync(api);
+            using var jDoc = JsonDocument.Parse(json);
+            var ssId = "ss" + jDoc.RootElement.GetProperty("result").GetProperty("media").GetProperty("season_id").ToString();
+            return ssId;
         }
 
         private static async Task RangeDownloadToTmpAsync(int id, string url, string tmpName, long fromPosition, long? toPosition, Action<int, long, long> onProgress, bool failOnRangeNotSupported = false)
