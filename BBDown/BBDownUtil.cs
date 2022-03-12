@@ -596,12 +596,17 @@ namespace BBDown
             return redirectedUrl;
         }
 
-        public static string GetValidFileName(string input, string re = ".")
+        public static string GetValidFileName(string input, string re = ".", bool filterSlash = false)
         {
             string title = input;
             foreach (char invalidChar in Path.GetInvalidFileNameChars())
             {
                 title = title.Replace(invalidChar.ToString(), re);
+            }
+            if (filterSlash)
+            {
+                title = title.Replace("/", re);
+                title = title.Replace("\\", re);
             }
             return title;
         }
