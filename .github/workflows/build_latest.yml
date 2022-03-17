@@ -63,7 +63,7 @@ jobs:
   build-linux-arm64:
     
     runs-on: ubuntu-18.04
-    container: mcr.microsoft.com/dotnet-buildtools/prereqs:ubuntu-16.04-cross-arm64-20201022204150-b2c2436
+    container: mcr.microsoft.com/dotnet-buildtools/prereqs:ubuntu-18.04-cross-arm64-20220312201346-b2c2436
     
     steps:
       
