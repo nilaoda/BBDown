@@ -19,35 +19,60 @@ namespace BBDown
     {
         public async Task<BBDownVInfo> FetchAsync(string id)
         {
+            //套用BBDownMediaListFetcher.cs的代码
+            //只修改id = id.Substring(12);以及api地址的type=5
             id = id.Substring(12);
-            var seriesId = id.Split(':')[0];
-            var mid = id.Split(':')[1];
-            var aids = new List<string>();
-            int pageSize = 30;
-            var api = $"https://api.bilibili.com/x/series/archives?mid={mid}&series_id={seriesId}&only_normal=true&sort=desc&pn=1&ps={pageSize}";
+            var api = $"https://api.bilibili.com/x/v1/medialist/info?type=5&biz_id={id}&tid=0";
             var json = await GetWebSourceAsync(api);
             using var infoJson = JsonDocument.Parse(json);
             var data = infoJson.RootElement.GetProperty("data");
-            int totalCount = data.GetProperty("page").GetProperty("total").GetInt32();
-            int totalPage = (int)Math.Ceiling((double)totalCount / pageSize);
-            aids.AddRange(data.GetProperty("aids").EnumerateArray().ToArray().Select(o => o.ToString()));
-            for (int page = 2; page <= totalPage; page++)
+            var listTitle = GetValidFileName(data.GetProperty("title").GetString());
+            var intro = data.GetProperty("intro").GetString();
+            string pubTime = data.GetProperty("ctime").ToString();
+            pubTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc).AddSeconds(Convert.ToDouble(pubTime)).ToLocalTime().ToString();
+
+            List<Page> pagesInfo = new List<Page>();
+            bool hasMore = true;
+            var oid = "";
+            int index = 1;
+            while (hasMore)
             {
-                api = $"https://api.bilibili.com/x/series/archives?mid={mid}&series_id={seriesId}&only_normal=true&sort=desc&pn={page}&ps={pageSize}";
-                json = await GetWebSourceAsync(api);
-                using var jsonDoc = JsonDocument.Parse(json);
-                data = jsonDoc.RootElement.GetProperty("data");
-                aids.AddRange(data.GetProperty("aids").EnumerateArray().ToArray().Select(o => o.ToString()));
+                var listApi = $"https://api.bilibili.com/x/v2/medialist/resource/list?type=5&oid={oid}&otype=2&biz_id={id}&bvid=&with_current=true&mobi_app=web&ps=20&direction=false&sort_field=1&tid=0&desc=false";
+                json = await GetWebSourceAsync(listApi);
+                using var listJson = JsonDocument.Parse(json);
+                data = listJson.RootElement.GetProperty("data");
+                hasMore = data.GetProperty("has_more").GetBoolean();
+                foreach (var m in data.GetProperty("media_list").EnumerateArray())
+                {
+                    var pageCount = m.GetProperty("page").GetInt32();
+                    var desc = m.GetProperty("intro").GetString();
+                    foreach (var page in m.GetProperty("pages").EnumerateArray())
+                    {
+                        Page p = new Page(index++,
+                        m.GetProperty("id").ToString(),
+                        page.GetProperty("id").ToString(),
+                        "", //epid
+                        pageCount == 1 ? m.GetProperty("title").ToString() : $"{m.GetProperty("title").ToString()}_P{page.GetProperty("page").ToString()}_{page.GetProperty("title")}", //单P使用外层标题 多P则拼接内层子标题
+                        page.GetProperty("duration").GetInt32(),
+                        page.GetProperty("dimension").GetProperty("width").ToString() + "x" + page.GetProperty("dimension").GetProperty("height").ToString(),
+                        m.GetProperty("cover").ToString(),
+                        desc);
+                        if (!pagesInfo.Contains(p)) pagesInfo.Add(p);
+                        else index--;
+                    }
+                    oid = m.GetProperty("id").ToString();
+                }
             }
-            var urls = aids.Select(o => $"https://www.bilibili.com/video/av{o}");
-            File.WriteAllText($"用户{mid}所创建的列表{seriesId}的所有视频.txt", string.Join(Environment.NewLine, urls));
-            Log("目前下载器不支持下载用户创建的列表视频，不过程序已经获取到了该列表的全部投稿视频地址，你可以自行使用批处理脚本等手段调用本程序进行批量下载。如在Windows系统你可以使用如下代码：");
-            Console.WriteLine();
-            Console.WriteLine(@"@echo Off
-For /F %%a in (urls.txt) Do (BBDown.exe ""%%a"")
-pause");
-            Console.WriteLine();
-            throw new Exception("暂不支持该功能");
+
+            var info = new BBDownVInfo();
+            info.Title = listTitle.Trim();
+            info.Desc = intro.Trim();
+            info.Pic = "";
+            info.PubTime = pubTime;
+            info.PagesInfo = pagesInfo;
+            info.IsBangumi = false;
+
+            return info;
         }
     }
 }
