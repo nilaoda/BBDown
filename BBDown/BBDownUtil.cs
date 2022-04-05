@@ -329,7 +329,7 @@ namespace BBDown
 
         private static async Task RangeDownloadToTmpAsync(int id, string url, string tmpName, long fromPosition, long? toPosition, Action<int, long, long> onProgress, bool failOnRangeNotSupported = false)
         {
-            var lastTime = File.Exists(tmpName) ? new FileInfo(tmpName).LastWriteTimeUtc : DateTimeOffset.MinValue;
+            DateTimeOffset? lastTime = File.Exists(tmpName) ? new FileInfo(tmpName).LastWriteTimeUtc : null;
             using (var fileStream = new FileStream(tmpName, FileMode.OpenOrCreate))
             {
                 fileStream.Seek(0, SeekOrigin.End);
@@ -341,7 +341,7 @@ namespace BBDown
                 httpRequestMessage.Headers.Add("User-Agent", "Mozilla/5.0");
                 httpRequestMessage.Headers.Add("Cookie", Program.COOKIE);
                 httpRequestMessage.Headers.Range = new(downloadedBytes, toPosition);
-                httpRequestMessage.Headers.IfRange = new(lastTime);
+                httpRequestMessage.Headers.IfRange = lastTime != null ? new(lastTime.Value) : null;
                 httpRequestMessage.RequestUri = new(url);
 
                 using var response = (await AppHttpClient.SendAsync(httpRequestMessage, HttpCompletionOption.ResponseHeadersRead)).EnsureSuccessStatusCode();
