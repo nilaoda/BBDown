@@ -90,10 +90,15 @@ namespace BBDown
                     string epId = Regex.Match(input, "/ep(\\d{1,})").Groups[1].Value;
                     avid = $"ep:{epId}";
                 }
-                else if (input.Contains("/medialist/") && input.Contains("business_id=")) //medialist
+                else if (input.Contains("/medialist/") && input.Contains("business_id=") && input.Contains("business=space_collection")) //列表类型是合集
                 {
                     string bizId = GetQueryString("business_id", input);
                     avid = $"listBizId:{bizId}";
+                }
+                else if (input.Contains("/medialist/") && input.Contains("business_id=") && input.Contains("business=space_series")) //列表类型是系列
+                {
+                    string bizId = GetQueryString("business_id", input);
+                    avid = $"seriesBizId:{bizId}";
                 }
                 else if (input.Contains("/channel/collectiondetail?sid="))
                 {
@@ -102,9 +107,8 @@ namespace BBDown
                 }
                 else if (input.Contains("/channel/seriesdetail?sid="))
                 {
-                    string mid = Regex.Match(input, "space\\.bilibili\\.com/(\\d{1,})").Groups[1].Value;
                     string bizId = GetQueryString("sid", input);
-                    avid = $"seriesBizId:{bizId}:{mid}";
+                    avid = $"seriesBizId:{bizId}";
                 }
                 else if (input.Contains("/space.bilibili.com/") && input.Contains("/favlist"))
                 {
