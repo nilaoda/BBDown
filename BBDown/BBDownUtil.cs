@@ -27,7 +27,8 @@ namespace BBDown
         public static readonly HttpClient AppHttpClient = new(new HttpClientHandler
         {
             AllowAutoRedirect = true,
-            AutomaticDecompression = DecompressionMethods.All
+            AutomaticDecompression = DecompressionMethods.All,
+            ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true
         })
         { 
             Timeout = TimeSpan.FromMinutes(5) 
