@@ -31,7 +31,7 @@ namespace BBDown
             {"112","1080P 高码率" }, {"80","1080P 高清" }, {"74","720P 高帧率" },
             {"64","720P 高清" }, {"48","720P 高清" }, {"32","480P 清晰" }, {"16","360P 流畅" }
         };
-        public static string SinglePageDefaultSavePath { get; set; } = "[P<pageNumberWithZero>]<pageTitle>";
+        public static string SinglePageDefaultSavePath { get; set; } = "<videoTitle>";
         public static string MultiPageDefaultSavePath { get; set; } = "<videoTitle>/[P<pageNumberWithZero>]<pageTitle>";
 
         public static string APP_DIR = Path.GetDirectoryName(System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName);
