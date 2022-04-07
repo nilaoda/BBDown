@@ -10,6 +10,7 @@ using System.Net;
 using System.Net.Cache;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Net.Security;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -28,7 +29,19 @@ namespace BBDown
         {
             AllowAutoRedirect = true,
             AutomaticDecompression = DecompressionMethods.All,
-            ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true
+            ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) =>
+            {
+                if (sslPolicyErrors != SslPolicyErrors.None)
+                {
+                    if (Program.IngoreSSLError)
+                    {
+                        LogWarn($"忽略了访问{sender.RequestUri}时发生的SSL错误{sslPolicyErrors}");
+                        return true;
+                    }
+                    throw new System.Security.Authentication.AuthenticationException($"SSL寄啦 {sslPolicyErrors}");
+                }
+                return true;
+            }
         })
         { 
             Timeout = TimeSpan.FromMinutes(5) 

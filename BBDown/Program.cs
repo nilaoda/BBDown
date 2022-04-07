@@ -25,6 +25,7 @@ namespace BBDown
     {
         public static string COOKIE { get; set; } = "";
         public static string TOKEN { get; set; } = "";
+        public static bool IngoreSSLError { get; set; } = false;
 
         public static Dictionary<string, string> qualitys = new Dictionary<string, string>() {
             {"127","8K 超高清" }, {"126","杜比视界" }, {"125","HDR 真彩" }, {"120","4K 超清" }, {"116","1080P 高帧率" },
@@ -82,6 +83,7 @@ namespace BBDown
             public bool SkipSubtitle { get; set; }
             public bool SkipCover { get; set; }
             public bool DownloadDanmaku { get; set; }
+            public bool IngoreSSLError { get; set; }
             public string SavePath { get; set; } = "";
             public string SelectPage { get; set; } = "";
             public string Language { get; set; } = "";
@@ -176,6 +178,9 @@ namespace BBDown
                 new Option<bool>(
                     new string[]{ "--download-danmaku", "-dd"},
                     "下载弹幕"),
+                new Option<bool>(
+                    new string[] { "--ingore-ssl-error" },
+                    "忽略SSL证书错误"),
                 new Option<string>(
                     new string[] {"--save-path", "-sp"},
                     $"自定义存储文件名, 多p默认为: {MultiPageDefaultSavePath}, 单p默认为: {SinglePageDefaultSavePath}"),
@@ -405,6 +410,7 @@ namespace BBDown
                 int delay = Convert.ToInt32(myOption.DelayPerPage);
                 COOKIE = myOption.Cookie;
                 TOKEN = myOption.AccessToken.Replace("access_token=", "");
+                IngoreSSLError = myOption.IngoreSSLError;
 
                 if (!string.IsNullOrEmpty(myOption.WorkDir))
                 {

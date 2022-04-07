@@ -14,6 +14,17 @@ namespace BBDown
             if (enter) Console.WriteLine();
         }
 
+        public static void LogWarn(object text, bool enter) => LogWarn(text.ToString(), enter);
+
+        public static void LogWarn(string text, bool enter = true)
+        {
+            Console.Write(DateTime.Now.ToString("[yyyy-MM-dd HH:mm:ss.fff]") + " - ");
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.Write(text);
+            Console.ResetColor();
+            if (enter) Console.WriteLine();
+        }
+
         public static void LogError(object text)
         {
             Console.Write(DateTime.Now.ToString("[yyyy-MM-dd HH:mm:ss.fff]") + " - ");
