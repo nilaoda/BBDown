@@ -83,7 +83,7 @@ namespace BBDown
             public bool SkipSubtitle { get; set; }
             public bool SkipCover { get; set; }
             public bool DownloadDanmaku { get; set; }
-            public bool IngoreSSLError { get; set; }
+            public bool IngoreSSLError { get; set; } = false;
             public string SavePath { get; set; } = "";
             public string SelectPage { get; set; } = "";
             public string Language { get; set; } = "";
@@ -737,64 +737,75 @@ namespace BBDown
                         if (audioTracks.Count > 0)
                             LogColor($"[音频] [{audioTracks[aIndex].codecs}] [{audioTracks[aIndex].bandwith} kbps] [~{FormatFileSize(audioTracks[aIndex].dur * audioTracks[aIndex].bandwith * 1024 / 8)}]", false);
 
-                        Log("Format before: " + savePathFormat);
                         savePath = FormatSavePath(savePathFormat, title, videoTracks[vIndex], audioTracks[aIndex], p, pagesCount);
-                        Log("Format After: " + savePath);
+
+                        if (!infoMode && File.Exists(savePath) && new FileInfo(savePath).Length != 0)
+                        {
+                            Log($"{savePath}已存在, 跳过下载...");
+                            File.Delete(coverPath);
+                            if (Directory.Exists(p.aid) && Directory.GetFiles(p.aid).Length == 0)
+                            {
+                                Directory.Delete(p.aid, true);
+                            }
+                            continue;
+                        }
 
                         if (videoTracks.Count > 0)
                         {
-
-                            if (!infoMode && File.Exists(savePath) && new FileInfo(savePath).Length != 0)
-                            {
-                                Log($"{savePath}已存在, 跳过下载...");
-                                File.Delete(coverPath);
-                                if (Directory.Exists(p.aid) && Directory.GetFiles(p.aid).Length == 0)
-                                {
-                                    Directory.Delete(p.aid, true);
-                                }
-                                continue;
-                            }
-
                             //杜比视界，若ffmpeg版本小于5.0，使用mp4box封装
                             if (videoTracks[vIndex].dfn == qualitys["126"] && !useMp4box && !CheckFFmpegDOVI())
                             {
                                 LogError($"检测到杜比视界清晰度且您的ffmpeg版本小于5.0,将使用mp4box混流...");
                                 useMp4box = true;
                             }
-                            if (multiThread && !videoTracks[vIndex].baseUrl.Contains("-cmcc-"))
+                            if (!File.Exists(videoPath)) // 已存在，跳过下载
                             {
-                                Log($"开始多线程下载P{p.index}视频...");
-                                await MultiThreadDownloadFileAsync(videoTracks[vIndex].baseUrl, videoPath, useAria2c, aria2cProxy);
-                                Log("合并视频分片...");
-                                CombineMultipleFilesIntoSingleFile(GetFiles(Path.GetDirectoryName(videoPath), ".vclip"), videoPath);
-                                Log("清理分片...");
-                                foreach (var file in new DirectoryInfo(Path.GetDirectoryName(videoPath)).EnumerateFiles("*.?clip")) file.Delete();
+                                if (multiThread && !videoTracks[vIndex].baseUrl.Contains("-cmcc-"))
+                                {
+                                    Log($"开始多线程下载P{p.index}视频...");
+                                    await MultiThreadDownloadFileAsync(videoTracks[vIndex].baseUrl, videoPath, useAria2c, aria2cProxy);
+                                    Log("合并视频分片...");
+                                    CombineMultipleFilesIntoSingleFile(GetFiles(Path.GetDirectoryName(videoPath), ".vclip"), videoPath);
+                                    Log("清理分片...");
+                                    foreach (var file in new DirectoryInfo(Path.GetDirectoryName(videoPath)).EnumerateFiles("*.?clip")) file.Delete();
+                                }
+                                else
+                                {
+                                    if (multiThread && videoTracks[vIndex].baseUrl.Contains("-cmcc-"))
+                                        LogError("检测到cmcc域名cdn, 已经禁用多线程");
+                                    Log($"开始下载P{p.index}视频...");
+                                    await DownloadFile(videoTracks[vIndex].baseUrl, videoPath, useAria2c, aria2cProxy);
+                                }
                             }
                             else
                             {
-                                if (multiThread && videoTracks[vIndex].baseUrl.Contains("-cmcc-"))
-                                    LogError("检测到cmcc域名cdn, 已经禁用多线程");
-                                Log($"开始下载P{p.index}视频...");
-                                await DownloadFile(videoTracks[vIndex].baseUrl, videoPath, useAria2c, aria2cProxy);
+                                Log($"{videoPath} 已存在，跳过下载");
                             }
                         }
                         if (audioTracks.Count > 0)
                         {
-                            if (multiThread && !audioTracks[aIndex].baseUrl.Contains("-cmcc-"))
+                            if (!File.Exists(audioPath))
                             {
-                                Log($"开始多线程下载P{p.index}音频...");
-                                await MultiThreadDownloadFileAsync(audioTracks[aIndex].baseUrl, audioPath, useAria2c, aria2cProxy);
-                                Log("合并音频分片...");
-                                CombineMultipleFilesIntoSingleFile(GetFiles(Path.GetDirectoryName(audioPath), ".aclip"), audioPath);
-                                Log("清理分片...");
-                                foreach (var file in new DirectoryInfo(Path.GetDirectoryName(videoPath)).EnumerateFiles("*.?clip")) file.Delete();
+                                if (multiThread && !audioTracks[aIndex].baseUrl.Contains("-cmcc-"))
+                                {
+                                    Log($"开始多线程下载P{p.index}音频...");
+                                    await MultiThreadDownloadFileAsync(audioTracks[aIndex].baseUrl, audioPath, useAria2c, aria2cProxy);
+                                    Log("合并音频分片...");
+                                    CombineMultipleFilesIntoSingleFile(GetFiles(Path.GetDirectoryName(audioPath), ".aclip"), audioPath);
+                                    Log("清理分片...");
+                                    foreach (var file in new DirectoryInfo(Path.GetDirectoryName(videoPath)).EnumerateFiles("*.?clip")) file.Delete();
+                                }
+                                else
+                                {
+                                    if (multiThread && audioTracks[aIndex].baseUrl.Contains("-cmcc-"))
+                                        LogError("检测到cmcc域名cdn, 已经禁用多线程");
+                                    Log($"开始下载P{p.index}音频...");
+                                    await DownloadFile(audioTracks[aIndex].baseUrl, audioPath, useAria2c, aria2cProxy);
+                                }
                             }
                             else
                             {
-                                if (multiThread && audioTracks[aIndex].baseUrl.Contains("-cmcc-"))
-                                    LogError("检测到cmcc域名cdn, 已经禁用多线程");
-                                Log($"开始下载P{p.index}音频...");
-                                await DownloadFile(audioTracks[aIndex].baseUrl, audioPath, useAria2c, aria2cProxy);
+                                Log($"{audioPath} 已存在，跳过下载");
                             }
                         }
 
@@ -812,7 +823,11 @@ namespace BBDown
                             subtitleInfo, audioOnly, videoOnly, p.points);
                         if (code != 0 || !File.Exists(savePath) || new FileInfo(savePath).Length == 0)
                         {
-                            LogError("合并失败"); continue;
+                            LogError("合并失败");
+                            if (File.Exists(coverPath)) File.Delete(coverPath);
+                            if (File.Exists(videoPath)) File.Delete(videoPath);
+                            if (File.Exists(audioPath)) File.Delete(audioPath);
+                            continue;
                         }
                         Log("清理临时文件...");
                         Thread.Sleep(200);

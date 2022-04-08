@@ -443,11 +443,12 @@ namespace BBDown
             long fileSize = await GetFileSizeAsync(url);
             LogDebug("文件大小：{0} bytes", fileSize);
             //已下载过, 跳过下载
-            if (File.Exists(path) && new FileInfo(path).Length == fileSize)
+            /*if (File.Exists(path) && new FileInfo(path).Length == fileSize)
             {
                 LogDebug("文件已下载过, 跳过下载");
                 return;
-            }
+            }*/
+            // 会导致后面合并产生0字节文件
             List<Clip> allClips = GetAllClips(url, fileSize);
             int total = allClips.Count;
             LogDebug("分段数量：{0}", total);
