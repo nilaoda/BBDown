@@ -577,7 +577,7 @@ namespace BBDown
                     pagesInfo = pagesInfo.Where(p => selectedPages.Contains(p.index.ToString())).ToList();
 
                 // 如果没有设置保存路径，则根据p数选择默认的路径
-                savePathFormat = string.IsNullOrEmpty(savePathFormat) ? (pagesInfo.Count == 1) ? SinglePageDefaultSavePath : MultiPageDefaultSavePath : savePathFormat;
+                savePathFormat = string.IsNullOrEmpty(savePathFormat) ? (pagesCount == 1) ? SinglePageDefaultSavePath : MultiPageDefaultSavePath : savePathFormat;
 
                 foreach (Page p in pagesInfo)
                 {
@@ -800,7 +800,7 @@ namespace BBDown
                         int code = MuxAV(useMp4box, videoPath, audioPath, savePath,
                             desc,
                             title,
-                            vInfo.PagesInfo.Count > 1 ? savePath.Substring(Math.Max(0, savePath.LastIndexOf("/"))) : "",
+                            pagesCount > 1 ? savePath.Split('/').Last() : "",
                             File.Exists(coverPath) ? coverPath : "",
                             lang,
                             subtitleInfo, audioOnly, videoOnly, p.points);
@@ -901,7 +901,7 @@ namespace BBDown
                         int code = MuxAV(false, videoPath, "", savePath,
                             desc,
                             title,
-                            vInfo.PagesInfo.Count > 1 ? savePath.Substring(Math.Max(0, savePath.LastIndexOf("/"))) : "",
+                            pagesCount > 1 ? savePath.Split('/').Last() : "",
                             File.Exists(coverPath) ? coverPath : "",
                             lang,
                             subtitleInfo, audioOnly, videoOnly, p.points);
