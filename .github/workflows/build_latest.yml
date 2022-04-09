@@ -21,8 +21,8 @@ jobs:
           dotnet-version: ${{ env.DOTNET_SDK_VERSION }}
           include-prerelease: true
 
-      - run: dotnet publish -r win-x64 -c Release -o artifact-x64
-      - run: dotnet publish -r win-arm64 -c Release -o artifact-arm64
+      - run: dotnet publish BBDown -r win-x64 -c Release -o artifact-x64
+      - run: dotnet publish BBDown -r win-arm64 -c Release -o artifact-arm64
 
       - name: Upload Artifact[win-x64]
         uses: actions/upload-artifact@v1.0.0
@@ -51,7 +51,7 @@ jobs:
           include-prerelease: true
       - run: sudo apt-get update
       - run: sudo apt-get install libcurl4-openssl-dev zlib1g-dev libkrb5-dev
-      - run: dotnet publish -r linux-x64 -c Release -o artifact
+      - run: dotnet publish BBDown -r linux-x64 -c Release -o artifact
       - run: strip artifact/BBDown
       
       - name: Upload Artifact[linux-x64]
@@ -73,7 +73,7 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_SDK_VERSION }}
           include-prerelease: true
-      - run: dotnet publish -r linux-arm64 -c Release -p:CppCompilerAndLinker=clang-9 -p:SysRoot=/crossrootfs/arm64 -o artifact
+      - run: dotnet publish BBDown -r linux-arm64 -c Release -p:CppCompilerAndLinker=clang-9 -p:SysRoot=/crossrootfs/arm64 -o artifact
       - run: aarch64-linux-gnu-strip artifact/BBDown
       
       - name: Upload Artifact[linux-arm64]
@@ -91,7 +91,7 @@ jobs:
       - uses: actions/checkout@v2
       - run: apk update
       - run: apk --no-cache add clang clang-dev musl-dev git gcc krb5-dev zlib-dev libexecinfo lldb binutils build-base zlib-static
-      - run: dotnet publish -r linux-musl-x64 -c Release -o artifact
+      - run: dotnet publish BBDown -r linux-musl-x64 -c Release -o artifact
       - run: strip artifact/BBDown
       - name: Upload Artifact[linux-musl-x64]
         uses: actions/upload-artifact@v1.0.0
@@ -111,7 +111,7 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_SDK_VERSION }}
           include-prerelease: true
-      - run: dotnet publish -r osx-x64 -c Release -o artifact
+      - run: dotnet publish BBDown -r osx-x64 -c Release -o artifact
       - run: strip artifact/BBDown
       
       - name: Upload Artifact[osx-x64]
@@ -134,7 +134,7 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_SDK_VERSION }}
           include-prerelease: true
-      - run: dotnet publish -r osx-arm64 -c Release -o artifact-arm64 -p:PublishTrimmed=true -p:PublishReadyToRun=true -p:PublishSingleFile=true --self-contained true
+      - run: dotnet publish BBDown -r osx-arm64 -c Release -o artifact-arm64 -p:PublishTrimmed=true -p:PublishReadyToRun=true -p:PublishSingleFile=true --self-contained true
       
       - name: Upload Artifact[osx-x64]
         uses: actions/upload-artifact@v1.0.0
