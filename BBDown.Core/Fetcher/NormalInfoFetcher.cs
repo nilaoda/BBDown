@@ -1,18 +1,19 @@
-﻿using System;
+﻿using BBDown.Core.Entity;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using static BBDown.BBDownEntity;
-using static BBDown.BBDownUtil;
+using static BBDown.Core.Entity.Entity;
+using static BBDown.Core.Util.HTTPUtil;
 
-namespace BBDown
+namespace BBDown.Core.Fetcher
 {
-    class BBDownNormalInfoFetcher : IFetcher
+    public class NormalInfoFetcher : IFetcher
     {
-        public async Task<BBDownVInfo> FetchAsync(string id)
+        public async Task<VInfo> FetchAsync(string id)
         {
             string api = $"https://api.bilibili.com/x/web-interface/view?aid={id}";
             string json = await GetWebSourceAsync(api);
@@ -54,7 +55,7 @@ namespace BBDown
             }
             catch { }
 
-            var info = new BBDownVInfo();
+            var info = new VInfo();
             info.Title = title.Trim();
             info.Desc = desc.Trim();
             info.Pic = pic;

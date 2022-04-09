@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace BBDown
+namespace BBDown.Core.Entity
 {
-    class BBDownEntity
+    public class Entity
     {
         public class Page
         {

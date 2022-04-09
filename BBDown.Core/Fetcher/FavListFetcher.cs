@@ -1,25 +1,26 @@
-﻿using System;
+﻿using BBDown.Core.Entity;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using static BBDown.BBDownEntity;
-using static BBDown.BBDownLogger;
-using static BBDown.BBDownUtil;
+using static BBDown.Core.Entity.Entity;
+using static BBDown.Core.Logger;
+using static BBDown.Core.Util.HTTPUtil;
 
 
-namespace BBDown
+namespace BBDown.Core.Fetcher
 {
     /// <summary>
     /// 收藏夹解析
     /// https://space.bilibili.com/4743331/favlist?spm_id_from=333.1007.0.0
     /// 
     /// </summary>
-    internal class BBDownFavListFetcher : IFetcher
+    public class FavListFetcher : IFetcher
     {
-        public async Task<BBDownVInfo> FetchAsync(string id)
+        public async Task<VInfo> FetchAsync(string id)
         {
             id = id.Substring(6);
             var favId = id.Split(':')[0];
@@ -41,11 +42,11 @@ namespace BBDown
             var data = infoJson.RootElement.GetProperty("data");
             int totalCount = data.GetProperty("info").GetProperty("media_count").GetInt32();
             int totalPage = (int)Math.Ceiling((double)totalCount / pageSize);
-            var title = GetValidFileName(data.GetProperty("info").GetProperty("title").ToString());
-            var intro = GetValidFileName(data.GetProperty("info").GetProperty("intro").GetString());
+            var title = data.GetProperty("info").GetProperty("title").ToString();
+            var intro = data.GetProperty("info").GetProperty("intro").GetString();
             string pubTime = data.GetProperty("info").GetProperty("ctime").ToString();
             pubTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc).AddSeconds(Convert.ToDouble(pubTime)).ToLocalTime().ToString();
-            var userName = GetValidFileName(data.GetProperty("info").GetProperty("upper").GetProperty("name").ToString());
+            var userName = data.GetProperty("info").GetProperty("upper").GetProperty("name").ToString();
             var medias = data.GetProperty("medias").EnumerateArray().ToList();
             
             for (int page = 2; page <= totalPage; page++)
@@ -62,7 +63,7 @@ namespace BBDown
                 var pageCount = m.GetProperty("page").GetInt32();
                 if (pageCount > 1)
                 {
-                    var tmpInfo = await new BBDownNormalInfoFetcher().FetchAsync(m.GetProperty("id").ToString());
+                    var tmpInfo = await new NormalInfoFetcher().FetchAsync(m.GetProperty("id").ToString());
                     foreach (var item in tmpInfo.PagesInfo)
                     {
                         Page p = new Page(index++, item);
@@ -87,7 +88,7 @@ namespace BBDown
                 }
             }
 
-            var info = new BBDownVInfo();
+            var info = new VInfo();
             info.Title = title.Trim();
             info.Desc = intro.Trim();
             info.Pic = "";

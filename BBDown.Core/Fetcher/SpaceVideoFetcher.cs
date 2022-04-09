@@ -1,21 +1,22 @@
-﻿using System;
+﻿using BBDown.Core.Entity;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using static BBDown.BBDownLogger;
-using static BBDown.BBDownUtil;
+using static BBDown.Core.Util.HTTPUtil;
+using static BBDown.Core.Logger;
 
-namespace BBDown
+namespace BBDown.Core.Fetcher
 {
-    class BBDownSpaceVideoFetcher : IFetcher
+    public class SpaceVideoFetcher : IFetcher
     {
-        public async Task<BBDownVInfo> FetchAsync(string id)
+        public async Task<VInfo> FetchAsync(string id)
         {
             id = id.Substring(4);
             string userInfoApi = $"https://api.bilibili.com/x/space/acc/info?mid={id}&jsonp=jsonp";
-            string userName = GetValidFileName(JsonDocument.Parse(await GetWebSourceAsync(userInfoApi)).RootElement.GetProperty("data").GetProperty("name").ToString());
+            string userName = GetValidFileName(JsonDocument.Parse(await GetWebSourceAsync(userInfoApi)).RootElement.GetProperty("data").GetProperty("name").ToString(), ".", true);
             List<string> urls = new List<string>();
             int pageSize = 50;
             int pageNumber = 1;
@@ -56,6 +57,21 @@ pause");
                 urls.Add($"https://www.bilibili.com/video/av{page.GetProperty("aid")}");
             }
             return urls;
+        }
+
+        private static string GetValidFileName(string input, string re = ".", bool filterSlash = false)
+        {
+            string title = input;
+            foreach (char invalidChar in Path.GetInvalidFileNameChars())
+            {
+                title = title.Replace(invalidChar.ToString(), re);
+            }
+            if (filterSlash)
+            {
+                title = title.Replace("/", re);
+                title = title.Replace("\\", re);
+            }
+            return title;
         }
     }
 }

@@ -1,17 +1,18 @@
-﻿using System;
+﻿using BBDown.Core.Entity;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using static BBDown.BBDownEntity;
-using static BBDown.BBDownUtil;
+using static BBDown.Core.Entity.Entity;
+using static BBDown.Core.Util.HTTPUtil;
 
-namespace BBDown
+namespace BBDown.Core.Fetcher
 {
-    class BBDownCheeseInfoFetcher : IFetcher
+    public class CheeseInfoFetcher : IFetcher
     {
-        public async Task<BBDownVInfo> FetchAsync(string id)
+        public async Task<VInfo> FetchAsync(string id)
         {
             id = id.Substring(7);
             string index = "";
@@ -38,7 +39,7 @@ namespace BBDown
             string pubTime = pagesInfo.Count > 0 ? pages[0].GetProperty("release_date").ToString() : "";
             pubTime = pubTime != "" ? (new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc).AddSeconds(Convert.ToDouble(pubTime)).ToLocalTime().ToString()) : "";
 
-            var info = new BBDownVInfo();
+            var info = new VInfo();
             info.Title = title.Trim();
             info.Desc = desc.Trim();
             info.Pic = cover;

@@ -9,11 +9,11 @@ using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using static BBDown.BBDownLogger;
+using static BBDown.Core.Logger;
 
-namespace BBDown
+namespace BBDown.Core
 {
-    class BBDownAppHelper
+    class AppHelper
     {
         private static string API = "https://grpc.biliapi.net/bilibili.app.playurl.v1.PlayURL/PlayView";
         private static string API2 = "https://app.bilibili.com/bilibili.pgc.gateway.player.v1.PlayURL/PlayView";
@@ -59,7 +59,7 @@ namespace BBDown
             }
             catch (Exception ex)
             {
-                if (DEBUG_LOG)
+                if (Config.DEBUG_LOG)
                 {
                     LogError(ex.Message);
                 }
@@ -176,7 +176,7 @@ namespace BBDown
                 ["te"] = "trailers",
                 ["x-bili-fawkes-req-bin"] = GenerateFawkesReqBin(),
                 ["x-bili-metadata-bin"] = GenerateMetadataBin(appkey),
-                ["authorization"] = $"identify_v1 {Program.TOKEN}",
+                ["authorization"] = $"identify_v1 {Config.TOKEN}",
                 ["x-bili-device-bin"] = GenerateDeviceBin(),
                 ["x-bili-network-bin"] = GenerateNetworkBin(),
                 ["x-bili-restriction-bin"] = "",
@@ -403,7 +403,7 @@ namespace BBDown
                 foreach (KeyValuePair<string, string> header in headers)
                     request.Headers.TryAddWithoutValidation(header.Key, header.Value);
 
-            HttpResponseMessage response = await BBDownUtil.AppHttpClient.SendAsync(request);
+            HttpResponseMessage response = await Util.HTTPUtil.AppHttpClient.SendAsync(request);
             byte[] bytes = await response.Content.ReadAsByteArrayAsync();
 
             return bytes;

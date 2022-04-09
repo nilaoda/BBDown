@@ -1,17 +1,10 @@
-﻿using System.IO;
-using System.Threading.Tasks;
-using static BBDown.BBDownEntity;
-using static BBDown.BBDownUtil;
-using static BBDown.BBDownLogger;
+﻿using static BBDown.Core.Logger;
 using System.Text;
 using System.Xml;
-using System.Collections.Generic;
-using System;
-using System.Linq;
 
-namespace BBDown
+namespace BBDown.Core
 {
-    class BBDownDanmaku
+    public class DanmakuUtil
     {
         private const int MONITOR_WIDTH = 1920;         //渲染字幕时的渲染范围的高度
         private const int MONITOR_HEIGHT = 1080;        //渲染字幕时的渲染范围的高度
@@ -21,19 +14,19 @@ namespace BBDown
         private const int PROTECT_LENGTH = 50;          //滚动弹幕屏占百分比
         public static readonly DanmakuComparer comparer = new DanmakuComparer();
 
-        public static async Task DownloadAsync(Page p, string xmlPath, bool aria2c, string aria2cProxy)
+        /*public static async Task DownloadAsync(Page p, string xmlPath, bool aria2c, string aria2cProxy)
         {
             string danmakuUrl = "https://comment.bilibili.com/" + p.cid + ".xml";
             await DownloadFile(danmakuUrl, xmlPath, aria2c, aria2cProxy);
-        }
+        }*/
 
-        public static Danmaku[] ParseXml(string xmlPath)
+        public static DanmakuItem[] ParseXml(string xmlPath)
         {
             // 解析xml文件
             XmlDocument xmlFile = new XmlDocument();
             XmlReaderSettings settings = new XmlReaderSettings();
             settings.IgnoreComments = true;//忽略文档里面的注释
-            var danmakus = new List<Danmaku>();
+            var danmakus = new List<DanmakuItem>();
             using (var reader = XmlReader.Create(xmlPath, settings))
 			{
                 try
@@ -63,7 +56,7 @@ namespace BBDown
                             string[] vs = attr.Split(',');
                             if (vs.Length >= 8)
                             {
-                                Danmaku danmaku = new(vs, dElement.InnerText);
+                                DanmakuItem danmaku = new(vs, dElement.InnerText);
                                 danmakus.Add(danmaku);
                             }
                         }
@@ -79,7 +72,7 @@ namespace BBDown
         /// <param name="danmakus">弹幕</param>
         /// <param name="outputPath">保存路径</param>
         /// <returns></returns>
-        public static async Task SaveAsAssAsync(Danmaku[] danmakus, string outputPath)
+        public static async Task SaveAsAssAsync(DanmakuItem[] danmakus, string outputPath)
         {
             var sb = new StringBuilder();
             // ASS字幕文件头
@@ -101,7 +94,7 @@ namespace BBDown
             
             PositionController controller = new PositionController();   // 弹幕位置控制器
             Array.Sort(danmakus, comparer);
-            foreach (Danmaku danmaku in danmakus)
+            foreach (DanmakuItem danmaku in danmakus)
             {
                 int height = controller.updatePosition(danmaku.DanmakuMode, danmaku.Second, danmaku.Content.Length);
                 if (height == -1) continue;
@@ -176,9 +169,9 @@ namespace BBDown
             }
         }
 
-        public class Danmaku
+        public class DanmakuItem
         {
-            public Danmaku(string[] attrs, string content)
+            public DanmakuItem(string[] attrs, string content)
             {
                 switch (attrs[1])
                 {
@@ -241,9 +234,9 @@ namespace BBDown
             // 时间戳
         }
 
-        public class DanmakuComparer : IComparer<Danmaku>
+        public class DanmakuComparer : IComparer<DanmakuItem>
         {
-            public int Compare(Danmaku? x, Danmaku? y)
+            public int Compare(DanmakuItem? x, DanmakuItem? y)
             {
                 if (x == null) return -1;
                 if (y == null) return 1;

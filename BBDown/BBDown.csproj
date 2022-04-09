@@ -13,10 +13,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="protobuf-net" Version="3.0.101" />
     <PackageReference Include="QRCoder" Version="1.4.1" />
     <PackageReference Include="SharpZipLib" Version="1.3.3" />
     <PackageReference Include="System.CommandLine" Version="2.0.0-beta1.21308.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BBDown.Core\BBDown.Core.csproj" />
   </ItemGroup>
 
 </Project>

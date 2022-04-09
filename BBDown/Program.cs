@@ -8,29 +8,24 @@ using System.IO;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using static BBDown.BBDownEntity;
+using static BBDown.Core.Entity.Entity;
 using static BBDown.BBDownUtil;
-using static BBDown.BBDownParser;
-using static BBDown.BBDownLogger;
+using static BBDown.Core.Parser;
+using static BBDown.Core.Logger;
 using static BBDown.BBDownMuxer;
 using System.Text;
 using System.Linq;
 using System.Text.Json;
 using System.Net.Http;
 using System.Text.RegularExpressions;
+using BBDown.Core;
+using BBDown.Core.Util;
+using BBDown.Core.Fetcher;
 
 namespace BBDown
 {
     class Program
     {
-        public static string COOKIE { get; set; } = "";
-        public static string TOKEN { get; set; } = "";
-
-        public static Dictionary<string, string> qualitys = new Dictionary<string, string>() {
-            {"127","8K 超高清" }, {"126","杜比视界" }, {"125","HDR 真彩" }, {"120","4K 超清" }, {"116","1080P 高帧率" },
-            {"112","1080P 高码率" }, {"80","1080P 高清" }, {"74","720P 高帧率" },
-            {"64","720P 高清" }, {"48","720P 高清" }, {"32","480P 清晰" }, {"16","360P 流畅" }
-        };
         public static string SinglePageDefaultSavePath { get; set; } = "<videoTitle>";
         public static string MultiPageDefaultSavePath { get; set; } = "<videoTitle>/[P<pageNumberWithZero>]<pageTitle>";
 
@@ -82,7 +77,7 @@ namespace BBDown
             public bool SkipSubtitle { get; set; }
             public bool SkipCover { get; set; }
             public bool DownloadDanmaku { get; set; }
-            public string SavePath { get; set; } = "";
+            public string FilePattern { get; set; } = "";
             public string SelectPage { get; set; } = "";
             public string Language { get; set; } = "";
             public string Cookie { get; set; } = "";
@@ -98,10 +93,6 @@ namespace BBDown
         public static async Task<int> Main(params string[] args)
         {
             ServicePointManager.DefaultConnectionLimit = 2048;
-            ServicePointManager.ServerCertificateValidationCallback = (sender, certificate, chain, errors) =>
-            {
-                return true;
-            };
 
             var rootCommand = new RootCommand
             {
@@ -177,7 +168,7 @@ namespace BBDown
                     new string[]{ "--download-danmaku", "-dd"},
                     "下载弹幕"),
                 new Option<string>(
-                    new string[] {"--save-path", "-sp"},
+                    new string[]{ "--file-pattern", "-fp"},
                     $"自定义存储文件名, 多p默认为: {MultiPageDefaultSavePath}, 单p默认为: {SinglePageDefaultSavePath}"),
                 new Option<string>(
                     new string[]{ "--language"},
@@ -223,7 +214,7 @@ namespace BBDown
                 {
                     Log("获取登录地址...");
                     string loginUrl = "https://passport.bilibili.com/qrcode/getLoginUrl";
-                    string url = JsonDocument.Parse(await GetWebSourceAsync(loginUrl)).RootElement.GetProperty("data").GetProperty("url").ToString();
+                    string url = JsonDocument.Parse(await HTTPUtil.GetWebSourceAsync(loginUrl)).RootElement.GetProperty("data").GetProperty("url").ToString();
                     string oauthKey = GetQueryString("oauthKey", url);
                     //Log(oauthKey);
                     //Log(url);
@@ -282,7 +273,7 @@ namespace BBDown
                     string pollUrl = "https://passport.bilibili.com/x/passport-tv-login/qrcode/poll";
                     var parms = GetTVLoginParms();
                     Log("获取登录地址...");
-                    byte[] responseArray = await (await AppHttpClient.PostAsync(loginUrl, new FormUrlEncodedContent(parms.ToDictionary()))).Content.ReadAsByteArrayAsync();
+                    byte[] responseArray = await (await HTTPUtil.AppHttpClient.PostAsync(loginUrl, new FormUrlEncodedContent(parms.ToDictionary()))).Content.ReadAsByteArrayAsync();
                     string web = Encoding.UTF8.GetString(responseArray);
                     string url = JsonDocument.Parse(web).RootElement.GetProperty("data").GetProperty("url").ToString();
                     string authCode = JsonDocument.Parse(web).RootElement.GetProperty("data").GetProperty("auth_code").ToString();
@@ -301,7 +292,7 @@ namespace BBDown
                     while (true)
                     {
                         await Task.Delay(1000);
-                        responseArray = await (await AppHttpClient.PostAsync(pollUrl, new FormUrlEncodedContent(parms.ToDictionary()))).Content.ReadAsByteArrayAsync();
+                        responseArray = await (await HTTPUtil.AppHttpClient.PostAsync(pollUrl, new FormUrlEncodedContent(parms.ToDictionary()))).Content.ReadAsByteArrayAsync();
                         web = Encoding.UTF8.GetString(responseArray);
                         string code = JsonDocument.Parse(web).RootElement.GetProperty("code").ToString();
                         if (code == "86038")
@@ -396,15 +387,15 @@ namespace BBDown
                 bool showAll = myOption.ShowAll;
                 bool useAria2c = myOption.UseAria2c;
                 string aria2cProxy = myOption.Aria2cProxy;
-                DEBUG_LOG = myOption.Debug;
+                Config.DEBUG_LOG = myOption.Debug;
                 string input = myOption.Url;
-                string savePathFormat = myOption.SavePath;
+                string savePathFormat = myOption.FilePattern;
                 string lang = myOption.Language;
                 string selectPage = myOption.SelectPage.ToUpper();
                 string aidOri = ""; //原始aid
                 int delay = Convert.ToInt32(myOption.DelayPerPage);
-                COOKIE = myOption.Cookie;
-                TOKEN = myOption.AccessToken.Replace("access_token=", "");
+                Config.COOKIE = myOption.Cookie;
+                Config.TOKEN = myOption.AccessToken.Replace("access_token=", "");
 
                 if (!string.IsNullOrEmpty(myOption.WorkDir))
                 {
@@ -452,25 +443,25 @@ namespace BBDown
 
                 LogDebug("AppDirectory: {0}", APP_DIR);
                 LogDebug("运行参数：{0}", JsonSerializer.Serialize(myOption));
-                if (string.IsNullOrEmpty(COOKIE) && File.Exists(Path.Combine(APP_DIR, "BBDown.data")) && !tvApi)
+                if (string.IsNullOrEmpty(Config.COOKIE) && File.Exists(Path.Combine(APP_DIR, "BBDown.data")) && !tvApi)
                 {
                     Log("加载本地cookie...");
                     LogDebug("文件路径：{0}", Path.Combine(APP_DIR, "BBDown.data"));
-                    COOKIE = File.ReadAllText(Path.Combine(APP_DIR, "BBDown.data"));
+                    Config.COOKIE = File.ReadAllText(Path.Combine(APP_DIR, "BBDown.data"));
                 }
-                if (string.IsNullOrEmpty(TOKEN) && File.Exists(Path.Combine(APP_DIR, "BBDownTV.data")) && tvApi)
+                if (string.IsNullOrEmpty(Config.TOKEN) && File.Exists(Path.Combine(APP_DIR, "BBDownTV.data")) && tvApi)
                 {
                     Log("加载本地token...");
                     LogDebug("文件路径：{0}", Path.Combine(APP_DIR, "BBDownTV.data"));
-                    TOKEN = File.ReadAllText(Path.Combine(APP_DIR, "BBDownTV.data"));
-                    TOKEN = TOKEN.Replace("access_token=", "");
+                    Config.TOKEN = File.ReadAllText(Path.Combine(APP_DIR, "BBDownTV.data"));
+                    Config.TOKEN = Config.TOKEN.Replace("access_token=", "");
                 }
-                if (string.IsNullOrEmpty(TOKEN) && File.Exists(Path.Combine(APP_DIR, "BBDownApp.data")) && appApi)
+                if (string.IsNullOrEmpty(Config.TOKEN) && File.Exists(Path.Combine(APP_DIR, "BBDownApp.data")) && appApi)
                 {
                     Log("加载本地token...");
                     LogDebug("文件路径：{0}", Path.Combine(APP_DIR, "BBDownApp.data"));
-                    TOKEN = File.ReadAllText(Path.Combine(APP_DIR, "BBDownApp.data"));
-                    TOKEN = TOKEN.Replace("access_token=", "");
+                    Config.TOKEN = File.ReadAllText(Path.Combine(APP_DIR, "BBDownApp.data"));
+                    Config.TOKEN = Config.TOKEN.Replace("access_token=", "");
                 }
                 Log("获取aid...");
                 aidOri = await GetAvIdAsync(input);
@@ -507,36 +498,36 @@ namespace BBDown
 
                 if (string.IsNullOrEmpty(aidOri)) throw new Exception("输入有误");
                 Log("获取视频信息...");
-                IFetcher fetcher = new BBDownNormalInfoFetcher();
+                IFetcher fetcher = new NormalInfoFetcher();
                 if (aidOri.StartsWith("cheese"))
                 {
-                    fetcher = new BBDownCheeseInfoFetcher();
+                    fetcher = new CheeseInfoFetcher();
                 }
                 else if (aidOri.StartsWith("ep"))
                 {
                     if (intlApi)
-                        fetcher = new BBDownIntlBangumiInfoFetcher();
+                        fetcher = new IntlBangumiInfoFetcher();
                     else
-                        fetcher = new BBDownBangumiInfoFetcher();
+                        fetcher = new BangumiInfoFetcher();
                 }
                 else if (aidOri.StartsWith("mid"))
                 {
-                    fetcher = new BBDownSpaceVideoFetcher();
+                    fetcher = new SpaceVideoFetcher();
                 }
                 else if (aidOri.StartsWith("listBizId"))
                 {
-                    fetcher = new BBDownMediaListFetcher();
+                    fetcher = new MediaListFetcher();
                 }
                 else if (aidOri.StartsWith("seriesBizId"))
                 {
-                    fetcher = new BBDownSeriesListFetcher();
+                    fetcher = new SeriesListFetcher();
                 }
                 else if (aidOri.StartsWith("favId"))
                 {
-                    fetcher = new BBDownFavListFetcher();
+                    fetcher = new FavListFetcher();
                 }
                 var vInfo = await fetcher.FetchAsync(aidOri);
-                string title = vInfo.Title;
+                string title = GetValidFileName(vInfo.Title);
                 string pic = vInfo.Pic;
                 string pubTime = vInfo.PubTime;
                 LogColor("视频标题: " + title);
@@ -618,20 +609,20 @@ namespace BBDown
                             Log("下载封面...");
                             var cover = pic == "" ? p.cover : pic;
                             LogDebug("下载：{0}", cover);
-                            await using var response = await AppHttpClient.GetStreamAsync(cover);
-                            await using var fs = new FileStream(coverPath, FileMode.OpenOrCreate);
+                            await using var response = await HTTPUtil.AppHttpClient.GetStreamAsync(cover);
+                            await using var fs = new FileStream(coverPath, FileMode.Create);
                             await response.CopyToAsync(fs);
                         }
 
                         if (!skipSubtitle)
                         {
                             LogDebug("获取字幕...");
-                            subtitleInfo = await BBDownSubUtil.GetSubtitlesAsync(p.aid, p.cid, p.epid, intlApi);
+                            subtitleInfo = await SubUtil.GetSubtitlesAsync(p.aid, p.cid, p.epid, intlApi);
                             foreach (Subtitle s in subtitleInfo)
                             {
-                                Log($"下载字幕 {s.lan} => {BBDownSubUtil.GetSubtitleCode(s.lan).Item2}...");
+                                Log($"下载字幕 {s.lan} => {SubUtil.GetSubtitleCode(s.lan).Item2}...");
                                 LogDebug("下载：{0}", s.url);
-                                await BBDownSubUtil.SaveSubtitleAsync(s.url, s.path);
+                                await SubUtil.SaveSubtitleAsync(s.url, s.path);
                                 if (subOnly && File.Exists(s.path) && File.ReadAllText(s.path) != "")
                                 {
                                     var _outSubPath = FormatSavePath(savePathFormat, title, null, null, p, pagesCount);
@@ -731,9 +722,9 @@ namespace BBDown
                         if (audioTracks.Count > 0)
                             LogColor($"[音频] [{audioTracks[aIndex].codecs}] [{audioTracks[aIndex].bandwith} kbps] [~{FormatFileSize(audioTracks[aIndex].dur * audioTracks[aIndex].bandwith * 1024 / 8)}]", false);
 
-                        Log("Format before: " + savePathFormat);
+                        LogDebug("Format Before: " + savePathFormat);
                         savePath = FormatSavePath(savePathFormat, title, videoTracks[vIndex], audioTracks[aIndex], p, pagesCount);
-                        Log("Format After: " + savePath);
+                        LogDebug("Format After: " + savePath);
 
                         if (videoTracks.Count > 0)
                         {
@@ -750,7 +741,7 @@ namespace BBDown
                             }
 
                             //杜比视界，若ffmpeg版本小于5.0，使用mp4box封装
-                            if (videoTracks[vIndex].dfn == qualitys["126"] && !useMp4box && !CheckFFmpegDOVI())
+                            if (videoTracks[vIndex].dfn == Config.qualitys["126"] && !useMp4box && !CheckFFmpegDOVI())
                             {
                                 LogError($"检测到杜比视界清晰度且您的ffmpeg版本小于5.0,将使用mp4box混流...");
                                 useMp4box = true;
@@ -829,7 +820,7 @@ namespace BBDown
                         if (interactMode && !flag)
                         {
                             int i = 0;
-                            dfns.ForEach(key => LogColor($"{i++}.{qualitys[key]}"));
+                            dfns.ForEach(key => LogColor($"{i++}.{Config.qualitys[key]}"));
                             Log("请选择最想要的清晰度(输入序号): ", false);
                             Console.ForegroundColor = ConsoleColor.Cyan;
                             vIndex = Convert.ToInt32(Console.ReadLine());
@@ -947,14 +938,15 @@ namespace BBDown
                             else
                             {
                                 Log("正在下载弹幕Xml文件");
-                                await BBDownDanmaku.DownloadAsync(p, danmakuXmlPath, useAria2c, aria2cProxy);
+                                string danmakuUrl = "https://comment.bilibili.com/" + p.cid + ".xml";
+                                await DownloadFile(danmakuUrl, danmakuXmlPath, useAria2c, aria2cProxy);
                             }
 
-                            var danmakus = BBDownDanmaku.ParseXml(danmakuXmlPath);
+                            var danmakus = DanmakuUtil.ParseXml(danmakuXmlPath);
                             if (danmakus != null)
                             {
                                 Log("正在保存弹幕Ass文件...");
-                                await BBDownDanmaku.SaveAsAssAsync(danmakus, danmakuAssPath);
+                                await DanmakuUtil.SaveAsAssAsync(danmakus, danmakuAssPath);
                             }
                             else
                             {
@@ -974,7 +966,7 @@ namespace BBDown
             {
                 Console.BackgroundColor = ConsoleColor.Red;
                 Console.ForegroundColor = ConsoleColor.White;
-                Console.Write(DEBUG_LOG ? e.ToString() : e.Message);
+                Console.Write(Config.DEBUG_LOG ? e.ToString() : e.Message);
                 Console.ResetColor();
                 Console.WriteLine();
                 Thread.Sleep(1);

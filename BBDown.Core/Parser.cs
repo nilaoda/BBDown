@@ -2,16 +2,17 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
-using static BBDown.BBDownUtil;
-using static BBDown.BBDownLogger;
-using static BBDown.BBDownEntity;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using static BBDown.Core.Logger;
+using static BBDown.Core.Util.HTTPUtil;
+using static BBDown.Core.Entity.Entity;
+using System.Security.Cryptography;
 
-namespace BBDown
+namespace BBDown.Core
 {
-    class BBDownParser
+    public class Parser
     {
         private static async Task<string> GetPlayJsonAsync(bool onlyAvc, string aidOri, string aid, string cid, string epId, bool tvApi, bool intl, bool appApi, string qn = "0")
         {
@@ -24,18 +25,18 @@ namespace BBDown
             bool bangumi = cheese || aidOri.StartsWith("ep:");
             LogDebug("bangumi={0},cheese={1}", bangumi, cheese);
 
-            if (appApi) return await BBDownAppHelper.DoReqAsync(aid, cid, epId, qn, bangumi, onlyAvc, Program.TOKEN);
+            if (appApi) return await AppHelper.DoReqAsync(aid, cid, epId, qn, bangumi, onlyAvc, Config.TOKEN);
 
             string prefix = tvApi ? (bangumi ? "api.snm0516.aisee.tv/pgc/player/api/playurltv" : "api.snm0516.aisee.tv/x/tv/ugc/playurl")
                         : (bangumi ? "api.bilibili.com/pgc/player/web/playurl" : "api.bilibili.com/x/player/playurl");
             string api = $"https://{prefix}?avid={aid}&cid={cid}&qn={qn}&type=&otype=json" + (tvApi ? "" : "&fourk=1") +
                 $"&fnver=0&fnval=4048" + (tvApi ? "&device=android&platform=android" +
                 "&mobi_app=android_tv_yst&npcybs=0&force_host=2&build=102801" +
-                (Program.TOKEN != "" ? $"&access_key={Program.TOKEN}" : "") : "") +
+                (Config.TOKEN != "" ? $"&access_key={Config.TOKEN}" : "") : "") +
                 (bangumi ? $"&module=bangumi&ep_id={epId}&fourk=1" + "&session=" : "");
             if (tvApi && bangumi)
             {
-                api = (Program.TOKEN != "" ? $"access_key={Program.TOKEN}&" : "") +
+                api = (Config.TOKEN != "" ? $"access_key={Config.TOKEN}&" : "") +
                     $"aid={aid}&appkey=4409e2ce8ffd12b8&build=102801" +
                     $"&cid={cid}&device=android&ep_id={epId}&expire=0" +
                     $"&fnval=80&fnver=0&fourk=1" +
@@ -64,7 +65,7 @@ namespace BBDown
         private static async Task<string> GetPlayJsonAsync(string aid, string cid, string epId, string qn)
         {
             string api = $"https://api.bilibili.tv/intl/gateway/v2/ogv/playurl?" +
-                $"aid={aid}&cid={cid}&ep_id={epId}&platform=android&prefer_code_type=0&qn={qn}" + (Program.TOKEN != "" ? $"&access_key={Program.TOKEN}" : "");
+                $"aid={aid}&cid={cid}&ep_id={epId}&platform=android&prefer_code_type=0&qn={qn}" + (Config.TOKEN != "" ? $"&access_key={Config.TOKEN}" : "");
             string webJson = await GetWebSourceAsync(api);
             return webJson;
         }
@@ -97,7 +98,7 @@ namespace BBDown
                             Video v = new Video();
                             v.dur = pDur;
                             v.id = stream.GetProperty("stream_info").GetProperty("quality").ToString();
-                            v.dfn = Program.qualitys[v.id];
+                            v.dfn = Config.qualitys[v.id];
                             v.bandwith = Convert.ToInt64(dashVideo.GetProperty("bandwidth").ToString()) / 1000;
                             v.baseUrl = dashVideo.GetProperty("base_url").ToString();
                             v.codecs = GetVideoCodec(dashVideo.GetProperty("codecid").ToString());
@@ -169,7 +170,7 @@ namespace BBDown
                         Video v = new Video();
                         v.dur = pDur;
                         v.id = node.GetProperty("id").ToString();
-                        v.dfn = Program.qualitys[v.id];
+                        v.dfn = Config.qualitys[v.id];
                         v.bandwith = Convert.ToInt64(node.GetProperty("bandwidth").ToString()) / 1000;
                         v.baseUrl = urlList.FirstOrDefault(i => !Regex.IsMatch(i, "http.*:\\d+"), urlList.First());
                         v.codecs = GetVideoCodec(node.GetProperty("codecid").ToString());
@@ -296,7 +297,7 @@ namespace BBDown
 
                 Video v = new Video();
                 v.id = quality;
-                v.dfn = Program.qualitys[quality];
+                v.dfn = Config.qualitys[quality];
                 v.baseUrl = url;
                 v.codecs = GetVideoCodec(videoCodecid);
                 v.dur = (int)length / 1000;
@@ -305,6 +306,53 @@ namespace BBDown
             }
 
             return (webJsonStr, videoTracks, audioTracks, clips, dfns);
+        }
+
+        /// <summary>
+        /// 编码转换
+        /// </summary>
+        /// <param name="code"></param>
+        /// <returns></returns>
+        private static string GetVideoCodec(string code)
+        {
+            return code switch
+            {
+                "13" => "AV1",
+                "12" => "HEVC",
+                "7" => "AVC",
+                _ => "UNKNOWN"
+            };
+        }
+
+        private static string GetMaxQn()
+        {
+            return Config.qualitys.Keys.First();
+        }
+
+        private static string GetTimeStamp(bool bflag)
+        {
+            TimeSpan ts = DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, 0);
+            string ret = string.Empty;
+            if (bflag)
+                ret = Convert.ToInt64(ts.TotalSeconds).ToString();
+            else
+                ret = Convert.ToInt64(ts.TotalMilliseconds).ToString();
+
+            return ret;
+        }
+
+        private static string GetSign(string parms)
+        {
+            string toEncode = parms + "59b43e04ad6965f34319062b478f83dd";
+            MD5 md5 = MD5.Create();
+            byte[] bs = Encoding.UTF8.GetBytes(toEncode);
+            byte[] hs = md5.ComputeHash(bs);
+            StringBuilder sb = new StringBuilder();
+            foreach (byte b in hs)
+            {
+                sb.Append(b.ToString("x2"));
+            }
+            return sb.ToString();
         }
     }
 }

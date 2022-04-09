@@ -30,7 +30,7 @@ namespace BBDown
             if (!url.Contains("platform=android_tv_yst") && !url.Contains("platform=android"))
                 headerArgs += " --header=\"Referer: https://www.bilibili.com\"";
             headerArgs += " --header=\"User-Agent: Mozilla/5.0\"";
-            headerArgs += $" --header=\"Cookie: {Program.COOKIE}\"";
+            headerArgs += $" --header=\"Cookie: {Core.Config.COOKIE}\"";
             await RunCommandCodeAsync(ARIA2C, $"{(proxy == "" ? "" : "--all-proxy=" + proxy)} --auto-file-renaming=false --download-result=hide --allow-overwrite=true --console-log-level=warn -x16 -s16 -k5M {headerArgs} \"{url}\" -d \"{Path.GetDirectoryName(path)}\" -o \"{Path.GetFileName(path)}\"");
         }
     }

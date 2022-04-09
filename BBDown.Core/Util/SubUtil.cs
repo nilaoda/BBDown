@@ -2,17 +2,16 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using static BBDown.BBDownEntity;
-using static BBDown.BBDownUtil;
-using static BBDown.BBDownLogger;
+using static BBDown.Core.Entity.Entity;
+using static BBDown.Core.Util.HTTPUtil;
 using System.Text.RegularExpressions;
 using System.Text.Json;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace BBDown
+namespace BBDown.Core.Util
 {
-    class BBDownSubUtil
+    public class SubUtil
     {
         //https://i0.hdslb.com/bfs/subtitle/subtitle_lan.json
         public static (string, string) GetSubtitleCode(string key)
@@ -256,7 +255,7 @@ namespace BBDown
                     subtitles.Add(subtitle);
                 }
                 //无字幕片源 但是字幕没上导致的空列表，尝试从国际接口获取
-                if (subtitles.Count == 0)
+                if (subtitles.Count == 0 && !string.IsNullOrEmpty(epId))
                 {
                     return await GetSubtitlesAsync(aid, cid, epId, true);
                 }

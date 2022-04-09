@@ -1,27 +1,28 @@
 <Directives>
     <Application>
-        <Assembly Name="BBDown" Dynamic="Required All">
-            <Type Name="CodeType[],BBDown" Dynamic="Required All"/>
+		<Assembly Name="BBDown" Dynamic="Required All"/>
+        <Assembly Name="BBDown.Core" Dynamic="Required All">
+            <Type Name="CodeType[],BBDown.Core" Dynamic="Required All"/>
         </Assembly>
         <Assembly Name="protobuf-net.Core" Dynamic="Required All">
             <Type Name="ProtoBuf.Serializers.RepeatedSerializer" Dynamic="Required All">
                 <Method Name="CreateList" Dynamic="Required">
-                    <GenericArgument Name="DashItem,BBDown" />
+                    <GenericArgument Name="DashItem,BBDown.Core" />
                 </Method>
                 <Method Name="CreateList" Dynamic="Required">
-                    <GenericArgument Name="StreamItem,BBDown" />
+                    <GenericArgument Name="StreamItem,BBDown.Core" />
                 </Method>
                 <Method Name="CreateList" Dynamic="Required">
-                    <GenericArgument Name="ResponseUrl,BBDown" />
+                    <GenericArgument Name="ResponseUrl,BBDown.Core" />
                 </Method>
             </Type>
         </Assembly>
         <Assembly Name="System.Text.Json" Dynamic="Required All" >
-            <Type Name="System.Text.Json.Serialization.Converters.EnumConverter`1[[CodeType,BBDown]]" Dynamic="Required All" />
-            <Type Name="System.Text.Json.Serialization.Converters.SmallObjectWithParameterizedConstructorConverter`5[[BBDown.DashJson,BBDown],[System.Int32,System.Private.CoreLib],[System.String,System.Private.CoreLib],[System.Int32,System.Private.CoreLib],[BBDown.DashData,BBDown]]" Dynamic="Required All" />
-            <Type Name="System.Text.Json.Serialization.Converters.SmallObjectWithParameterizedConstructorConverter`5[[BBDown.DashData,BBDown],[System.UInt64,System.Private.CoreLib],[BBDown.DashInfo,BBDown],[System.Object,System.Private.CoreLib],[System.Object,System.Private.CoreLib]]" Dynamic="Required All" />
-            <Type Name="System.Text.Json.Serialization.Converters.SmallObjectWithParameterizedConstructorConverter`5[[BBDown.AudioInfoWitCodecId,BBDown],[System.UInt32,System.Private.CoreLib],[System.String,System.Private.CoreLib],[System.UInt32,System.Private.CoreLib],[System.UInt32,System.Private.CoreLib]]" Dynamic="Required All" />
-            <Type Name="System.Text.Json.Serialization.Converters.SmallObjectWithParameterizedConstructorConverter`5[[BBDown.AudioInfoWithCodecName,BBDown],[System.UInt32,System.Private.CoreLib],[System.String,System.Private.CoreLib],[System.UInt32,System.Private.CoreLib],[System.String,System.Private.CoreLib]]" Dynamic="Required All" />
+            <Type Name="System.Text.Json.Serialization.Converters.EnumConverter`1[[CodeType,BBDown.Core]]" Dynamic="Required All" />
+            <Type Name="System.Text.Json.Serialization.Converters.SmallObjectWithParameterizedConstructorConverter`5[[BBDown.Core.DashJson,BBDown.Core],[System.Int32,System.Private.CoreLib],[System.String,System.Private.CoreLib],[System.Int32,System.Private.CoreLib],[BBDown.Core.DashData,BBDown.Core]]" Dynamic="Required All" />
+            <Type Name="System.Text.Json.Serialization.Converters.SmallObjectWithParameterizedConstructorConverter`5[[BBDown.Core.DashData,BBDown.Core],[System.UInt64,System.Private.CoreLib],[BBDown.Core.DashInfo,BBDown.Core],[System.Object,System.Private.CoreLib],[System.Object,System.Private.CoreLib]]" Dynamic="Required All" />
+            <Type Name="System.Text.Json.Serialization.Converters.SmallObjectWithParameterizedConstructorConverter`5[[BBDown.Core.AudioInfoWitCodecId,BBDown.Core],[System.UInt32,System.Private.CoreLib],[System.String,System.Private.CoreLib],[System.UInt32,System.Private.CoreLib],[System.UInt32,System.Private.CoreLib]]" Dynamic="Required All" />
+            <Type Name="System.Text.Json.Serialization.Converters.SmallObjectWithParameterizedConstructorConverter`5[[BBDown.Core.AudioInfoWithCodecName,BBDown.Core],[System.UInt32,System.Private.CoreLib],[System.String,System.Private.CoreLib],[System.UInt32,System.Private.CoreLib],[System.String,System.Private.CoreLib]]" Dynamic="Required All" />
         </Assembly>
     </Application>
 </Directives>

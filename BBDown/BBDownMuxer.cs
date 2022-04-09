@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 using System.Text.RegularExpressions;
-using static BBDown.BBDownEntity;
+using static BBDown.Core.Entity.Entity;
 using static BBDown.BBDownUtil;
-using static BBDown.BBDownSubUtil;
-using static BBDown.BBDownLogger;
+using static BBDown.Core.Util.SubUtil;
+using static BBDown.Core.Logger;
 using System.IO;
 
 namespace BBDown

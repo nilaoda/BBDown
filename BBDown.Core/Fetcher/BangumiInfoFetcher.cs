@@ -1,16 +1,17 @@
-﻿using System;
+﻿using BBDown.Core.Entity;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
-using static BBDown.BBDownEntity;
-using static BBDown.BBDownUtil;
+using static BBDown.Core.Entity.Entity;
+using static BBDown.Core.Util.HTTPUtil;
 
-namespace BBDown
+namespace BBDown.Core.Fetcher
 {
-    class BBDownBangumiInfoFetcher : IFetcher
+    public class BangumiInfoFetcher : IFetcher
     {
-        public async Task<BBDownVInfo> FetchAsync(string id)
+        public async Task<VInfo> FetchAsync(string id)
         {
             id = id.Substring(3);
             string index = "";
@@ -68,7 +69,7 @@ namespace BBDown
             }
 
 
-            var info = new BBDownVInfo();
+            var info = new VInfo();
             info.Title = title.Trim();
             info.Desc = desc.Trim();
             info.Pic = cover;

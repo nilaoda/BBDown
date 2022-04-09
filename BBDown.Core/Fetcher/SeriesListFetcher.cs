@@ -1,29 +1,32 @@
-﻿using System;
+﻿using BBDown.Core.Entity;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using static BBDown.BBDownEntity;
-using static BBDown.BBDownUtil;
+using static BBDown.Core.Entity.Entity;
+using static BBDown.Core.Util.HTTPUtil;
 
-namespace BBDown
+namespace BBDown.Core.Fetcher
 {
     /// <summary>
-    /// 合集解析
-    /// https://space.bilibili.com/23630128/channel/collectiondetail?sid=2045
-    /// https://www.bilibili.com/medialist/play/23630128?from=space&business=space_collection&business_id=2045&desc=0
+    /// 列表解析
+    /// https://space.bilibili.com/23630128/channel/seriesdetail?sid=340933
     /// </summary>
-    internal class BBDownMediaListFetcher : IFetcher
+    public class SeriesListFetcher : IFetcher
     {
-        public async Task<BBDownVInfo> FetchAsync(string id)
+        public async Task<VInfo> FetchAsync(string id)
         {
-            id = id.Substring(10);
-            var api = $"https://api.bilibili.com/x/v1/medialist/info?type=8&biz_id={id}&tid=0";
+            //套用BBDownMediaListFetcher.cs的代码
+            //只修改id = id.Substring(12);以及api地址的type=5
+            id = id.Substring(12);
+            var api = $"https://api.bilibili.com/x/v1/medialist/info?type=5&biz_id={id}&tid=0";
             var json = await GetWebSourceAsync(api);
             using var infoJson = JsonDocument.Parse(json);
             var data = infoJson.RootElement.GetProperty("data");
-            var listTitle = GetValidFileName(data.GetProperty("title").GetString());
+            var listTitle = data.GetProperty("title").GetString();
             var intro = data.GetProperty("intro").GetString();
             string pubTime = data.GetProperty("ctime").ToString();
             pubTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc).AddSeconds(Convert.ToDouble(pubTime)).ToLocalTime().ToString();
@@ -34,7 +37,7 @@ namespace BBDown
             int index = 1;
             while (hasMore)
             {
-                var listApi = $"https://api.bilibili.com/x/v2/medialist/resource/list?type=8&oid={oid}&otype=2&biz_id={id}&bvid=&with_current=true&mobi_app=web&ps=20&direction=false&sort_field=1&tid=0&desc=false";
+                var listApi = $"https://api.bilibili.com/x/v2/medialist/resource/list?type=5&oid={oid}&otype=2&biz_id={id}&bvid=&with_current=true&mobi_app=web&ps=20&direction=false&sort_field=1&tid=0&desc=false";
                 json = await GetWebSourceAsync(listApi);
                 using var listJson = JsonDocument.Parse(json);
                 data = listJson.RootElement.GetProperty("data");
@@ -61,7 +64,7 @@ namespace BBDown
                 }
             }
 
-            var info = new BBDownVInfo();
+            var info = new VInfo();
             info.Title = listTitle.Trim();
             info.Desc = intro.Trim();
             info.Pic = "";

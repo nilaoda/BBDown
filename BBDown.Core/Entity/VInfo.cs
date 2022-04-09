@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using static BBDown.BBDownEntity;
+using static BBDown.Core.Entity.Entity;
 
-namespace BBDown
+namespace BBDown.Core.Entity
 {
-    class BBDownVInfo
+    public class VInfo
     {
         /// <summary>
         /// 视频index 用于番剧或课程判断当前选择的是第几集
@@ -47,6 +47,6 @@ namespace BBDown
         public bool IsBangumi { get => isBangumi; set => isBangumi = value; }
         public bool IsCheese { get => isCheese; set => isCheese = value; }
         public string Index { get => index; set => index = value; }
-        internal List<Page> PagesInfo { get => pagesInfo; set => pagesInfo = value; }
+        public List<Page> PagesInfo { get => pagesInfo; set => pagesInfo = value; }
     }
 }

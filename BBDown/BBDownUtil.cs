@@ -17,23 +17,14 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
-using static BBDown.BBDownEntity;
-using static BBDown.BBDownLogger;
+using static BBDown.Core.Entity.Entity;
+using static BBDown.Core.Logger;
+using static BBDown.Core.Util.HTTPUtil;
 
 namespace BBDown
 {
     static class BBDownUtil
     {
-        public static readonly HttpClient AppHttpClient = new(new HttpClientHandler
-        {
-            AllowAutoRedirect = true,
-            AutomaticDecompression = DecompressionMethods.All,
-            ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true
-        })
-        { 
-            Timeout = TimeSpan.FromMinutes(5) 
-        };
-
         public static async Task CheckUpdateAsync()
         {
             try
@@ -234,49 +225,6 @@ namespace BBDown
             return str;
         }
 
-        public static async Task<string> GetWebSourceAsync(string url)
-        {
-            string htmlCode = string.Empty;
-            try
-            {
-                using var webRequest = new HttpRequestMessage(HttpMethod.Get, url);
-                webRequest.Headers.Add("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0 Safari/605.1.15");
-                webRequest.Headers.Add("Accept-Encoding", "gzip, deflate");
-                webRequest.Headers.Add("Cookie", (url.Contains("/ep") || url.Contains("/ss")) ? Program.COOKIE + ";CURRENT_FNVAL=4048;" : Program.COOKIE);
-                if (url.Contains("api.bilibili.com/pgc/player/web/playurl") || url.Contains("api.bilibili.com/pugv/player/web/playurl"))
-                    webRequest.Headers.Add("Referer", "https://www.bilibili.com");
-                webRequest.Headers.CacheControl = CacheControlHeaderValue.Parse("no-cache");
-                webRequest.Headers.Connection.Clear();
-
-                LogDebug("获取网页内容：Url: {0}, Headers: {1}", url, webRequest.Headers);
-                var webResponse = (await AppHttpClient.SendAsync(webRequest, HttpCompletionOption.ResponseHeadersRead)).EnsureSuccessStatusCode();
-
-                htmlCode = await webResponse.Content.ReadAsStringAsync();
-            }
-            catch (Exception)
-            {
-                ;
-            }
-            LogDebug("Response: {0}", htmlCode);
-            return htmlCode;
-        }
-
-        public static async Task<string> GetPostResponseAsync(string Url, byte[] postData)
-        {
-            LogDebug("Post to: {0}, data: {1}", Url, Convert.ToBase64String(postData));
-            string htmlCode = string.Empty;
-            using HttpRequestMessage request = new(HttpMethod.Post, Url);
-            request.Headers.Add("Content-Type", "application/grpc");
-            request.Headers.Add("Content-Length", postData.Length.ToString());
-            request.Headers.Add("User-Agent", "Dalvik/2.1.0 (Linux; U; Android 6.0.1; oneplus a5010 Build/V417IR) 6.10.0 os/android model/oneplus a5010 mobi_app/android build/6100500 channel/bili innerVer/6100500 osVer/6.0.1 network/2");
-            request.Headers.Add("Cookie", Program.COOKIE);
-            request.Content = new ByteArrayContent(postData);
-            var webResponse = await AppHttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
-            Stream myRequestStream = await webResponse.Content.ReadAsStreamAsync();
-            htmlCode = await webResponse.Content.ReadAsStringAsync();
-            return htmlCode;
-        }
-
         /// <summary>
         /// 通过avid检测是否为版权内容，如果是的话返回ep:xx格式
         /// </summary>
@@ -342,9 +290,9 @@ namespace BBDown
 
                 using var httpRequestMessage = new HttpRequestMessage();
                 if (!url.Contains("platform=android_tv_yst") && !url.Contains("platform=android"))
-                    httpRequestMessage.Headers.Add("Referer", "https://www.bilibili.com");
-                httpRequestMessage.Headers.Add("User-Agent", "Mozilla/5.0");
-                httpRequestMessage.Headers.Add("Cookie", Program.COOKIE);
+                    httpRequestMessage.Headers.TryAddWithoutValidation("Referer", "https://www.bilibili.com");
+                httpRequestMessage.Headers.TryAddWithoutValidation("User-Agent", "Mozilla/5.0");
+                httpRequestMessage.Headers.TryAddWithoutValidation("Cookie", Core.Config.COOKIE);
                 httpRequestMessage.Headers.Range = new(downloadedBytes, toPosition);
                 httpRequestMessage.Headers.IfRange = lastTime != null ? new(lastTime.Value) : null;
                 httpRequestMessage.RequestUri = new(url);
@@ -512,7 +460,7 @@ namespace BBDown
             if (files.Length == 1)
             {
                 FileInfo fi = new FileInfo(files[0]);
-                fi.MoveTo(outputFilePath);
+                fi.MoveTo(outputFilePath, true);
                 return;
             }
 
@@ -564,9 +512,9 @@ namespace BBDown
         {
             using var httpRequestMessage = new HttpRequestMessage();
             if (!url.Contains("platform=android_tv_yst") && !url.Contains("platform=android"))
-                httpRequestMessage.Headers.Add("Referer", "https://www.bilibili.com");
-            httpRequestMessage.Headers.Add("User-Agent", "Mozilla/5.0");
-            httpRequestMessage.Headers.Add("Cookie", Program.COOKIE);
+                httpRequestMessage.Headers.TryAddWithoutValidation("Referer", "https://www.bilibili.com");
+            httpRequestMessage.Headers.TryAddWithoutValidation("User-Agent", "Mozilla/5.0");
+            httpRequestMessage.Headers.TryAddWithoutValidation("Cookie", Core.Config.COOKIE);
             httpRequestMessage.RequestUri = new(url);
             var response = (await AppHttpClient.SendAsync(httpRequestMessage, HttpCompletionOption.ResponseHeadersRead)).EnsureSuccessStatusCode();
             long totalSizeBytes = response.Content.Headers.ContentLength ?? 0;
@@ -707,11 +655,6 @@ namespace BBDown
             return dict;
         }
 
-        public static string GetMaxQn()
-        {
-            return Program.qualitys.Keys.First();
-        }
-
         public static NameValueCollection GetTVLoginParms()
         {
             NameValueCollection sb = new();
@@ -846,22 +789,6 @@ namespace BBDown
                 sb.AppendLine($"{FormatTime(p.start, true)} {p.title}");
             }
             return sb.ToString();
-        }
-
-        /// <summary>
-        /// 编码转换
-        /// </summary>
-        /// <param name="code"></param>
-        /// <returns></returns>
-        public static string GetVideoCodec(string code)
-        {
-            return code switch
-            {
-                "13" => "AV1",
-                "12" => "HEVC",
-                "7" => "AVC",
-                _ => "UNKNOWN"
-            };
         }
     }
 }
