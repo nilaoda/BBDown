@@ -168,9 +168,6 @@ namespace BBDown
                     new string[]{ "--download-danmaku", "-dd"},
                     "下载弹幕"),
                 new Option<string>(
-                    new string[]{ "--file-pattern", "-fp"},
-                    $"自定义存储文件名, 多p默认为: {MultiPageDefaultSavePath}, 单p默认为: {SinglePageDefaultSavePath}"),
-                new Option<string>(
                     new string[]{ "--language"},
                     "设置混流的音频语言(代码)，如chi, jpn等"),
                 new Option<string>(
@@ -193,7 +190,25 @@ namespace BBDown
                     "设置aria2c的路径"),
                 new Option<string>(
                     new string[]{ "--delay-per-page"},
-                    "设置下载合集分P之间的下载间隔时间(单位: 秒, 默认无间隔)")
+                    "设置下载合集分P之间的下载间隔时间(单位: 秒, 默认无间隔)"),
+                new Option<string>(
+                    new string[]{ "--file-pattern", "-fp"},
+                    $"使用内置变量自定义存储文件名:\r\n\r\n" +
+                    $"<videoTitle>: 视频主标题\r\n" +
+                    $"<pageNumber>: 视频分P序号\r\n" +
+                    $"<pageNumberWithZero>: 视频分P序号(前缀补零)\r\n" +
+                    $"<pageTitle>: 视频分P标题\r\n" +
+                    $"<aid>: 视频aid\r\n" +
+                    $"<cid>: 视频cid\r\n" +
+                    $"<dfn>: 视频清晰度\r\n" +
+                    $"<res>: 视频分辨率\r\n" +
+                    $"<fps>: 视频帧率\r\n" +
+                    $"<videoCodecs>: 视频编码\r\n" +
+                    $"<videoBandwidth>: 视频码率\r\n" +
+                    $"<audioCodecs>: 音频编码\r\n" +
+                    $"<audioBandwidth>: 音频码率\r\n\r\n" +
+                    $"多p默认为: {MultiPageDefaultSavePath}\r\n" +
+                    $"单p默认为: {SinglePageDefaultSavePath}"),
             };
 
             Command loginCommand = new Command(
