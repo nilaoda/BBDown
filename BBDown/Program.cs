@@ -365,7 +365,7 @@ namespace BBDown
                 var dfnPriority = new Dictionary<string, int>();
                 if (myOption.DfnPriority != null)
 				{
-                    var dfnPriorityTemp = myOption.DfnPriority.Split(',').Select(s => s.ToUpper().Trim()).Where(s => !string.IsNullOrEmpty(s));
+                    var dfnPriorityTemp = myOption.DfnPriority.Replace("，", ",").Split(',').Select(s => s.ToUpper().Trim()).Where(s => !string.IsNullOrEmpty(s));
                     int index = 0;
                     foreach (string dfn in dfnPriorityTemp)
 					{
