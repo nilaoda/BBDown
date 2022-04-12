@@ -324,8 +324,9 @@ namespace BBDown
             }
         }
 
-        public static async Task DownloadFile(string url, string path, bool aria2c, string aria2cProxy)
+        public static async Task DownloadFile(string url, string path, bool aria2c, string aria2cProxy, bool forceHttp = false)
         {
+            if (forceHttp) url = url.Replace("https:", "http:");
             LogDebug("Start downloading: {0}", url);
             if (aria2c)
             {
@@ -364,8 +365,9 @@ namespace BBDown
             });
         }
 
-        public static async Task MultiThreadDownloadFileAsync(string url, string path, bool aria2c, string aria2cProxy)
+        public static async Task MultiThreadDownloadFileAsync(string url, string path, bool aria2c, string aria2cProxy, bool forceHttp = false)
         {
+            if (forceHttp) url = url.Replace("https:", "http:");
             LogDebug("Start downloading: {0}", url);
             if (aria2c)
             {
