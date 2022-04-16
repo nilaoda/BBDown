@@ -76,7 +76,7 @@ namespace BBDown
             public bool SkipMux { get; set; }
             public bool SkipSubtitle { get; set; }
             public bool SkipCover { get; set; }
-            public bool ForceHttp { get; set; }
+            public bool ForceHttp { get; set; } = true;
             public bool DownloadDanmaku { get; set; } = false;
             public string FilePattern { get; set; } = "";
             public string SelectPage { get; set; } = "";
@@ -167,7 +167,7 @@ namespace BBDown
                     "跳过封面下载"),
                 new Option<bool>(
                     new string[]{ "--force-http"},
-                    "下载音视频时强制使用HTTP协议替换HTTPS"),
+                    "下载音视频时强制使用HTTP协议替换HTTPS(默认开启)"),
                 new Option<bool>(
                     new string[]{ "--download-danmaku", "-dd"},
                     "下载弹幕"),
