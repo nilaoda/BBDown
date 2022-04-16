@@ -646,6 +646,11 @@ namespace BBDown
                                 if (subOnly && File.Exists(s.path) && File.ReadAllText(s.path) != "")
                                 {
                                     var _outSubPath = FormatSavePath(savePathFormat, title, null, null, p, pagesCount);
+                                    if (_outSubPath.Contains("/"))
+                                    {
+                                        if (!Directory.Exists(_outSubPath.Split('/').First()))
+                                            Directory.CreateDirectory(_outSubPath.Split('/').First());
+                                    }
                                     _outSubPath = _outSubPath.Substring(0, _outSubPath.LastIndexOf('.')) + ".srt";
                                     File.Move(s.path, _outSubPath, true);
                                 }
