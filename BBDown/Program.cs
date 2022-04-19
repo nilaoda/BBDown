@@ -964,7 +964,7 @@ namespace BBDown
                             {
                                 Log("正在下载弹幕Xml文件");
                                 string danmakuUrl = "https://comment.bilibili.com/" + p.cid + ".xml";
-                                await DownloadFile(danmakuUrl, danmakuXmlPath, useAria2c, aria2cProxy);
+                                await DownloadFile(danmakuUrl, danmakuXmlPath, false, aria2cProxy);
                             }
 
                             var danmakus = DanmakuUtil.ParseXml(danmakuXmlPath);
