@@ -811,5 +811,36 @@ namespace BBDown
             }
             return sb.ToString();
         }
+
+        public static string FindExecutable(string name)
+        {
+            if (OperatingSystem.IsWindows())
+            {
+                var file = Path.Combine(Program.APP_DIR, name + ".exe");
+                if (File.Exists(file))
+                    return file;
+                var path = Environment.GetEnvironmentVariable("PATH");
+                foreach (var item in path.Split(';'))
+                {
+                    file = Path.Combine(item, name + ".exe");
+                    if (File.Exists(file))
+                        return file;
+                }
+            }
+            else
+            {
+                var file = Path.Combine(Program.APP_DIR, name);
+                if (File.Exists(file))
+                    return file;
+                var path = Environment.GetEnvironmentVariable("PATH");
+                foreach (var item in path.Split(':'))
+                {
+                    file = Path.Combine(item, name);
+                    if (File.Exists(file))
+                        return file;
+                }
+            }
+            return null;
+        }
     }
 }

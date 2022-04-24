@@ -18,14 +18,6 @@ namespace BBDown
 
         public static int RunExe(string app, string parms, bool customBin = false)
         {
-            // 若不是手动指定，则自动寻找可执行文件
-            if (!customBin)
-            {
-                if (File.Exists(Path.Combine(Program.APP_DIR, $"{app}")))
-                    app = Path.Combine(Program.APP_DIR, $"{app}");
-                if (File.Exists(Path.Combine(Program.APP_DIR, $"{app}.exe")))
-                    app = Path.Combine(Program.APP_DIR, $"{app}.exe");
-            }
             int code = 0;
             Process p = new Process();
             p.StartInfo.FileName = app;

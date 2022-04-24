@@ -429,17 +429,45 @@ namespace BBDown
                     LogDebug("切换工作目录至：{0}", dir);
                 }
 
-                if (!string.IsNullOrEmpty(myOption.FFmpegPath))
+                //寻找ffmpeg或mp4box
+                if (!skipMux)
+                {
+                    if (useMp4box)
+                    {
+                        var binPath = FindExecutable("mp4box");
+                        if (string.IsNullOrEmpty(binPath))
+                            throw new Exception("找不到可执行的mp4box文件");
+                        BBDownMuxer.MP4BOX = binPath;
+                    }
+                    else
+                    {
+                        var binPath = FindExecutable("ffmpeg");
+                        if (string.IsNullOrEmpty(binPath))
+                            throw new Exception("找不到可执行的ffmpeg文件");
+                        BBDownMuxer.FFMPEG = binPath;
+                    }
+                }
+
+                //寻找aria2c
+                if (useAria2c)
+                {
+                    var binPath = FindExecutable("aria2c");
+                    if (string.IsNullOrEmpty(binPath))
+                        throw new Exception("找不到可执行的aria2c文件");
+                    BBDownAria2c.ARIA2C = binPath;
+                }
+
+                if (!string.IsNullOrEmpty(myOption.FFmpegPath) && File.Exists(myOption.FFmpegPath))
                 {
                     BBDownMuxer.FFMPEG = myOption.FFmpegPath;
                 }
 
-                if (!string.IsNullOrEmpty(myOption.Mp4boxPath))
+                if (!string.IsNullOrEmpty(myOption.Mp4boxPath) && File.Exists(myOption.Mp4boxPath))
                 {
                     BBDownMuxer.MP4BOX = myOption.Mp4boxPath;
                 }
 
-                if (!string.IsNullOrEmpty(myOption.Aria2cPath))
+                if (!string.IsNullOrEmpty(myOption.Aria2cPath) && File.Exists(myOption.Aria2cPath))
                 {
                     BBDownAria2c.ARIA2C = myOption.Aria2cPath;
                 }
