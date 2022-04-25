@@ -26,6 +26,7 @@ namespace BBDown
 {
     class Program
     {
+        private static string BACKUP_HOST = "upos-sz-mirrorcoso1.bilivideo.com";
         public static string SinglePageDefaultSavePath { get; set; } = "<videoTitle>";
         public static string MultiPageDefaultSavePath { get; set; } = "<videoTitle>/[P<pageNumberWithZero>]<pageTitle>";
 
@@ -774,6 +775,20 @@ namespace BBDown
                             LogColor($"[视频] [{videoTracks[vIndex].dfn}] [{videoTracks[vIndex].res}] [{videoTracks[vIndex].codecs}] [{videoTracks[vIndex].fps}] [{videoTracks[vIndex].bandwith} kbps] [~{FormatFileSize(videoTracks[vIndex].dur * videoTracks[vIndex].bandwith * 1024 / 8)}]".Replace("[] ", ""), false);
                         if (audioTracks.Count > 0)
                             LogColor($"[音频] [{audioTracks[aIndex].codecs}] [{audioTracks[aIndex].bandwith} kbps] [~{FormatFileSize(audioTracks[aIndex].dur * audioTracks[aIndex].bandwith * 1024 / 8)}]", false);
+
+                        //如果是PCDN则若干秒后重新解析……
+                        var pcdnReg = new Regex("://.*mcdn\\.bilivideo\\.cn:\\d+");
+                        if (videoTracks.Count > 0 && pcdnReg.IsMatch(videoTracks[vIndex].baseUrl))
+                        {
+                            LogWarn($"检测到视频流为PCDN，尝试强制替换为{BACKUP_HOST}……");
+                            videoTracks[vIndex].baseUrl = pcdnReg.Replace(videoTracks[vIndex].baseUrl, $"://{BACKUP_HOST}");
+                        }
+
+                        if (audioTracks.Count > 0 && pcdnReg.IsMatch(audioTracks[aIndex].baseUrl))
+                        {
+                            LogWarn($"检测到音频流为PCDN，尝试强制替换为{BACKUP_HOST}……");
+                            audioTracks[aIndex].baseUrl = pcdnReg.Replace(audioTracks[aIndex].baseUrl, $"://{BACKUP_HOST}");
+                        }
 
                         LogDebug("Format Before: " + savePathFormat);
                         savePath = FormatSavePath(savePathFormat, title, videoTracks[vIndex], audioTracks[aIndex], p, pagesCount);
