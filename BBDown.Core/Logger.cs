@@ -36,6 +36,19 @@ namespace BBDown.Core
             Console.WriteLine();
         }
 
+        public static void LogWarn(object text, bool time = true)
+        {
+            if (time)
+                Console.Write(DateTime.Now.ToString("[yyyy-MM-dd HH:mm:ss.fff]") + " - ");
+            Console.ForegroundColor = ConsoleColor.DarkYellow;
+            if (time)
+                Console.Write(text);
+            else
+                Console.Write("                            " + text);
+            Console.ResetColor();
+            Console.WriteLine();
+        }
+
         public static void LogDebug(string toFormat, params object[] args)
         {
             if (Config.DEBUG_LOG)
