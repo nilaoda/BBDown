@@ -482,6 +482,7 @@ namespace BBDown
         /// <param name="outputFilePath"></param>
         public static void CombineMultipleFilesIntoSingleFile(string[] files, string outputFilePath)
         {
+            if (files.Length == 0) return;
             if (files.Length == 1)
             {
                 FileInfo fi = new FileInfo(files[0]);
