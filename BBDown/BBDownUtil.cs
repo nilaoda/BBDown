@@ -347,6 +347,10 @@ namespace BBDown
         {
             if (forceHttp) url = ReplaceUrl(url);
             LogDebug("Start downloading: {0}", url);
+            if (!Directory.Exists(Path.GetDirectoryName(Path.GetFullPath(path))))
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(path)));
+            }
             if (aria2c)
             {
                 await BBDownAria2c.DownloadFileByAria2cAsync(url, path, aria2cProxy);

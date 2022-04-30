@@ -659,7 +659,7 @@ namespace BBDown
                     var coverPath = $"{p.aid}/{p.aid}.jpg";
 
                     //处理文件夹以.结尾导致的异常情况
-                    //if (title.EndsWith(".")) title += "_fix";
+                    if (title.EndsWith(".")) title += "_fix";
 
                     //处理封面&&字幕
                     if (!infoMode)
@@ -791,7 +791,7 @@ namespace BBDown
                         if (audioTracks.Count > 0)
                             LogColor($"[音频] [{audioTracks[aIndex].codecs}] [{audioTracks[aIndex].bandwith} kbps] [~{FormatFileSize(audioTracks[aIndex].dur * audioTracks[aIndex].bandwith * 1024 / 8)}]", false);
 
-                        //如果是PCDN则若干秒后重新解析……
+                        //处理PCDN
                         var pcdnReg = new Regex("://.*mcdn\\.bilivideo\\.cn:\\d+");
                         if (videoTracks.Count > 0 && pcdnReg.IsMatch(videoTracks[vIndex].baseUrl))
                         {
@@ -808,6 +808,38 @@ namespace BBDown
                         LogDebug("Format Before: " + savePathFormat);
                         savePath = FormatSavePath(savePathFormat, title, videoTracks[vIndex], audioTracks[aIndex], p, pagesCount);
                         LogDebug("Format After: " + savePath);
+
+                        if (downloadDanmaku)
+                        {
+                            var danmakuXmlPath = savePath.Substring(0, savePath.LastIndexOf('.')) + ".xml";
+                            var danmakuAssPath = savePath.Substring(0, savePath.LastIndexOf('.')) + ".ass";
+                            if (!File.Exists(danmakuAssPath))
+                            {
+                                if (File.Exists(danmakuXmlPath)) { Log("弹幕Xml文件已存在，跳过下载..."); }
+                                else
+                                {
+                                    Log("正在下载弹幕Xml文件");
+                                    string danmakuUrl = "https://comment.bilibili.com/" + p.cid + ".xml";
+                                    await DownloadFile(danmakuUrl, danmakuXmlPath, false, aria2cProxy);
+                                }
+
+                                var danmakus = DanmakuUtil.ParseXml(danmakuXmlPath);
+                                if (danmakus != null)
+                                {
+                                    Log("正在保存弹幕Ass文件...");
+                                    await DanmakuUtil.SaveAsAssAsync(danmakus, danmakuAssPath);
+                                }
+                                else
+                                {
+                                    Log("弹幕Xml解析失败, 删除Xml...");
+                                    File.Delete(danmakuXmlPath);
+                                }
+                            }
+                            else
+                            {
+                                Log("弹幕Ass文件已存在，跳过生成");
+                            }
+                        }
 
                         if (videoTracks.Count > 0)
                         {
@@ -1009,38 +1041,6 @@ namespace BBDown
                         LogError("解析此分P失败(使用--debug查看详细信息)");
                         LogDebug("{0}", webJsonStr);
                         continue;
-                    }
-
-                    if (downloadDanmaku)
-                    {
-                        var danmakuXmlPath = savePath.Substring(0, savePath.LastIndexOf('.')) + ".xml";
-                        var danmakuAssPath = savePath.Substring(0, savePath.LastIndexOf('.')) + ".ass";
-                        if (!File.Exists(danmakuAssPath))
-						{
-                            if (File.Exists(danmakuXmlPath)) { Log("弹幕Xml文件已存在，跳过下载..."); }
-                            else
-                            {
-                                Log("正在下载弹幕Xml文件");
-                                string danmakuUrl = "https://comment.bilibili.com/" + p.cid + ".xml";
-                                await DownloadFile(danmakuUrl, danmakuXmlPath, false, aria2cProxy);
-                            }
-
-                            var danmakus = DanmakuUtil.ParseXml(danmakuXmlPath);
-                            if (danmakus != null)
-                            {
-                                Log("正在保存弹幕Ass文件...");
-                                await DanmakuUtil.SaveAsAssAsync(danmakus, danmakuAssPath);
-                            }
-                            else
-                            {
-                                Log("弹幕Xml解析失败, 删除Xml...");
-                                File.Delete(danmakuXmlPath);
-                            }
-                        }
-						else
-						{
-                            Log("弹幕Ass文件已存在，跳过生成");
-						}
                     }
                 }
                 Log("任务完成");
