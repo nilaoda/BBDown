@@ -34,18 +34,18 @@ namespace BBDown
 
         private static int Compare(Video r1, Video r2, Dictionary<string, byte> encodingPriority, Dictionary<string, int> dfnPriority)
         {
+            if (r1.dfn != r2.dfn)
+            {
+                if (!dfnPriority.TryGetValue(r1.dfn, out int r1Priority)) { r1Priority = int.MaxValue; }
+                if (!dfnPriority.TryGetValue(r2.dfn, out int r2Priority)) { r2Priority = int.MaxValue; }
+                if (r1Priority != r2Priority) { return r1Priority < r2Priority ? -1 : 1; }
+            }
             if (r1.codecs != r2.codecs)
             {
                 if (!encodingPriority.TryGetValue(r1.codecs, out byte r1Priority)) { r1Priority = byte.MaxValue; }
                 if (!encodingPriority.TryGetValue(r2.codecs, out byte r2Priority)) { r2Priority = byte.MaxValue; }
                 if (r1Priority != r2Priority) { return r1Priority < r2Priority ? -1 : 1; }
                 
-            }
-            if (r1.dfn != r2.dfn)
-            {
-                if (!dfnPriority.TryGetValue(r1.dfn, out int r1Priority)) { r1Priority = int.MaxValue; }
-                if (!dfnPriority.TryGetValue(r2.dfn, out int r2Priority)) { r2Priority = int.MaxValue; }
-                if (r1Priority != r2Priority) { return r1Priority < r2Priority ? -1 : 1; }
             }
             return (Convert.ToInt32(r1.id) * 100000 + r1.bandwith) > (Convert.ToInt32(r2.id) * 100000 + r2.bandwith) ? -1 : 1;
         }
