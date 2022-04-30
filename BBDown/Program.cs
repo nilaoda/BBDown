@@ -80,6 +80,7 @@ namespace BBDown
             public bool ForceHttp { get; set; } = true;
             public bool DownloadDanmaku { get; set; } = false;
             public string FilePattern { get; set; } = "";
+            public string MultiFilePattern { get; set; } = "";
             public string SelectPage { get; set; } = "";
             public string Language { get; set; } = "";
             public string Cookie { get; set; } = "";
@@ -197,8 +198,8 @@ namespace BBDown
                     new string[]{ "--delay-per-page"},
                     "设置下载合集分P之间的下载间隔时间(单位: 秒, 默认无间隔)"),
                 new Option<string>(
-                    new string[]{ "--file-pattern", "-fp"},
-                    $"使用内置变量自定义存储文件名:\r\n\r\n" +
+                    new string[]{ "--file-pattern", "-F"},
+                    $"使用内置变量自定义单P存储文件名:\r\n\r\n" +
                     $"<videoTitle>: 视频主标题\r\n" +
                     $"<pageNumber>: 视频分P序号\r\n" +
                     $"<pageNumberWithZero>: 视频分P序号(前缀补零)\r\n" +
@@ -212,8 +213,11 @@ namespace BBDown
                     $"<videoBandwidth>: 视频码率\r\n" +
                     $"<audioCodecs>: 音频编码\r\n" +
                     $"<audioBandwidth>: 音频码率\r\n\r\n" +
-                    $"多p默认为: {MultiPageDefaultSavePath}\r\n" +
-                    $"单p默认为: {SinglePageDefaultSavePath}"),
+                    $"默认为: {SinglePageDefaultSavePath}\r\n"),
+                new Option<string>(
+                    new string[]{ "--multi-file-pattern", "-M"},
+                    $"使用内置变量自定义多P存储文件名:\r\n\r\n" +
+                    $"默认为: {MultiPageDefaultSavePath}\r\n"),
             };
 
             Command loginCommand = new Command(
@@ -616,8 +620,19 @@ namespace BBDown
                 if (selectedPages != null)
                     pagesInfo = pagesInfo.Where(p => selectedPages.Contains(p.index.ToString())).ToList();
 
-                // 如果没有设置保存路径，则根据p数选择默认的路径
-                savePathFormat = string.IsNullOrEmpty(savePathFormat) ? (pagesCount == 1) ? SinglePageDefaultSavePath : MultiPageDefaultSavePath : savePathFormat;
+                // 根据p数选择存储路径
+                if (pagesCount == 1)
+                {
+                    savePathFormat = string.IsNullOrEmpty(myOption.FilePattern) ? SinglePageDefaultSavePath : myOption.FilePattern;
+                }
+                else if (pagesCount > 1)
+                {
+                    savePathFormat = string.IsNullOrEmpty(myOption.MultiFilePattern) ? MultiPageDefaultSavePath : myOption.MultiFilePattern;
+                }
+                else
+                {
+                    savePathFormat = SinglePageDefaultSavePath;
+                }
 
                 foreach (Page p in pagesInfo)
                 {
