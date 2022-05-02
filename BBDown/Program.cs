@@ -45,7 +45,7 @@ namespace BBDown
                 if (!encodingPriority.TryGetValue(r1.codecs, out byte r1Priority)) { r1Priority = byte.MaxValue; }
                 if (!encodingPriority.TryGetValue(r2.codecs, out byte r2Priority)) { r2Priority = byte.MaxValue; }
                 if (r1Priority != r2Priority) { return r1Priority < r2Priority ? -1 : 1; }
-                
+
             }
             return (Convert.ToInt32(r1.id) * 100000 + r1.bandwith) > (Convert.ToInt32(r2.id) * 100000 + r2.bandwith) ? -1 : 1;
         }
@@ -272,7 +272,7 @@ namespace BBDown
                 var encodingPriority = new Dictionary<string, byte>();
                 if (myOption.EncodingPriority != null)
                 {
-                    var encodingPriorityTemp = myOption.EncodingPriority.Split(',').Select(s => s.ToUpper().Trim()).Where(s => !string.IsNullOrEmpty(s));
+                    var encodingPriorityTemp = myOption.EncodingPriority.Replace("，", ",").Split(',').Select(s => s.ToUpper().Trim()).Where(s => !string.IsNullOrEmpty(s));
                     byte index = 0;
                     foreach (string encoding in encodingPriorityTemp)
                     {
@@ -624,7 +624,8 @@ namespace BBDown
                             if (!videoOnly) continue;
                         }
                         //排序
-                        videoTracks.Sort((v1, v2) => Compare(v1, v2, encodingPriority, dfnPriority));
+                        //videoTracks.Sort((v1, v2) => Compare(v1, v2, encodingPriority, dfnPriority));
+                        videoTracks = SortTracks(videoTracks, dfnPriority, encodingPriority); 
                         audioTracks.Sort(Compare);
 
                         if (audioOnly) videoTracks.Clear();
@@ -825,7 +826,8 @@ namespace BBDown
                         int vIndex = 0;
                     reParse:
                         //排序
-                        videoTracks.Sort((v1, v2) => Compare(v1, v2, encodingPriority, dfnPriority));
+                        //videoTracks.Sort((v1, v2) => Compare(v1, v2, encodingPriority, dfnPriority));
+                        videoTracks = SortTracks(videoTracks, dfnPriority, encodingPriority);
 
                         if (interactMode && !flag)
                         {
@@ -948,6 +950,45 @@ namespace BBDown
                 Console.ResetColor();
                 Console.WriteLine();
                 Thread.Sleep(1);
+            }
+        }
+
+        private static List<Video> SortTracks(List<Video> videoTracks, Dictionary<string, int> dfnPriority, Dictionary<string, byte> encodingPriority)
+        {
+            //用户同时输入了自定义分辨率优先级和自定义编码优先级，则根据输入顺序依次进行排序
+            if (dfnPriority.Count > 0 && encodingPriority.Count > 0 && Environment.CommandLine.IndexOf("--encoding-priority") < Environment.CommandLine.IndexOf("--dfn-priority"))
+            {
+                return videoTracks
+                    .OrderBy(v =>
+                    {
+                        if (encodingPriority.TryGetValue(v.codecs, out byte i)) return i;
+                        return 100;
+                    })
+                    .ThenBy(v =>
+                    {
+                        if (dfnPriority.TryGetValue(v.dfn, out int i)) return i;
+                        return 100;
+                    })
+                    .ThenByDescending(v => Convert.ToInt32(v.id))
+                    .ThenByDescending(v => v.bandwith)
+                    .ToList();
+            }
+            else
+            {
+                return videoTracks
+                    .OrderBy(v =>
+                    {
+                        if (dfnPriority.TryGetValue(v.dfn, out int i)) return i;
+                        return 100;
+                    })
+                    .ThenBy(v =>
+                    {
+                        if (encodingPriority.TryGetValue(v.codecs, out byte i)) return i;
+                        return 100;
+                    })
+                    .ThenByDescending(v => Convert.ToInt32(v.id))
+                    .ThenByDescending(v => v.bandwith)
+                    .ToList(); 
             }
         }
 
