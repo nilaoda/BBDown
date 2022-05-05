@@ -91,6 +91,7 @@ namespace BBDown
             public string Mp4boxPath { get; set; } = "";
             public string Aria2cPath { get; set; } = "";
             public string DelayPerPage { get; set; } = "0";
+            public string ConfigFile { get; set; }
             //以下仅为兼容旧版本命令行，不建议使用
             public bool OnlyHevc { get; set; }
             public bool OnlyAvc { get; set; }
@@ -224,6 +225,9 @@ namespace BBDown
                     new string[]{ "--multi-file-pattern", "-M"},
                     $"使用内置变量自定义多P存储文件名:\r\n\r\n" +
                     $"默认为: {MultiPageDefaultSavePath}\r\n"),
+                new Option<string>(
+                    new string[]{ "--config-file"},
+                    "读取指定的BBDown本地配置文件(默认为: BBDown.config)"),
                 //以下仅为兼容旧版本命令行，不建议使用
                 new Option<bool>(
                     new string[]{ "--only-hevc" ,"-hevc"},
@@ -279,11 +283,6 @@ namespace BBDown
                 await DoWorkAsync(myOption);
             });
 
-            return await rootCommand.InvokeAsync(args);
-        }
-
-        private static async Task DoWorkAsync(MyOption myOption)
-        {
             Console.BackgroundColor = ConsoleColor.DarkBlue;
             Console.ForegroundColor = ConsoleColor.White;
             var ver = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
@@ -292,6 +291,39 @@ namespace BBDown
             Console.Write("欢迎到讨论区交流：\r\n" +
                 "https://github.com/nilaoda/BBDown/discussions\r\n");
             Console.WriteLine();
+
+            //处理配置文件
+            var myArgs = new List<string>(Environment.GetCommandLineArgs());
+            try
+            {
+                var configPath = "";
+                if (myArgs.Contains("--config-file"))
+                {
+                    configPath = myArgs.ElementAt(myArgs.IndexOf("--config-file") + 1);
+                }
+                else
+                {
+                    configPath = Path.Combine(APP_DIR, "BBDown.config");
+                }
+
+                if (File.Exists(configPath))
+                {
+                    Log($"加载配置文件: {configPath}");
+                    var configArgs = File.ReadAllLines(configPath).Where(s => !string.IsNullOrEmpty(s) && !s.StartsWith("#")).Select(s => s.Trim('\"'));
+                    LogDebug(string.Join(" ", configArgs));
+                    myArgs.AddRange(configArgs);
+                }
+            }
+            catch (Exception)
+            {
+                LogError("配置文件读取异常，忽略");
+            }
+
+            return await rootCommand.InvokeAsync(myArgs.ToArray());
+        }
+
+        private static async Task DoWorkAsync(MyOption myOption)
+        {
             //检测更新
             new Thread(async () =>
             {
