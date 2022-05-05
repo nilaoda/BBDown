@@ -647,7 +647,7 @@ namespace BBDown
 
                 foreach (Page p in pagesInfo)
                 {
-                    string desc = p.desc == "" ? vInfo.Desc : p.desc;
+                    string desc = string.IsNullOrEmpty(p.desc) ? vInfo.Desc : p.desc;
                     if (pagesInfo.Count > 1 && delay > 0)
                     {
                         Log($"停顿{delay}秒...");
