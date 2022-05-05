@@ -1,4 +1,4 @@
-[![img](https://img.shields.io/github/stars/nilaoda/BBDown?label=%E7%82%B9%E8%B5%9E)](https://github.com/nilaoda/BBDown)  [![img](https://img.shields.io/github/last-commit/nilaoda/BBDown?label=%E6%9C%80%E8%BF%91%E6%8F%90%E4%BA%A4)](https://github.com/nilaoda/BBDown)  [![img](https://img.shields.io/github/release/nilaoda/BBDown?label=%E6%9C%80%E6%96%B0%E7%89%88%E6%9C%AC)](https://github.com/nilaoda/BBDown/releases)  [![img](https://img.shields.io/github/license/nilaoda/BBDown?label=%E8%AE%B8%E5%8F%AF%E8%AF%81)](https://github.com/nilaoda/BBDown)
+[![img](https://img.shields.io/github/stars/nilaoda/BBDown?label=%E7%82%B9%E8%B5%9E)](https://github.com/nilaoda/BBDown)  [![img](https://img.shields.io/github/last-commit/nilaoda/BBDown?label=%E6%9C%80%E8%BF%91%E6%8F%90%E4%BA%A4)](https://github.com/nilaoda/BBDown)  [![img](https://img.shields.io/github/release/nilaoda/BBDown?label=%E6%9C%80%E6%96%B0%E7%89%88%E6%9C%AC)](https://github.com/nilaoda/BBDown/releases)  [![img](https://img.shields.io/github/license/nilaoda/BBDown?label=%E8%AE%B8%E5%8F%AF%E8%AF%81)](https://github.com/nilaoda/BBDown)  [![Build Latest](https://github.com/nilaoda/BBDown/actions/workflows/build_latest.yml/badge.svg)](https://github.com/nilaoda/BBDown/actions/workflows/build_latest.yml)
 
 # BBDown
 一款命令行式哔哩哔哩下载器. Bilibili Downloader.
@@ -35,42 +35,62 @@ Arguments:
   <url>  视频地址 或 av|bv|BV|ep|ss
 
 Options:
-  -tv, --use-tv-api                      使用TV端解析模式
-  -app, --use-app-api                    使用APP端解析模式
-  -intl, --use-intl-api                  使用国际版解析模式
-  --use-mp4box                           使用MP4Box来混流
-  -hevc, --only-hevc                     只下载hevc编码
-  -avc, --only-avc                       只下载avc编码
-  -av1, --only-av1                       只下载av1编码
-  -info, --only-show-info                仅解析而不进行下载
-  -hs, --hide-streams                    不要显示所有可用音视频流
-  -ia, --interactive                     交互式选择清晰度
-  --show-all                             展示所有分P标题
-  --use-aria2c                           调用aria2c进行下载(你需要自行准备好二进制可执行文件)
-  --aria2c-proxy <aria2c-proxy>          调用aria2c进行下载时的代理地址配置
-  -mt, --multi-thread                    使用多线程下载
-  -p, --select-page <select-page>        选择指定分p或分p范围：(-p 8 或 -p 1,2 或 -p 3-5 或 -p ALL)
-  --audio-only                           仅下载音频
-  --video-only                           仅下载视频
-  --sub-only                             仅下载字幕
-  --no-padding-page-num                  不给分P序号补零
-  --debug                                输出调试日志
-  --skip-mux                             跳过混流步骤
-  --skip-subtitle                        跳过字幕下载
-  --skip-cover                           跳过封面下载
-  -dd, --download-danmaku                下载弹幕
-  --add-dfn-subfix                       为文件加入清晰度后缀，如XXX[1080P 高码率]
-  --no-part-prefix                       多P时，不要加入分P前缀，如[P1],[P2]等
-  --language <language>                  设置混流的音频语言(代码)，如chi, jpn等
-  -c, --cookie <cookie>                  设置字符串cookie用以下载网页接口的会员内容
-  -token, --access-token <access-token>  设置access_token用以下载TV/APP接口的会员内容
-  --work-dir <work-dir>                  设置程序的工作目录
-  --ffmpeg-path <ffmpeg-path>            设置ffmpeg的路径
-  --mp4box-path <mp4box-path>            设置mp4box的路径
-  --aria2c-path <aria2c-path>            设置aria2c的路径
-  --delay-per-page <delay-per-page>      设置下载合集分P之间的下载间隔时间(单位: 秒, 默认无间隔)
-  --version                              Show version information
-  -?, -h, --help                         Show help and usage information
+  -tv, --use-tv-api                              使用TV端解析模式
+  -app, --use-app-api                            使用APP端解析模式
+  -intl, --use-intl-api                          使用国际版解析模式
+  --use-mp4box                                   使用MP4Box来混流
+  --encoding-priority <encoding-priority>        视频编码的选择优先级,用逗号分割 例:"hevc,av1,avc"
+  --dfn-priority <dfn-priority>                  画质优先级,用逗号分隔 例:"8K 超高清, 1080P 高码率, HDR 真彩, 杜比视界"
+  -info, --only-show-info                        仅解析而不进行下载
+  -hs, --hide-streams                            不要显示所有可用音视频流
+  -ia, --interactive                             交互式选择清晰度
+  --show-all                                     展示所有分P标题
+  --use-aria2c                                   调用aria2c进行下载(你需要自行准备好二进制可执行文件)
+  --aria2c-proxy <aria2c-proxy>                  调用aria2c进行下载时的代理地址配置
+  -mt, --multi-thread                            使用多线程下载
+  -p, --select-page <select-page>                选择指定分p或分p范围：(-p 8 或 -p 1,2 或 -p 3-5 或 -p ALL)
+  --audio-only                                   仅下载音频
+  --video-only                                   仅下载视频
+  --sub-only                                     仅下载字幕
+  --debug                                        输出调试日志
+  --skip-mux                                     跳过混流步骤
+  --skip-subtitle                                跳过字幕下载
+  --skip-cover                                   跳过封面下载
+  --force-http                                   下载音视频时强制使用HTTP协议替换HTTPS(默认开启)
+  -dd, --download-danmaku                        下载弹幕
+  --language <language>                          设置混流的音频语言(代码)，如chi, jpn等
+  -c, --cookie <cookie>                          设置字符串cookie用以下载网页接口的会员内容
+  -token, --access-token <access-token>          设置access_token用以下载TV/APP接口的会员内容
+  --work-dir <work-dir>                          设置程序的工作目录
+  --ffmpeg-path <ffmpeg-path>                    设置ffmpeg的路径
+  --mp4box-path <mp4box-path>                    设置mp4box的路径
+  --aria2c-path <aria2c-path>                    设置aria2c的路径
+  --delay-per-page <delay-per-page>              设置下载合集分P之间的下载间隔时间(单位: 秒, 默认无间隔)
+  -F, --file-pattern <file-pattern>              使用内置变量自定义单P存储文件名:
+
+                                                 <videoTitle>: 视频主标题
+                                                 <pageNumber>: 视频分P序号
+                                                 <pageNumberWithZero>: 视频分P序号(前缀补零)
+                                                 <pageTitle>: 视频分P标题
+                                                 <aid>: 视频aid
+                                                 <cid>: 视频cid
+                                                 <dfn>: 视频清晰度
+                                                 <res>: 视频分辨率
+                                                 <fps>: 视频帧率
+                                                 <videoCodecs>: 视频编码
+                                                 <videoBandwidth>: 视频码率
+                                                 <audioCodecs>: 音频编码
+                                                 <audioBandwidth>: 音频码率
+
+                                                 默认为: <videoTitle>
+
+  -M, --multi-file-pattern <multi-file-pattern>  使用内置变量自定义多P存储文件名:
+
+                                                 默认为: <videoTitle>/[P<pageNumberWithZero>]<pageTitle>
+
+  --config-file <config-file>                    读取指定的BBDown本地配置文件(默认为: BBDown.config)
+  --version                                      Show version information
+  -?, -h, --help                                 Show help and usage information
 
 Commands:
   login    通过APP扫描二维码以登录您的WEB账号
@@ -100,6 +120,62 @@ Commands:
 - [ ] 支持更多自定义选项
 
 # 使用教程
+
+<details>
+<summary>配置文件 (NEW)</summary> 
+
+---
+
+在`1.4.9`或更高版本中，BBDown支持读取本地配置文件以简化命令行的手动输入。
+
+如果用户没有指定`--config-file`，则默认读取程序同目录下的`BBDown.config`文件；若用户指定，则读取特定文件。
+
+一个典型的配置文件:
+```config
+#本文件是BBDown程序的配置文件
+#以#开头的都会被程序忽略
+#然后剩余非空白内容程序逐行读取，对于一个选项，其参数应当在下一行出现
+
+#例如下面将设置输出文件名格式
+--file-pattern
+<videoTitle>[<dfn>]
+
+--multi-file-pattern
+<videoTitle>/[P<pageNumberWithZero>]<pageTitle>[<dfn>]
+
+#下面设置下载多个分P时，每个分P的下载间隔为2秒
+--delay-per-page
+2
+
+#开启弹幕下载功能
+--download-danmaku
+```
+
+</details>
+
+<details>
+<summary>自定义输出文件名格式 (NEW)</summary> 
+
+---
+
+在`1.4.9`或更高版本中，BBDown支持用户自定义合并时的文件名组成。
+|  代码   | 含义  |
+|  ----  | ----  |
+`<videoTitle>`|视频主标题
+`<pageNumber>`|视频分P序号
+`<pageNumberWithZero>`|视频分P序号(前缀补零)
+`<pageTitle>`|视频分P标题
+`<aid>`|视频aid
+`<cid>`|视频cid
+`<dfn>`|视频清晰度
+`<res>`|视频分辨率
+`<fps>`|视频帧率
+`<videoCodecs>`|视频编码
+`<videoBandwidth>`|视频码率
+`<audioCodecs>`|音频编码
+`<audioBandwidth>`|音频码率
+
+</details>
 
 <details>
 <summary>WEB/TV鉴权</summary>  
@@ -187,10 +263,6 @@ BBDown -p ALL "https://www.bilibili.com/bangumi/play/ss33073"
 ```
 
 </details>
-
-# 更新日志
-
-请查看 [changelog.txt](https://github.com/nilaoda/BBDown/blob/master/BBDown/changelog.txt)
 
 # 演示
 ![1](https://user-images.githubusercontent.com/20772925/88686407-a2001480-d129-11ea-8aac-97a0c71af115.gif)
