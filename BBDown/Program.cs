@@ -91,6 +91,12 @@ namespace BBDown
             public string Mp4boxPath { get; set; } = "";
             public string Aria2cPath { get; set; } = "";
             public string DelayPerPage { get; set; } = "0";
+            //以下仅为兼容旧版本命令行，不建议使用
+            public bool OnlyHevc { get; set; }
+            public bool OnlyAvc { get; set; }
+            public bool OnlyAv1 { get; set; }
+            public bool AddDfnSubfix { get; set; }
+            public bool NoPaddingPageNum { get; set; }
         }
 
         public static async Task<int> Main(params string[] args)
@@ -218,6 +224,37 @@ namespace BBDown
                     new string[]{ "--multi-file-pattern", "-M"},
                     $"使用内置变量自定义多P存储文件名:\r\n\r\n" +
                     $"默认为: {MultiPageDefaultSavePath}\r\n"),
+                //以下仅为兼容旧版本命令行，不建议使用
+                new Option<bool>(
+                    new string[]{ "--only-hevc" ,"-hevc"},
+                    "只下载hevc编码")
+                {
+                    IsHidden = true
+                },
+                new Option<bool>(
+                    new string[]{ "--only-avc" ,"-avc"},
+                    "只下载avc编码")
+                {
+                    IsHidden = true
+                },
+                new Option<bool>(
+                    new string[]{ "--only-av1" ,"-av1"},
+                    "只下载av1编码")
+                {
+                    IsHidden = true
+                },
+                new Option<bool>(
+                    new string[]{ "--add-dfn-subfix"},
+                    "为文件加入清晰度后缀，如XXX[1080P 高码率]")
+                {
+                    IsHidden = true
+                },
+                new Option<bool>(
+                    new string[]{ "--no-padding-page-num"},
+                    "不给分P序号补零")
+                {
+                    IsHidden = true
+                },
             };
 
             Command loginCommand = new Command(
@@ -262,6 +299,42 @@ namespace BBDown
             }).Start();
             try
             {
+                //兼容旧版本命令行参数并给出警告
+                if (myOption.AddDfnSubfix)
+                {
+                    LogWarn("--add-dfn-subfix 已被弃用，建议使用 --file-pattern/-F 或 --multi-file-pattern/-M 来自定义输出文件名格式");
+                    if (string.IsNullOrEmpty(myOption.FilePattern) && string.IsNullOrEmpty(myOption.MultiFilePattern))
+                    {
+                        SinglePageDefaultSavePath += "[<dfn>]";
+                        MultiPageDefaultSavePath += "[<dfn>]";
+                        LogWarn($"已切换至 -F \"{SinglePageDefaultSavePath}\" -M \"{MultiPageDefaultSavePath}\"");
+                    }
+                }
+                if (myOption.OnlyHevc)
+                {
+                    LogWarn("--only-hevc/-hevc 已被弃用，请使用 --encoding-priority 来设置编码优先级，本次执行已将hevc设置为最高优先级");
+                    myOption.EncodingPriority = "hevc";
+                }
+                if (myOption.OnlyAvc)
+                {
+                    LogWarn("--only-avc/-avc 已被弃用，请使用 --encoding-priority 来设置编码优先级，本次执行已将avc设置为最高优先级");
+                    myOption.EncodingPriority = "avc";
+                }
+                if (myOption.OnlyAv1)
+                {
+                    LogWarn("--only-av1/-av1 已被弃用，请使用 --encoding-priority 来设置编码优先级，本次执行已将av1设置为最高优先级");
+                    myOption.EncodingPriority = "av1";
+                }
+                if (myOption.NoPaddingPageNum)
+                {
+                    LogWarn("--no-padding-page-num 已被弃用，建议使用 --file-pattern/-F 或 --multi-file-pattern/-M 来自定义输出文件名格式");
+                    if (string.IsNullOrEmpty(myOption.FilePattern) && string.IsNullOrEmpty(myOption.MultiFilePattern))
+                    {
+                        MultiPageDefaultSavePath = MultiPageDefaultSavePath.Replace("<pageNumberWithZero>", "<pageNumber>");
+                        LogWarn($"已切换至 -M \"{MultiPageDefaultSavePath}\"");
+                    }
+                }
+
                 bool interactMode = myOption.Interactive;
                 bool infoMode = myOption.OnlyShowInfo;
                 bool tvApi = myOption.UseTvApi;
@@ -501,6 +574,17 @@ namespace BBDown
                     }
                 }
 
+                //选择最新分P
+                if (!string.IsNullOrEmpty(selectPage) && (selectPage == "LAST" || selectPage == "NEW")) 
+                {
+                    try
+                    {
+                        selectedPages = new List<string> { pagesInfo.Count.ToString() };
+                        Log("程序已选择最新一P");
+                    }
+                    catch { LogError("解析分P参数时失败了~"); selectedPages = null; };
+                }
+
                 //如果用户没有选择分P，根据epid来确定某一集
                 if (selectedPages == null && selectPage != "ALL" && !string.IsNullOrEmpty(vInfo.Index))
                 {
@@ -702,7 +786,7 @@ namespace BBDown
                         }
 
                         LogDebug("Format Before: " + savePathFormat);
-                        savePath = FormatSavePath(savePathFormat, title, videoTracks[vIndex], audioTracks[aIndex], p, pagesCount);
+                        savePath = FormatSavePath(savePathFormat, title, videoTracks.ElementAtOrDefault(vIndex), audioTracks.ElementAtOrDefault(aIndex), p, pagesCount);
                         LogDebug("Format After: " + savePath);
 
                         if (downloadDanmaku)
@@ -856,7 +940,7 @@ namespace BBDown
                             }
                         }
                         if (infoMode) continue;
-                        savePath = FormatSavePath(savePathFormat, title, videoTracks[vIndex], null, p, pagesCount);
+                        savePath = FormatSavePath(savePathFormat, title, videoTracks.ElementAtOrDefault(vIndex), null, p, pagesCount);
                         if (File.Exists(savePath) && new FileInfo(savePath).Length != 0)
                         {
                             Log($"{savePath}已存在, 跳过下载...");
