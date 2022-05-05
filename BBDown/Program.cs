@@ -309,7 +309,7 @@ namespace BBDown
                 if (File.Exists(configPath))
                 {
                     Log($"加载配置文件: {configPath}");
-                    var configArgs = File.ReadAllLines(configPath).Where(s => !string.IsNullOrEmpty(s) && !s.StartsWith("#")).Select(s => s.Trim('\"'));
+                    var configArgs = File.ReadAllLines(configPath).Where(s => !string.IsNullOrEmpty(s) && !s.StartsWith("#")).Select(s => s.Trim().Trim('\"'));
                     LogDebug(string.Join(" ", configArgs));
                     myArgs.AddRange(configArgs);
                 }
