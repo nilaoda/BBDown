@@ -62,10 +62,10 @@ namespace BBDown.Core
             return webJson;
         }
 
-        private static async Task<string> GetPlayJsonAsync(string aid, string cid, string epId, string qn)
+        private static async Task<string> GetPlayJsonAsync(string aid, string cid, string epId, string qn, string code = "0")
         {
-            string api = $"https://api.bilibili.tv/intl/gateway/v2/ogv/playurl?" +
-                $"aid={aid}&cid={cid}&ep_id={epId}&platform=android&prefer_code_type=0&qn={qn}" + (Config.TOKEN != "" ? $"&access_key={Config.TOKEN}" : "");
+            string api = $"https://api.biliintl.com/intl/gateway/v2/ogv/playurl?" +
+                $"aid={aid}&cid={cid}&ep_id={epId}&platform=android&prefer_code_type={code}&qn={qn}" + (Config.TOKEN != "" ? $"&access_key={Config.TOKEN}" : "");
             string webJson = await GetWebSourceAsync(api);
             return webJson;
         }
@@ -76,10 +76,12 @@ namespace BBDown.Core
             List<Audio> audioTracks = new List<Audio>();
             List<string> clips = new List<string>();
             List<string> dfns = new List<string>();
+            var intlCode = "0";
 
             //调用解析
             string webJsonStr = await GetPlayJsonAsync(false, aidOri, aid, cid, epId, tvApi, intlApi, appApi, qn);
 
+        startParsing:
             var respJson = JsonDocument.Parse(webJsonStr);
             var data = respJson.RootElement;
 
@@ -116,7 +118,14 @@ namespace BBDown.Core
                     a.bandwith = Convert.ToInt64(node.GetProperty("bandwidth").ToString()) / 1000;
                     a.baseUrl = node.GetProperty("base_url").ToString();
                     a.codecs = "M4A";
-                    audioTracks.Add(a);
+                    if (!audioTracks.Contains(a)) audioTracks.Add(a);
+                }
+
+                if (intlCode == "0")
+                {
+                    intlCode = "1";
+                    webJsonStr = await GetPlayJsonAsync(aid, cid, epId, qn, intlCode);
+                    goto startParsing;
                 }
 
                 return (webJsonStr, videoTracks, audioTracks, clips, dfns);
