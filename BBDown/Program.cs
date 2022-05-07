@@ -1066,6 +1066,7 @@ namespace BBDown
                 Console.ResetColor();
                 Console.WriteLine();
                 Thread.Sleep(1);
+                Environment.Exit(1);
             }
         }
 
