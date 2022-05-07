@@ -804,17 +804,17 @@ namespace BBDown
                             LogColor($"[音频] [{audioTracks[aIndex].codecs}] [{audioTracks[aIndex].bandwith} kbps] [~{FormatFileSize(audioTracks[aIndex].dur * audioTracks[aIndex].bandwith * 1024 / 8)}]", false);
 
                         //处理PCDN
-                        var pcdnReg = new Regex("://.*mcdn\\.bilivideo\\.cn:\\d+");
+                        var pcdnReg = new Regex("://.*:\\d+/");
                         if (videoTracks.Count > 0 && pcdnReg.IsMatch(videoTracks[vIndex].baseUrl))
                         {
                             LogWarn($"检测到视频流为PCDN，尝试强制替换为{BACKUP_HOST}……");
-                            videoTracks[vIndex].baseUrl = pcdnReg.Replace(videoTracks[vIndex].baseUrl, $"://{BACKUP_HOST}");
+                            videoTracks[vIndex].baseUrl = pcdnReg.Replace(videoTracks[vIndex].baseUrl, $"://{BACKUP_HOST}/");
                         }
 
                         if (audioTracks.Count > 0 && pcdnReg.IsMatch(audioTracks[aIndex].baseUrl))
                         {
                             LogWarn($"检测到音频流为PCDN，尝试强制替换为{BACKUP_HOST}……");
-                            audioTracks[aIndex].baseUrl = pcdnReg.Replace(audioTracks[aIndex].baseUrl, $"://{BACKUP_HOST}");
+                            audioTracks[aIndex].baseUrl = pcdnReg.Replace(audioTracks[aIndex].baseUrl, $"://{BACKUP_HOST}/");
                         }
 
                         LogDebug("Format Before: " + savePathFormat);
