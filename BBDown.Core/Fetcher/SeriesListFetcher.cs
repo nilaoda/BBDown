@@ -37,7 +37,7 @@ namespace BBDown.Core.Fetcher
             int index = 1;
             while (hasMore)
             {
-                var listApi = $"https://api.bilibili.com/x/v2/medialist/resource/list?type=5&oid={oid}&otype=2&biz_id={id}&bvid=&with_current=true&mobi_app=web&ps=20&direction=false&sort_field=1&tid=0&desc=false";
+                var listApi = $"https://api.bilibili.com/x/v2/medialist/resource/list?type=5&oid={oid}&otype=2&biz_id={id}&bvid=&with_current=true&mobi_app=web&ps=20&direction=false&sort_field=1&tid=0&desc=true";
                 json = await GetWebSourceAsync(listApi);
                 using var listJson = JsonDocument.Parse(json);
                 data = listJson.RootElement.GetProperty("data");
