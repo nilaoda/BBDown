@@ -69,7 +69,7 @@ namespace BBDown
             public bool UseAria2c { get; set; }
             public bool Interactive { get; set; }
             public bool HideStreams { get; set; }
-            public bool MultiThread { get; set; }
+            public bool MultiThread { get; set; } = true;
             public bool VideoOnly { get; set; }
             public bool AudioOnly { get; set; }
             public bool SubOnly { get; set; }
@@ -149,7 +149,7 @@ namespace BBDown
                     "调用aria2c进行下载时的代理地址配置"),
                 new Option<bool>(
                     new string[]{ "--multi-thread", "-mt"},
-                    "使用多线程下载"),
+                    "使用多线程下载(默认开启)"),
                 new Option<string>(
                     new string[]{ "--select-page" ,"-p"},
                     "选择指定分p或分p范围：(-p 8 或 -p 1,2 或 -p 3-5 或 -p ALL)"),
