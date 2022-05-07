@@ -283,7 +283,7 @@ namespace BBDown
         private static async Task RangeDownloadToTmpAsync(int id, string url, string tmpName, long fromPosition, long? toPosition, Action<int, long, long> onProgress, bool failOnRangeNotSupported = false)
         {
             DateTimeOffset? lastTime = File.Exists(tmpName) ? new FileInfo(tmpName).LastWriteTimeUtc : null;
-            using (var fileStream = new FileStream(tmpName, FileMode.OpenOrCreate))
+            using (var fileStream = new FileStream(tmpName, FileMode.Create))
             {
                 fileStream.Seek(0, SeekOrigin.End);
                 var downloadedBytes = fromPosition + fileStream.Position;
@@ -321,6 +321,9 @@ namespace BBDown
                     downloadedBytes += recevied;
                     onProgress(id, downloadedBytes - fromPosition, totalBytes);
                 }
+
+                if (response.Content.Headers.ContentLength != null && (response.Content.Headers.ContentLength != new FileInfo(tmpName).Length)) 
+                    throw new Exception("Retry...");
             }
         }
 
@@ -359,33 +362,22 @@ namespace BBDown
                 Console.WriteLine();
                 return;
             }
+            int retry = 0;
             string tmpName = Path.Combine(Path.GetDirectoryName(path), Path.GetFileNameWithoutExtension(path) + ".tmp");
-            using (var progress = new ProgressBar())
+        reDown:
+            try
             {
-                await RangeDownloadToTmpAsync(0, url, tmpName, 0, null, (_, downloaded, total) => progress.Report((double)downloaded / total));
-                File.Move(tmpName, path, true);
-            }
-        }
-
-        //https://stackoverflow.com/a/25877042
-        public static async Task RunWithMaxDegreeOfConcurrency<T>(
-            int maxDegreeOfConcurrency, IEnumerable<T> collection, Func<T, Task> taskFactory)
-        {
-            var activeTasks = new List<Task>(maxDegreeOfConcurrency);
-            foreach (var task in collection.Select(taskFactory))
-            {
-                activeTasks.Add(task);
-                if (activeTasks.Count == maxDegreeOfConcurrency)
+                using (var progress = new ProgressBar())
                 {
-                    await Task.WhenAny(activeTasks.ToArray());
-                    //observe exceptions here
-                    activeTasks.RemoveAll(t => t.IsCompleted);
+                    await RangeDownloadToTmpAsync(0, url, tmpName, 0, null, (_, downloaded, total) => progress.Report((double)downloaded / total));
+                    File.Move(tmpName, path, true);
                 }
             }
-            await Task.WhenAll(activeTasks.ToArray()).ContinueWith(t =>
+            catch (Exception)
             {
-                //observe exceptions in a manner consistent with the above   
-            });
+                if (++retry == 3) throw;
+                goto reDown;
+            }
         }
 
         public static async Task MultiThreadDownloadFileAsync(string url, string path, bool aria2c, string aria2cProxy, bool forceHttp = false)
@@ -417,7 +409,7 @@ namespace BBDown
             using (var progress = new ProgressBar())
             {
                 progress.Report(0);
-                await RunWithMaxDegreeOfConcurrency(8, allClips, async clip =>
+                await Parallel.ForEachAsync(allClips, async (clip, _) =>
                 {
                     int retry = 0;
                     string tmp = Path.Combine(Path.GetDirectoryName(path), clip.index.ToString("00000") + "_" + Path.GetFileNameWithoutExtension(path) + (Path.GetExtension(path).EndsWith(".mp4") ? ".vclip" : ".aclip"));
@@ -432,9 +424,10 @@ namespace BBDown
                     }
                     catch (NotSupportedException)
                     {
-                        throw;
+                        if (++retry == 3) throw new Exception($"服务器可能并不支持多线程下载，请使用 --multi-thread false 关闭多线程");
+                        goto reDown;
                     }
-                    catch
+                    catch (Exception)
                     {
                         if (++retry == 3) throw new Exception($"Failed to download clip {clip.index}");
                         goto reDown;
@@ -449,7 +442,7 @@ namespace BBDown
             List<Clip> clips = new List<Clip>();
             int index = 0;
             long counter = 0;
-            int perSize = 5 * 1024 * 1024;
+            int perSize = 10 * 1024 * 1024;
             while (fileSize > 0)
             {
                 Clip c = new Clip();
