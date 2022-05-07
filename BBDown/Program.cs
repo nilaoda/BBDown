@@ -292,14 +292,31 @@ namespace BBDown
                 "https://github.com/nilaoda/BBDown/discussions\r\n");
             Console.WriteLine();
 
+            var newArgsList = new List<string>();
+            var commandLineResult = rootCommand.Parse(args);
+            foreach (var item in commandLineResult.CommandResult.Children)
+            {
+                if (item is ArgumentResult)
+                {
+                    var a = (ArgumentResult)item;
+                    newArgsList.Add(a.Tokens.First().Value);
+                }
+                else if (item is OptionResult)
+                {
+                    var o = (OptionResult)item;
+                    newArgsList.Add("--" + o.Option.Name);
+                    newArgsList.AddRange(o.Tokens.Select(t => t.Value));
+                }
+            }
+            if (newArgsList.Contains("--debug")) Config.DEBUG_LOG = true;
+
             //处理配置文件
-            var myArgs = new List<string>(Environment.GetCommandLineArgs());
             try
             {
                 var configPath = "";
-                if (myArgs.Contains("--config-file"))
+                if (newArgsList.Contains("--config-file"))
                 {
-                    configPath = myArgs.ElementAt(myArgs.IndexOf("--config-file") + 1);
+                    configPath = newArgsList.ElementAt(newArgsList.IndexOf("--config-file") + 1);
                 }
                 else
                 {
@@ -310,8 +327,22 @@ namespace BBDown
                 {
                     Log($"加载配置文件: {configPath}");
                     var configArgs = File.ReadAllLines(configPath).Where(s => !string.IsNullOrEmpty(s) && !s.StartsWith("#")).Select(s => s.Trim().Trim('\"'));
-                    LogDebug(string.Join(" ", configArgs));
-                    myArgs.AddRange(configArgs);
+                    var configArgsResult = rootCommand.Parse(configArgs.ToArray());
+                    foreach (var item in configArgsResult.CommandResult.Children)
+                    {
+                        if (item is OptionResult)
+                        {
+                            var o = (OptionResult)item;
+                            if (!newArgsList.Contains("--" + o.Option.Name))
+                            {
+                                newArgsList.Add("--" + o.Option.Name);
+                                newArgsList.AddRange(o.Tokens.Select(t => t.Value));
+                            }
+                        }
+                    }
+
+                    //命令行的优先级>配置文件优先级
+                    LogDebug("新的命令行参数: " + string.Join(" ", newArgsList));
                 }
             }
             catch (Exception)
@@ -319,7 +350,7 @@ namespace BBDown
                 LogError("配置文件读取异常，忽略");
             }
 
-            return await rootCommand.InvokeAsync(myArgs.ToArray());
+            return await rootCommand.InvokeAsync(newArgsList.ToArray());
         }
 
         private static async Task DoWorkAsync(MyOption myOption)
