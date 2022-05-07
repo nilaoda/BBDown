@@ -25,6 +25,7 @@ namespace BBDown.Core.Util
 
             return key switch
             {
+                "ai-Zh"             => ("chi", "中文（简体, AI识别）"),
                 "zh-CN"             => ("chi", "中文（简体）"),
                 "zh-HK"             => ("chi", "中文（香港繁體）"),
                 "zh-Hans"           => ("chi", "中文（简体）"),
