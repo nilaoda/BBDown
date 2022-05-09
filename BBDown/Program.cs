@@ -294,7 +294,7 @@ namespace BBDown
 
             var newArgsList = new List<string>();
             var commandLineResult = rootCommand.Parse(args);
-            if (commandLineResult.CommandResult.Command.Name != "BBDown")
+            if (commandLineResult.CommandResult.Command.Name.ToLower() != "bbdown")
             {
                 newArgsList.Add(commandLineResult.CommandResult.Command.Name);
                 return await rootCommand.InvokeAsync(newArgsList.ToArray());
