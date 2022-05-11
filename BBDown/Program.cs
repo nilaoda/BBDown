@@ -922,7 +922,10 @@ namespace BBDown
                             else
                             {
                                 if (multiThread && videoTracks[vIndex].baseUrl.Contains("-cmcc-"))
+                                {
                                     LogWarn("检测到cmcc域名cdn, 已经禁用多线程");
+                                    forceHttp = false;
+                                }
                                 Log($"开始下载P{p.index}视频...");
                                 await DownloadFile(videoTracks[vIndex].baseUrl, videoPath, useAria2c, aria2cProxy, forceHttp);
                             }
@@ -941,7 +944,10 @@ namespace BBDown
                             else
                             {
                                 if (multiThread && audioTracks[aIndex].baseUrl.Contains("-cmcc-"))
+                                {
                                     LogWarn("检测到cmcc域名cdn, 已经禁用多线程");
+                                    forceHttp = false;
+                                }
                                 Log($"开始下载P{p.index}音频...");
                                 await DownloadFile(audioTracks[aIndex].baseUrl, audioPath, useAria2c, aria2cProxy, forceHttp);
                             }
@@ -1039,7 +1045,10 @@ namespace BBDown
                             else
                             {
                                 if (multiThread && link.Contains("-cmcc-"))
+                                {
                                     LogWarn("检测到cmcc域名cdn, 已经禁用多线程");
+                                    forceHttp = false;
+                                }
                                 if (videoTracks.Count != 0)
                                 {
                                     Log($"开始下载P{p.index}视频, 片段({(i + 1).ToString(pad)}/{clips.Count})...");
