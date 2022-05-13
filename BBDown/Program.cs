@@ -856,31 +856,19 @@ namespace BBDown
                         {
                             var danmakuXmlPath = savePath.Substring(0, savePath.LastIndexOf('.')) + ".xml";
                             var danmakuAssPath = savePath.Substring(0, savePath.LastIndexOf('.')) + ".ass";
-                            if (!File.Exists(danmakuAssPath))
+                            Log("正在下载弹幕Xml文件");
+                            string danmakuUrl = "https://comment.bilibili.com/" + p.cid + ".xml";
+                            await DownloadFile(danmakuUrl, danmakuXmlPath, false, aria2cProxy);
+                            var danmakus = DanmakuUtil.ParseXml(danmakuXmlPath);
+                            if (danmakus != null)
                             {
-                                if (File.Exists(danmakuXmlPath)) { Log("弹幕Xml文件已存在，跳过下载..."); }
-                                else
-                                {
-                                    Log("正在下载弹幕Xml文件");
-                                    string danmakuUrl = "https://comment.bilibili.com/" + p.cid + ".xml";
-                                    await DownloadFile(danmakuUrl, danmakuXmlPath, false, aria2cProxy);
-                                }
-
-                                var danmakus = DanmakuUtil.ParseXml(danmakuXmlPath);
-                                if (danmakus != null)
-                                {
-                                    Log("正在保存弹幕Ass文件...");
-                                    await DanmakuUtil.SaveAsAssAsync(danmakus, danmakuAssPath);
-                                }
-                                else
-                                {
-                                    Log("弹幕Xml解析失败, 删除Xml...");
-                                    File.Delete(danmakuXmlPath);
-                                }
+                                Log("正在保存弹幕Ass文件...");
+                                await DanmakuUtil.SaveAsAssAsync(danmakus, danmakuAssPath);
                             }
                             else
                             {
-                                Log("弹幕Ass文件已存在，跳过生成");
+                                Log("弹幕Xml解析失败, 删除Xml...");
+                                File.Delete(danmakuXmlPath);
                             }
                         }
 
