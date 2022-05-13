@@ -669,17 +669,11 @@ namespace BBDown
                     pagesInfo = pagesInfo.Where(p => selectedPages.Contains(p.index.ToString())).ToList();
 
                 // 根据p数选择存储路径
-                if (pagesCount == 1)
-                {
-                    savePathFormat = string.IsNullOrEmpty(myOption.FilePattern) ? SinglePageDefaultSavePath : myOption.FilePattern;
-                }
-                else if (pagesCount > 1)
+                savePathFormat = string.IsNullOrEmpty(myOption.FilePattern) ? SinglePageDefaultSavePath : myOption.FilePattern;
+                // 1. 多P; 2. 只有1P，但是是番剧，尚未完结时 按照多P处理
+                if (pagesCount > 1 || (bangumi && !vInfo.IsBangumiEnd))
                 {
                     savePathFormat = string.IsNullOrEmpty(myOption.MultiFilePattern) ? MultiPageDefaultSavePath : myOption.MultiFilePattern;
-                }
-                else
-                {
-                    savePathFormat = SinglePageDefaultSavePath;
                 }
 
                 foreach (Page p in pagesInfo)
@@ -961,7 +955,7 @@ namespace BBDown
                         int code = MuxAV(useMp4box, videoPath, audioPath, savePath,
                             desc,
                             title,
-                            pagesCount > 1 ? savePath.Split('/').Last() : "",
+                            (pagesCount > 1 || (bangumi && !vInfo.IsBangumiEnd)) ? p.title : "",
                             File.Exists(coverPath) ? coverPath : "",
                             lang,
                             subtitleInfo, audioOnly, videoOnly, p.points);
@@ -1066,7 +1060,7 @@ namespace BBDown
                         int code = MuxAV(false, videoPath, "", savePath,
                             desc,
                             title,
-                            pagesCount > 1 ? savePath.Split('/').Last() : "",
+                            (pagesCount > 1 || (bangumi && !vInfo.IsBangumiEnd)) ? p.title : "",
                             File.Exists(coverPath) ? coverPath : "",
                             lang,
                             subtitleInfo, audioOnly, videoOnly, p.points);
