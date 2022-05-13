@@ -65,7 +65,7 @@ namespace BBDown.Core
         private static async Task<string> GetPlayJsonAsync(string aid, string cid, string epId, string qn, string code = "0")
         {
             string api = $"https://api.biliintl.com/intl/gateway/v2/ogv/playurl?" +
-                $"aid={aid}&cid={cid}&ep_id={epId}&platform=android&prefer_code_type={code}&qn={qn}" + (Config.TOKEN != "" ? $"&access_key={Config.TOKEN}" : "");
+                $"aid={aid}&cid={cid}&ep_id={epId}&platform=android&s_locale=zh_SG&prefer_code_type={code}&qn={qn}" + (Config.TOKEN != "" ? $"&access_key={Config.TOKEN}" : "");
             string webJson = await GetWebSourceAsync(api);
             return webJson;
         }
