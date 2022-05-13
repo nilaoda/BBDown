@@ -678,414 +678,430 @@ namespace BBDown
 
                 foreach (Page p in pagesInfo)
                 {
-                    string desc = string.IsNullOrEmpty(p.desc) ? vInfo.Desc : p.desc;
-                    if (pagesInfo.Count > 1 && delay > 0)
+                    int retryCount = 0;
+                downloadPage:
+                    try
                     {
-                        Log($"停顿{delay}秒...");
-                        Thread.Sleep(delay * 1000);
-                    }
-
-                    Log($"开始解析P{p.index}...");
-
-                    LogDebug("尝试获取章节信息...");
-                    p.points = await FetchPointsAsync(p.cid, p.aid);
-
-                    string webJsonStr = "";
-                    List<Video> videoTracks = new List<Video>();
-                    List<Audio> audioTracks = new List<Audio>();
-                    List<string> clips = new List<string>();
-                    List<string> dfns = new List<string>();
-
-                    string videoPath = $"{p.aid}/{p.aid}.P{p.index}.{p.cid}.mp4";
-                    string audioPath = $"{p.aid}/{p.aid}.P{p.index}.{p.cid}.m4a";
-                    var coverPath = $"{p.aid}/{p.aid}.jpg";
-
-                    //处理文件夹以.结尾导致的异常情况
-                    if (title.EndsWith(".")) title += "_fix";
-
-                    //处理封面&&字幕
-                    if (!infoMode)
-                    {
-                        if (!Directory.Exists(p.aid))
+                        string desc = string.IsNullOrEmpty(p.desc) ? vInfo.Desc : p.desc;
+                        if (pagesInfo.Count > 1 && delay > 0)
                         {
-                            Directory.CreateDirectory(p.aid);
-                        }
-                        if (!skipCover && !subOnly && !File.Exists(coverPath)) 
-                        {
-                            Log("下载封面...");
-                            var cover = pic == "" ? p.cover : pic;
-                            LogDebug("下载：{0}", cover);
-                            await using var response = await HTTPUtil.AppHttpClient.GetStreamAsync(cover);
-                            await using var fs = new FileStream(coverPath, FileMode.Create);
-                            await response.CopyToAsync(fs);
+                            Log($"停顿{delay}秒...");
+                            Thread.Sleep(delay * 1000);
                         }
 
-                        if (!skipSubtitle)
+                        Log($"开始解析P{p.index}...");
+
+                        LogDebug("尝试获取章节信息...");
+                        p.points = await FetchPointsAsync(p.cid, p.aid);
+
+                        string webJsonStr = "";
+                        List<Video> videoTracks = new List<Video>();
+                        List<Audio> audioTracks = new List<Audio>();
+                        List<string> clips = new List<string>();
+                        List<string> dfns = new List<string>();
+
+                        string videoPath = $"{p.aid}/{p.aid}.P{p.index}.{p.cid}.mp4";
+                        string audioPath = $"{p.aid}/{p.aid}.P{p.index}.{p.cid}.m4a";
+                        var coverPath = $"{p.aid}/{p.aid}.jpg";
+
+                        //处理文件夹以.结尾导致的异常情况
+                        if (title.EndsWith(".")) title += "_fix";
+
+                        //处理封面&&字幕
+                        if (!infoMode)
                         {
-                            LogDebug("获取字幕...");
-                            subtitleInfo = await SubUtil.GetSubtitlesAsync(p.aid, p.cid, p.epid, intlApi);
-                            foreach (Subtitle s in subtitleInfo)
+                            if (!Directory.Exists(p.aid))
                             {
-                                Log($"下载字幕 {s.lan} => {SubUtil.GetSubtitleCode(s.lan).Item2}...");
-                                LogDebug("下载：{0}", s.url);
-                                await SubUtil.SaveSubtitleAsync(s.url, s.path);
-                                if (subOnly && File.Exists(s.path) && File.ReadAllText(s.path) != "")
+                                Directory.CreateDirectory(p.aid);
+                            }
+                            if (!skipCover && !subOnly && !File.Exists(coverPath))
+                            {
+                                Log("下载封面...");
+                                var cover = pic == "" ? p.cover : pic;
+                                LogDebug("下载：{0}", cover);
+                                await using var response = await HTTPUtil.AppHttpClient.GetStreamAsync(cover);
+                                await using var fs = new FileStream(coverPath, FileMode.Create);
+                                await response.CopyToAsync(fs);
+                            }
+
+                            if (!skipSubtitle)
+                            {
+                                LogDebug("获取字幕...");
+                                subtitleInfo = await SubUtil.GetSubtitlesAsync(p.aid, p.cid, p.epid, intlApi);
+                                foreach (Subtitle s in subtitleInfo)
                                 {
-                                    var _outSubPath = FormatSavePath(savePathFormat, title, null, null, p, pagesCount);
-                                    if (_outSubPath.Contains("/"))
+                                    Log($"下载字幕 {s.lan} => {SubUtil.GetSubtitleCode(s.lan).Item2}...");
+                                    LogDebug("下载：{0}", s.url);
+                                    await SubUtil.SaveSubtitleAsync(s.url, s.path);
+                                    if (subOnly && File.Exists(s.path) && File.ReadAllText(s.path) != "")
                                     {
-                                        if (!Directory.Exists(_outSubPath.Split('/').First()))
-                                            Directory.CreateDirectory(_outSubPath.Split('/').First());
+                                        var _outSubPath = FormatSavePath(savePathFormat, title, null, null, p, pagesCount);
+                                        if (_outSubPath.Contains("/"))
+                                        {
+                                            if (!Directory.Exists(_outSubPath.Split('/').First()))
+                                                Directory.CreateDirectory(_outSubPath.Split('/').First());
+                                        }
+                                        _outSubPath = _outSubPath.Substring(0, _outSubPath.LastIndexOf('.')) + ".srt";
+                                        File.Move(s.path, _outSubPath, true);
                                     }
-                                    _outSubPath = _outSubPath.Substring(0, _outSubPath.LastIndexOf('.')) + ".srt";
-                                    File.Move(s.path, _outSubPath, true);
                                 }
                             }
-                        }
 
-                        if (subOnly)
-                        {
-                            if (Directory.Exists(p.aid) && Directory.GetFiles(p.aid).Length == 0) Directory.Delete(p.aid, true);
-                            continue;
-                        }
-                    }
-
-                    //调用解析
-                    (webJsonStr, videoTracks, audioTracks, clips, dfns) = await ExtractTracksAsync(aidOri, p.aid, p.cid, p.epid, tvApi, intlApi, appApi);
-
-                    //File.WriteAllText($"debug.json", JObject.Parse(webJson).ToString());
-
-                    var savePath = "";
-
-                    //此处代码简直灾难，后续优化吧
-                    if ((videoTracks.Count != 0 || audioTracks.Count != 0) && clips.Count == 0)   //dash
-                    {
-                        if (webJsonStr.Contains("\"video\":[") && videoTracks.Count == 0) 
-                        {
-                            LogError("没有找到符合要求的视频流");
-                            if (!audioOnly) continue;
-                        }
-                        if (webJsonStr.Contains("\"audio\":[") && audioTracks.Count == 0)
-                        {
-                            LogError("没有找到符合要求的音频流");
-                            if (!videoOnly) continue;
-                        }
-                        //排序
-                        //videoTracks.Sort((v1, v2) => Compare(v1, v2, encodingPriority, dfnPriority));
-                        videoTracks = SortTracks(videoTracks, dfnPriority, encodingPriority); 
-                        audioTracks.Sort(Compare);
-
-                        if (audioOnly) videoTracks.Clear();
-                        if (videoOnly) audioTracks.Clear();
-
-                        int vIndex = 0;
-                        int aIndex = 0;
-
-                        if (!hideStreams)
-                        {
-                            //展示所有的音视频流信息
-                            if (videoTracks.Count > 0) 
+                            if (subOnly)
                             {
-                                Log($"共计{videoTracks.Count}条视频流.");
-                                int index = 0;
-                                foreach (var v in videoTracks)
+                                if (Directory.Exists(p.aid) && Directory.GetFiles(p.aid).Length == 0) Directory.Delete(p.aid, true);
+                                continue;
+                            }
+                        }
+
+                        //调用解析
+                        (webJsonStr, videoTracks, audioTracks, clips, dfns) = await ExtractTracksAsync(aidOri, p.aid, p.cid, p.epid, tvApi, intlApi, appApi);
+
+                        //File.WriteAllText($"debug.json", JObject.Parse(webJson).ToString());
+
+                        var savePath = "";
+
+                        //此处代码简直灾难，后续优化吧
+                        if ((videoTracks.Count != 0 || audioTracks.Count != 0) && clips.Count == 0)   //dash
+                        {
+                            if (webJsonStr.Contains("\"video\":[") && videoTracks.Count == 0)
+                            {
+                                LogError("没有找到符合要求的视频流");
+                                if (!audioOnly) continue;
+                            }
+                            if (webJsonStr.Contains("\"audio\":[") && audioTracks.Count == 0)
+                            {
+                                LogError("没有找到符合要求的音频流");
+                                if (!videoOnly) continue;
+                            }
+                            //排序
+                            //videoTracks.Sort((v1, v2) => Compare(v1, v2, encodingPriority, dfnPriority));
+                            videoTracks = SortTracks(videoTracks, dfnPriority, encodingPriority);
+                            audioTracks.Sort(Compare);
+
+                            if (audioOnly) videoTracks.Clear();
+                            if (videoOnly) audioTracks.Clear();
+
+                            int vIndex = 0;
+                            int aIndex = 0;
+
+                            if (!hideStreams)
+                            {
+                                //展示所有的音视频流信息
+                                if (videoTracks.Count > 0)
                                 {
-                                    int pDur = p.dur == 0 ? v.dur : p.dur;
-                                    LogColor($"{index++}. [{v.dfn}] [{v.res}] [{v.codecs}] [{v.fps}] [{v.bandwith} kbps] [~{FormatFileSize(pDur * v.bandwith * 1024 / 8)}]".Replace("[] ", ""), false);
-                                    if (infoMode) Console.WriteLine(v.baseUrl);
+                                    Log($"共计{videoTracks.Count}条视频流.");
+                                    int index = 0;
+                                    foreach (var v in videoTracks)
+                                    {
+                                        int pDur = p.dur == 0 ? v.dur : p.dur;
+                                        LogColor($"{index++}. [{v.dfn}] [{v.res}] [{v.codecs}] [{v.fps}] [{v.bandwith} kbps] [~{FormatFileSize(pDur * v.bandwith * 1024 / 8)}]".Replace("[] ", ""), false);
+                                        if (infoMode) Console.WriteLine(v.baseUrl);
+                                    }
+                                }
+                                if (audioTracks.Count > 0)
+                                {
+                                    Log($"共计{audioTracks.Count}条音频流.");
+                                    int index = 0;
+                                    foreach (var a in audioTracks)
+                                    {
+                                        int pDur = p.dur == 0 ? a.dur : p.dur;
+                                        LogColor($"{index++}. [{a.codecs}] [{a.bandwith} kbps] [~{FormatFileSize(pDur * a.bandwith * 1024 / 8)}]", false);
+                                        if (infoMode) Console.WriteLine(a.baseUrl);
+                                    }
                                 }
                             }
+                            if (infoMode) continue;
+                            if (interactMode && !hideStreams)
+                            {
+                                if (videoTracks.Count > 0)
+                                {
+                                    Log("请选择一条视频流(输入序号): ", false);
+                                    Console.ForegroundColor = ConsoleColor.Cyan;
+                                    vIndex = Convert.ToInt32(Console.ReadLine());
+                                    if (vIndex > videoTracks.Count || vIndex < 0) vIndex = 0;
+                                    Console.ResetColor();
+                                }
+                                if (audioTracks.Count > 0)
+                                {
+                                    Log("请选择一条音频流(输入序号): ", false);
+                                    Console.ForegroundColor = ConsoleColor.Cyan;
+                                    aIndex = Convert.ToInt32(Console.ReadLine());
+                                    if (aIndex > audioTracks.Count || aIndex < 0) aIndex = 0;
+                                    Console.ResetColor();
+                                }
+                            }
+
+                            Log($"已选择的流:");
+                            if (videoTracks.Count > 0)
+                                LogColor($"[视频] [{videoTracks[vIndex].dfn}] [{videoTracks[vIndex].res}] [{videoTracks[vIndex].codecs}] [{videoTracks[vIndex].fps}] [{videoTracks[vIndex].bandwith} kbps] [~{FormatFileSize(videoTracks[vIndex].dur * videoTracks[vIndex].bandwith * 1024 / 8)}]".Replace("[] ", ""), false);
                             if (audioTracks.Count > 0)
+                                LogColor($"[音频] [{audioTracks[aIndex].codecs}] [{audioTracks[aIndex].bandwith} kbps] [~{FormatFileSize(audioTracks[aIndex].dur * audioTracks[aIndex].bandwith * 1024 / 8)}]", false);
+
+                            //处理PCDN
+                            var pcdnReg = new Regex("://.*:\\d+/");
+                            if (videoTracks.Count > 0 && pcdnReg.IsMatch(videoTracks[vIndex].baseUrl))
                             {
-                                Log($"共计{audioTracks.Count}条音频流.");
-                                int index = 0;
-                                foreach (var a in audioTracks)
+                                LogWarn($"检测到视频流为PCDN，尝试强制替换为{BACKUP_HOST}……");
+                                videoTracks[vIndex].baseUrl = pcdnReg.Replace(videoTracks[vIndex].baseUrl, $"://{BACKUP_HOST}/");
+                            }
+
+                            if (audioTracks.Count > 0 && pcdnReg.IsMatch(audioTracks[aIndex].baseUrl))
+                            {
+                                LogWarn($"检测到音频流为PCDN，尝试强制替换为{BACKUP_HOST}……");
+                                audioTracks[aIndex].baseUrl = pcdnReg.Replace(audioTracks[aIndex].baseUrl, $"://{BACKUP_HOST}/");
+                            }
+
+                            LogDebug("Format Before: " + savePathFormat);
+                            savePath = FormatSavePath(savePathFormat, title, videoTracks.ElementAtOrDefault(vIndex), audioTracks.ElementAtOrDefault(aIndex), p, pagesCount);
+                            LogDebug("Format After: " + savePath);
+
+                            if (downloadDanmaku)
+                            {
+                                var danmakuXmlPath = savePath.Substring(0, savePath.LastIndexOf('.')) + ".xml";
+                                var danmakuAssPath = savePath.Substring(0, savePath.LastIndexOf('.')) + ".ass";
+                                Log("正在下载弹幕Xml文件");
+                                string danmakuUrl = "https://comment.bilibili.com/" + p.cid + ".xml";
+                                await DownloadFile(danmakuUrl, danmakuXmlPath, false, aria2cProxy);
+                                var danmakus = DanmakuUtil.ParseXml(danmakuXmlPath);
+                                if (danmakus != null)
                                 {
-                                    int pDur = p.dur == 0 ? a.dur : p.dur;
-                                    LogColor($"{index++}. [{a.codecs}] [{a.bandwith} kbps] [~{FormatFileSize(pDur * a.bandwith * 1024 / 8)}]", false);
-                                    if (infoMode) Console.WriteLine(a.baseUrl);
+                                    Log("正在保存弹幕Ass文件...");
+                                    await DanmakuUtil.SaveAsAssAsync(danmakus, danmakuAssPath);
+                                }
+                                else
+                                {
+                                    Log("弹幕Xml解析失败, 删除Xml...");
+                                    File.Delete(danmakuXmlPath);
                                 }
                             }
-                        }
-                        if (infoMode) continue;
-                        if (interactMode && !hideStreams)
-                        {
+
                             if (videoTracks.Count > 0)
                             {
-                                Log("请选择一条视频流(输入序号): ", false);
-                                Console.ForegroundColor = ConsoleColor.Cyan;
-                                vIndex = Convert.ToInt32(Console.ReadLine());
-                                if (vIndex > videoTracks.Count || vIndex < 0) vIndex = 0;
-                                Console.ResetColor();
+
+                                if (!infoMode && File.Exists(savePath) && new FileInfo(savePath).Length != 0)
+                                {
+                                    Log($"{savePath}已存在, 跳过下载...");
+                                    File.Delete(coverPath);
+                                    if (Directory.Exists(p.aid) && Directory.GetFiles(p.aid).Length == 0)
+                                    {
+                                        Directory.Delete(p.aid, true);
+                                    }
+                                    continue;
+                                }
+
+                                //杜比视界，若ffmpeg版本小于5.0，使用mp4box封装
+                                if (videoTracks[vIndex].dfn == Config.qualitys["126"] && !useMp4box && !CheckFFmpegDOVI())
+                                {
+                                    LogWarn($"检测到杜比视界清晰度且您的ffmpeg版本小于5.0,将使用mp4box混流...");
+                                    useMp4box = true;
+                                }
+                                if (multiThread && !videoTracks[vIndex].baseUrl.Contains("-cmcc-"))
+                                {
+                                    Log($"开始多线程下载P{p.index}视频...");
+                                    await MultiThreadDownloadFileAsync(videoTracks[vIndex].baseUrl, videoPath, useAria2c, aria2cProxy, forceHttp);
+                                    Log("合并视频分片...");
+                                    CombineMultipleFilesIntoSingleFile(GetFiles(Path.GetDirectoryName(videoPath), ".vclip"), videoPath);
+                                    Log("清理分片...");
+                                    foreach (var file in new DirectoryInfo(Path.GetDirectoryName(videoPath)).EnumerateFiles("*.?clip")) file.Delete();
+                                }
+                                else
+                                {
+                                    if (multiThread && videoTracks[vIndex].baseUrl.Contains("-cmcc-"))
+                                    {
+                                        LogWarn("检测到cmcc域名cdn, 已经禁用多线程");
+                                        forceHttp = false;
+                                    }
+                                    Log($"开始下载P{p.index}视频...");
+                                    await DownloadFile(videoTracks[vIndex].baseUrl, videoPath, useAria2c, aria2cProxy, forceHttp);
+                                }
                             }
                             if (audioTracks.Count > 0)
                             {
-                                Log("请选择一条音频流(输入序号): ", false);
+                                if (multiThread && !audioTracks[aIndex].baseUrl.Contains("-cmcc-"))
+                                {
+                                    Log($"开始多线程下载P{p.index}音频...");
+                                    await MultiThreadDownloadFileAsync(audioTracks[aIndex].baseUrl, audioPath, useAria2c, aria2cProxy, forceHttp);
+                                    Log("合并音频分片...");
+                                    CombineMultipleFilesIntoSingleFile(GetFiles(Path.GetDirectoryName(audioPath), ".aclip"), audioPath);
+                                    Log("清理分片...");
+                                    foreach (var file in new DirectoryInfo(Path.GetDirectoryName(videoPath)).EnumerateFiles("*.?clip")) file.Delete();
+                                }
+                                else
+                                {
+                                    if (multiThread && audioTracks[aIndex].baseUrl.Contains("-cmcc-"))
+                                    {
+                                        LogWarn("检测到cmcc域名cdn, 已经禁用多线程");
+                                        forceHttp = false;
+                                    }
+                                    Log($"开始下载P{p.index}音频...");
+                                    await DownloadFile(audioTracks[aIndex].baseUrl, audioPath, useAria2c, aria2cProxy, forceHttp);
+                                }
+                            }
+
+                            Log($"下载P{p.index}完毕");
+                            if (videoTracks.Count == 0) videoPath = "";
+                            if (audioTracks.Count == 0) audioPath = "";
+                            if (skipMux) continue;
+                            Log("开始合并音视频" + (subtitleInfo.Count > 0 ? "和字幕" : "") + "...");
+                            if (audioOnly)
+                                savePath = string.Join("", savePath.Take(savePath.Length - 4)) + ".m4a";
+                            int code = MuxAV(useMp4box, videoPath, audioPath, savePath,
+                                desc,
+                                title,
+                                (pagesCount > 1 || (bangumi && !vInfo.IsBangumiEnd)) ? p.title : "",
+                                File.Exists(coverPath) ? coverPath : "",
+                                lang,
+                                subtitleInfo, audioOnly, videoOnly, p.points);
+                            if (code != 0 || !File.Exists(savePath) || new FileInfo(savePath).Length == 0)
+                            {
+                                LogError("合并失败"); continue;
+                            }
+                            Log("清理临时文件...");
+                            Thread.Sleep(200);
+                            if (videoTracks.Count > 0) File.Delete(videoPath);
+                            if (audioTracks.Count > 0) File.Delete(audioPath);
+                            if (p.points.Count > 0) File.Delete(Path.Combine(Path.GetDirectoryName(string.IsNullOrEmpty(videoPath) ? audioPath : videoPath), "chapters"));
+                            foreach (var s in subtitleInfo) File.Delete(s.path);
+                            if (pagesInfo.Count == 1 || p.index == pagesInfo.Last().index || p.aid != pagesInfo.Last().aid)
+                                File.Delete(coverPath);
+                            if (Directory.Exists(p.aid) && Directory.GetFiles(p.aid).Length == 0) Directory.Delete(p.aid, true);
+                        }
+                        else if (clips.Count > 0 && dfns.Count > 0)   //flv
+                        {
+                            bool flag = false;
+                            int vIndex = 0;
+                        reParse:
+                            //排序
+                            //videoTracks.Sort((v1, v2) => Compare(v1, v2, encodingPriority, dfnPriority));
+                            videoTracks = SortTracks(videoTracks, dfnPriority, encodingPriority);
+
+                            if (interactMode && !flag)
+                            {
+                                int i = 0;
+                                dfns.ForEach(key => LogColor($"{i++}.{Config.qualitys[key]}"));
+                                Log("请选择最想要的清晰度(输入序号): ", false);
                                 Console.ForegroundColor = ConsoleColor.Cyan;
-                                aIndex = Convert.ToInt32(Console.ReadLine());
-                                if (aIndex > audioTracks.Count || aIndex < 0) aIndex = 0;
+                                vIndex = Convert.ToInt32(Console.ReadLine());
+                                if (vIndex > dfns.Count || vIndex < 0) vIndex = 0;
                                 Console.ResetColor();
+                                //重新解析
+                                videoTracks.Clear();
+                                (webJsonStr, videoTracks, audioTracks, clips, dfns) = await ExtractTracksAsync(aidOri, p.aid, p.cid, p.epid, tvApi, intlApi, appApi, dfns[vIndex]);
+                                flag = true;
+                                goto reParse;
                             }
-                        }
 
-                        Log($"已选择的流:");
-                        if (videoTracks.Count > 0)
-                            LogColor($"[视频] [{videoTracks[vIndex].dfn}] [{videoTracks[vIndex].res}] [{videoTracks[vIndex].codecs}] [{videoTracks[vIndex].fps}] [{videoTracks[vIndex].bandwith} kbps] [~{FormatFileSize(videoTracks[vIndex].dur * videoTracks[vIndex].bandwith * 1024 / 8)}]".Replace("[] ", ""), false);
-                        if (audioTracks.Count > 0)
-                            LogColor($"[音频] [{audioTracks[aIndex].codecs}] [{audioTracks[aIndex].bandwith} kbps] [~{FormatFileSize(audioTracks[aIndex].dur * audioTracks[aIndex].bandwith * 1024 / 8)}]", false);
-
-                        //处理PCDN
-                        var pcdnReg = new Regex("://.*:\\d+/");
-                        if (videoTracks.Count > 0 && pcdnReg.IsMatch(videoTracks[vIndex].baseUrl))
-                        {
-                            LogWarn($"检测到视频流为PCDN，尝试强制替换为{BACKUP_HOST}……");
-                            videoTracks[vIndex].baseUrl = pcdnReg.Replace(videoTracks[vIndex].baseUrl, $"://{BACKUP_HOST}/");
-                        }
-
-                        if (audioTracks.Count > 0 && pcdnReg.IsMatch(audioTracks[aIndex].baseUrl))
-                        {
-                            LogWarn($"检测到音频流为PCDN，尝试强制替换为{BACKUP_HOST}……");
-                            audioTracks[aIndex].baseUrl = pcdnReg.Replace(audioTracks[aIndex].baseUrl, $"://{BACKUP_HOST}/");
-                        }
-
-                        LogDebug("Format Before: " + savePathFormat);
-                        savePath = FormatSavePath(savePathFormat, title, videoTracks.ElementAtOrDefault(vIndex), audioTracks.ElementAtOrDefault(aIndex), p, pagesCount);
-                        LogDebug("Format After: " + savePath);
-
-                        if (downloadDanmaku)
-                        {
-                            var danmakuXmlPath = savePath.Substring(0, savePath.LastIndexOf('.')) + ".xml";
-                            var danmakuAssPath = savePath.Substring(0, savePath.LastIndexOf('.')) + ".ass";
-                            Log("正在下载弹幕Xml文件");
-                            string danmakuUrl = "https://comment.bilibili.com/" + p.cid + ".xml";
-                            await DownloadFile(danmakuUrl, danmakuXmlPath, false, aria2cProxy);
-                            var danmakus = DanmakuUtil.ParseXml(danmakuXmlPath);
-                            if (danmakus != null)
+                            Log($"共计{videoTracks.Count}条流(共有{clips.Count}个分段).");
+                            int index = 0;
+                            foreach (var v in videoTracks)
                             {
-                                Log("正在保存弹幕Ass文件...");
-                                await DanmakuUtil.SaveAsAssAsync(danmakus, danmakuAssPath);
+                                LogColor($"{index++}. [{v.dfn}] [{v.res}] [{v.codecs}] [{v.fps}] [~{(v.size / 1024 / v.dur * 8).ToString("00")} kbps] [{FormatFileSize(v.size)}]".Replace("[] ", ""), false);
+                                if (infoMode)
+                                {
+                                    clips.ForEach(delegate (string c) { Console.WriteLine(c); });
+                                }
                             }
-                            else
-                            {
-                                Log("弹幕Xml解析失败, 删除Xml...");
-                                File.Delete(danmakuXmlPath);
-                            }
-                        }
-
-                        if (videoTracks.Count > 0)
-                        {
-
-                            if (!infoMode && File.Exists(savePath) && new FileInfo(savePath).Length != 0)
+                            if (infoMode) continue;
+                            savePath = FormatSavePath(savePathFormat, title, videoTracks.ElementAtOrDefault(vIndex), null, p, pagesCount);
+                            if (File.Exists(savePath) && new FileInfo(savePath).Length != 0)
                             {
                                 Log($"{savePath}已存在, 跳过下载...");
-                                File.Delete(coverPath);
-                                if (Directory.Exists(p.aid) && Directory.GetFiles(p.aid).Length == 0)
+                                if (pagesInfo.Count == 1 && Directory.Exists(p.aid))
                                 {
                                     Directory.Delete(p.aid, true);
                                 }
                                 continue;
                             }
-
-                            //杜比视界，若ffmpeg版本小于5.0，使用mp4box封装
-                            if (videoTracks[vIndex].dfn == Config.qualitys["126"] && !useMp4box && !CheckFFmpegDOVI())
+                            var pad = string.Empty.PadRight(clips.Count.ToString().Length, '0');
+                            for (int i = 0; i < clips.Count; i++)
                             {
-                                LogWarn($"检测到杜比视界清晰度且您的ffmpeg版本小于5.0,将使用mp4box混流...");
-                                useMp4box = true;
-                            }
-                            if (multiThread && !videoTracks[vIndex].baseUrl.Contains("-cmcc-"))
-                            {
-                                Log($"开始多线程下载P{p.index}视频...");
-                                await MultiThreadDownloadFileAsync(videoTracks[vIndex].baseUrl, videoPath, useAria2c, aria2cProxy, forceHttp);
-                                Log("合并视频分片...");
-                                CombineMultipleFilesIntoSingleFile(GetFiles(Path.GetDirectoryName(videoPath), ".vclip"), videoPath);
-                                Log("清理分片...");
-                                foreach (var file in new DirectoryInfo(Path.GetDirectoryName(videoPath)).EnumerateFiles("*.?clip")) file.Delete();
-                            }
-                            else
-                            {
-                                if (multiThread && videoTracks[vIndex].baseUrl.Contains("-cmcc-"))
+                                var link = clips[i];
+                                videoPath = $"{p.aid}/{p.aid}.P{p.index}.{p.cid}.{i.ToString(pad)}.mp4";
+                                if (multiThread && !link.Contains("-cmcc-"))
                                 {
-                                    LogWarn("检测到cmcc域名cdn, 已经禁用多线程");
-                                    forceHttp = false;
+                                    if (videoTracks.Count != 0)
+                                    {
+                                        Log($"开始多线程下载P{p.index}视频, 片段({(i + 1).ToString(pad)}/{clips.Count})...");
+                                        await MultiThreadDownloadFileAsync(link, videoPath, useAria2c, aria2cProxy, forceHttp);
+                                        Log("合并视频分片...");
+                                        CombineMultipleFilesIntoSingleFile(GetFiles(Path.GetDirectoryName(videoPath), ".vclip"), videoPath);
+                                    }
+                                    Log("清理分片...");
+                                    foreach (var file in new DirectoryInfo(Path.GetDirectoryName(videoPath)).EnumerateFiles("*.?clip")) file.Delete();
                                 }
-                                Log($"开始下载P{p.index}视频...");
-                                await DownloadFile(videoTracks[vIndex].baseUrl, videoPath, useAria2c, aria2cProxy, forceHttp);
-                            }
-                        }
-                        if (audioTracks.Count > 0)
-                        {
-                            if (multiThread && !audioTracks[aIndex].baseUrl.Contains("-cmcc-"))
-                            {
-                                Log($"开始多线程下载P{p.index}音频...");
-                                await MultiThreadDownloadFileAsync(audioTracks[aIndex].baseUrl, audioPath, useAria2c, aria2cProxy, forceHttp);
-                                Log("合并音频分片...");
-                                CombineMultipleFilesIntoSingleFile(GetFiles(Path.GetDirectoryName(audioPath), ".aclip"), audioPath);
-                                Log("清理分片...");
-                                foreach (var file in new DirectoryInfo(Path.GetDirectoryName(videoPath)).EnumerateFiles("*.?clip")) file.Delete();
-                            }
-                            else
-                            {
-                                if (multiThread && audioTracks[aIndex].baseUrl.Contains("-cmcc-"))
+                                else
                                 {
-                                    LogWarn("检测到cmcc域名cdn, 已经禁用多线程");
-                                    forceHttp = false;
+                                    if (multiThread && link.Contains("-cmcc-"))
+                                    {
+                                        LogWarn("检测到cmcc域名cdn, 已经禁用多线程");
+                                        forceHttp = false;
+                                    }
+                                    if (videoTracks.Count != 0)
+                                    {
+                                        Log($"开始下载P{p.index}视频, 片段({(i + 1).ToString(pad)}/{clips.Count})...");
+                                        await DownloadFile(link, videoPath, useAria2c, aria2cProxy, forceHttp);
+                                    }
                                 }
-                                Log($"开始下载P{p.index}音频...");
-                                await DownloadFile(audioTracks[aIndex].baseUrl, audioPath, useAria2c, aria2cProxy, forceHttp);
                             }
-                        }
-
-                        Log($"下载P{p.index}完毕");
-                        if (videoTracks.Count == 0) videoPath = "";
-                        if (audioTracks.Count == 0) audioPath = "";
-                        if (skipMux) continue;
-                        Log("开始合并音视频" + (subtitleInfo.Count > 0 ? "和字幕" : "") + "...");
-                        if (audioOnly)
-                            savePath = string.Join("", savePath.Take(savePath.Length - 4)) + ".m4a";
-                        int code = MuxAV(useMp4box, videoPath, audioPath, savePath,
-                            desc,
-                            title,
-                            (pagesCount > 1 || (bangumi && !vInfo.IsBangumiEnd)) ? p.title : "",
-                            File.Exists(coverPath) ? coverPath : "",
-                            lang,
-                            subtitleInfo, audioOnly, videoOnly, p.points);
-                        if (code != 0 || !File.Exists(savePath) || new FileInfo(savePath).Length == 0)
-                        {
-                            LogError("合并失败"); continue;
-                        }
-                        Log("清理临时文件...");
-                        Thread.Sleep(200);
-                        if (videoTracks.Count > 0) File.Delete(videoPath);
-                        if (audioTracks.Count > 0) File.Delete(audioPath);
-                        if (p.points.Count > 0) File.Delete(Path.Combine(Path.GetDirectoryName(string.IsNullOrEmpty(videoPath) ? audioPath : videoPath), "chapters"));
-                        foreach (var s in subtitleInfo) File.Delete(s.path);
-                        if (pagesInfo.Count == 1 || p.index == pagesInfo.Last().index || p.aid != pagesInfo.Last().aid)
-                            File.Delete(coverPath);
-                        if (Directory.Exists(p.aid) && Directory.GetFiles(p.aid).Length == 0) Directory.Delete(p.aid, true);
-                    }
-                    else if (clips.Count > 0 && dfns.Count > 0)   //flv
-                    {
-                        bool flag = false;
-                        int vIndex = 0;
-                    reParse:
-                        //排序
-                        //videoTracks.Sort((v1, v2) => Compare(v1, v2, encodingPriority, dfnPriority));
-                        videoTracks = SortTracks(videoTracks, dfnPriority, encodingPriority);
-
-                        if (interactMode && !flag)
-                        {
-                            int i = 0;
-                            dfns.ForEach(key => LogColor($"{i++}.{Config.qualitys[key]}"));
-                            Log("请选择最想要的清晰度(输入序号): ", false);
-                            Console.ForegroundColor = ConsoleColor.Cyan;
-                            vIndex = Convert.ToInt32(Console.ReadLine());
-                            if (vIndex > dfns.Count || vIndex < 0) vIndex = 0;
-                            Console.ResetColor();
-                            //重新解析
-                            videoTracks.Clear();
-                            (webJsonStr, videoTracks, audioTracks, clips, dfns) = await ExtractTracksAsync(aidOri, p.aid, p.cid, p.epid, tvApi, intlApi, appApi, dfns[vIndex]);
-                            flag = true;
-                            goto reParse;
-                        }
-
-                        Log($"共计{videoTracks.Count}条流(共有{clips.Count}个分段).");
-                        int index = 0;
-                        foreach (var v in videoTracks)
-                        {
-                            LogColor($"{index++}. [{v.dfn}] [{v.res}] [{v.codecs}] [{v.fps}] [~{(v.size / 1024 / v.dur * 8).ToString("00")} kbps] [{FormatFileSize(v.size)}]".Replace("[] ", ""), false);
-                            if (infoMode)
+                            Log($"下载P{p.index}完毕");
+                            Log("开始合并分段...");
+                            var files = GetFiles(Path.GetDirectoryName(videoPath), ".mp4");
+                            videoPath = $"{p.aid}/{p.aid}.P{p.index}.{p.cid}.mp4";
+                            MergeFLV(files, videoPath);
+                            if (skipMux) continue;
+                            Log("开始混流视频" + (subtitleInfo.Count > 0 ? "和字幕" : "") + "...");
+                            if (audioOnly)
+                                savePath = string.Join("", savePath.Take(savePath.Length - 4)) + ".m4a";
+                            int code = MuxAV(false, videoPath, "", savePath,
+                                desc,
+                                title,
+                                (pagesCount > 1 || (bangumi && !vInfo.IsBangumiEnd)) ? p.title : "",
+                                File.Exists(coverPath) ? coverPath : "",
+                                lang,
+                                subtitleInfo, audioOnly, videoOnly, p.points);
+                            if (code != 0 || !File.Exists(savePath) || new FileInfo(savePath).Length == 0)
                             {
-                                clips.ForEach(delegate (string c) { Console.WriteLine(c); });
+                                LogError("合并失败"); continue;
                             }
+                            Log("清理临时文件...");
+                            Thread.Sleep(200);
+                            if (videoTracks.Count != 0) File.Delete(videoPath);
+                            foreach (var s in subtitleInfo) File.Delete(s.path);
+                            if (p.points.Count > 0) File.Delete(Path.Combine(Path.GetDirectoryName(string.IsNullOrEmpty(videoPath) ? audioPath : videoPath), "chapters"));
+                            if (pagesInfo.Count == 1 || p.index == pagesInfo.Last().index || p.aid != pagesInfo.Last().aid)
+                                File.Delete(coverPath);
+                            if (Directory.Exists(p.aid) && Directory.GetFiles(p.aid).Length == 0) Directory.Delete(p.aid, true);
                         }
-                        if (infoMode) continue;
-                        savePath = FormatSavePath(savePathFormat, title, videoTracks.ElementAtOrDefault(vIndex), null, p, pagesCount);
-                        if (File.Exists(savePath) && new FileInfo(savePath).Length != 0)
+                        else
                         {
-                            Log($"{savePath}已存在, 跳过下载...");
-                            if (pagesInfo.Count == 1 && Directory.Exists(p.aid))
+                            if (webJsonStr.Contains("平台不可观看"))
                             {
-                                Directory.Delete(p.aid, true);
+                                throw new Exception("当前(WEB)平台不可观看，请尝试使用TV API解析。");
                             }
+                            else if (webJsonStr.Contains("地区不可观看") || webJsonStr.Contains("地区不支持"))
+                            {
+                                throw new Exception("当前地区不可观看，尝试设置系统代理后解析。");
+                            }
+                            else if (webJsonStr.Contains("购买后才能观看"))
+                            {
+                                throw new Exception("购买后才能观看哦");
+                            }
+                            LogError("解析此分P失败(使用--debug查看详细信息)");
+                            LogDebug("{0}", webJsonStr);
                             continue;
                         }
-                        var pad = string.Empty.PadRight(clips.Count.ToString().Length, '0');
-                        for (int i = 0; i < clips.Count; i++)
-                        {
-                            var link = clips[i];
-                            videoPath = $"{p.aid}/{p.aid}.P{p.index}.{p.cid}.{i.ToString(pad)}.mp4";
-                            if (multiThread && !link.Contains("-cmcc-"))
-                            {
-                                if (videoTracks.Count != 0)
-                                {
-                                    Log($"开始多线程下载P{p.index}视频, 片段({(i + 1).ToString(pad)}/{clips.Count})...");
-                                    await MultiThreadDownloadFileAsync(link, videoPath, useAria2c, aria2cProxy, forceHttp);
-                                    Log("合并视频分片...");
-                                    CombineMultipleFilesIntoSingleFile(GetFiles(Path.GetDirectoryName(videoPath), ".vclip"), videoPath);
-                                }
-                                Log("清理分片...");
-                                foreach (var file in new DirectoryInfo(Path.GetDirectoryName(videoPath)).EnumerateFiles("*.?clip")) file.Delete();
-                            }
-                            else
-                            {
-                                if (multiThread && link.Contains("-cmcc-"))
-                                {
-                                    LogWarn("检测到cmcc域名cdn, 已经禁用多线程");
-                                    forceHttp = false;
-                                }
-                                if (videoTracks.Count != 0)
-                                {
-                                    Log($"开始下载P{p.index}视频, 片段({(i + 1).ToString(pad)}/{clips.Count})...");
-                                    await DownloadFile(link, videoPath, useAria2c, aria2cProxy, forceHttp);
-                                }
-                            }
-                        }
-                        Log($"下载P{p.index}完毕");
-                        Log("开始合并分段...");
-                        var files = GetFiles(Path.GetDirectoryName(videoPath), ".mp4");
-                        videoPath = $"{p.aid}/{p.aid}.P{p.index}.{p.cid}.mp4";
-                        MergeFLV(files, videoPath);
-                        if (skipMux) continue;
-                        Log("开始混流视频" + (subtitleInfo.Count > 0 ? "和字幕" : "") + "...");
-                        if (audioOnly)
-                            savePath = string.Join("", savePath.Take(savePath.Length - 4)) + ".m4a";
-                        int code = MuxAV(false, videoPath, "", savePath,
-                            desc,
-                            title,
-                            (pagesCount > 1 || (bangumi && !vInfo.IsBangumiEnd)) ? p.title : "",
-                            File.Exists(coverPath) ? coverPath : "",
-                            lang,
-                            subtitleInfo, audioOnly, videoOnly, p.points);
-                        if (code != 0 || !File.Exists(savePath) || new FileInfo(savePath).Length == 0)
-                        {
-                            LogError("合并失败"); continue;
-                        }
-                        Log("清理临时文件...");
-                        Thread.Sleep(200);
-                        if (videoTracks.Count != 0) File.Delete(videoPath);
-                        foreach (var s in subtitleInfo) File.Delete(s.path);
-                        if (p.points.Count > 0) File.Delete(Path.Combine(Path.GetDirectoryName(string.IsNullOrEmpty(videoPath) ? audioPath : videoPath), "chapters"));
-                        if (pagesInfo.Count == 1 || p.index == pagesInfo.Last().index || p.aid != pagesInfo.Last().aid)
-                            File.Delete(coverPath);
-                        if (Directory.Exists(p.aid) && Directory.GetFiles(p.aid).Length == 0) Directory.Delete(p.aid, true);
                     }
-                    else
+                    catch (Exception ex)
                     {
-                        if (webJsonStr.Contains("平台不可观看"))
+                        if (++retryCount <= 2)
                         {
-                            throw new Exception("当前(WEB)平台不可观看，请尝试使用TV API解析。");
+                            LogError(ex.Message);
+                            LogWarn("下载出现异常, 3秒后将进行自动重试...");
+                            await Task.Delay(3000);
+                            goto downloadPage;
                         }
-                        else if (webJsonStr.Contains("地区不可观看") || webJsonStr.Contains("地区不支持"))
-                        {
-                            throw new Exception("当前地区不可观看，尝试设置系统代理后解析。");
-                        }
-                        else if (webJsonStr.Contains("购买后才能观看"))
-                        {
-                            throw new Exception("购买后才能观看哦");
-                        }
-                        LogError("解析此分P失败(使用--debug查看详细信息)");
-                        LogDebug("{0}", webJsonStr);
-                        continue;
+                        else throw;
                     }
                 }
                 Log("任务完成");
