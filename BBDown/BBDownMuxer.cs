@@ -8,6 +8,7 @@ using static BBDown.BBDownUtil;
 using static BBDown.Core.Util.SubUtil;
 using static BBDown.Core.Logger;
 using System.IO;
+using System.Linq;
 
 namespace BBDown
 {
@@ -49,7 +50,7 @@ namespace BBDown
             StringBuilder metaArg = new StringBuilder();
             inputArg.Append(" -inter 500 -noprog ");
             if (!string.IsNullOrEmpty(videoPath))
-                inputArg.Append($" -add \"{videoPath}#trackID=1:name=\" ");
+                inputArg.Append($" -add \"{videoPath}#trackID={((audioOnly && audioPath == "") ? "2" : "1")}:name=\" ");
             if (!string.IsNullOrEmpty(audioPath))
                 inputArg.Append($" -add \"{audioPath}:lang={(lang == "" ? "und" : lang)}\" ");
             if (points != null && points.Count > 0)
@@ -86,6 +87,10 @@ namespace BBDown
 
         public static int MuxAV(bool useMp4box, string videoPath, string audioPath, string outPath, string desc = "", string title = "", string episodeId = "", string pic = "", string lang = "", List<Subtitle> subs = null, bool audioOnly = false, bool videoOnly = false, List<ViewPoint> points = null)
         {
+            if (audioOnly && audioPath != "") 
+                videoPath = "";
+            if (videoOnly)
+                audioPath = "";
             desc = EscapeString(desc);
             title = EscapeString(title);
             episodeId = EscapeString(episodeId);
@@ -119,7 +124,7 @@ namespace BBDown
             }
 
             if (!string.IsNullOrEmpty(pic))
-                metaArg.Append(" -disposition:v:1 attached_pic ");
+                metaArg.Append($" -disposition:v:{(audioOnly ? "0" : "1")} attached_pic ");
             var inputCount = Regex.Matches(inputArg.ToString(), "-i \"").Count;
 
             if (points != null && points.Count > 0)
@@ -141,10 +146,9 @@ namespace BBDown
                  (lang == "" ? "" : $"-metadata:s:a:0 language={lang} ") +
                  $"-metadata description=\"{desc}\" " +
                  (episodeId == "" ? "" : $"-metadata album=\"{title}\" ") +
-                 (audioOnly ? " -vn " : "") + (videoOnly ? " -an " : "") +
-                 $"-c copy " +
+                 $"-c copy " + (audioOnly && audioPath == "" ? " -vn " : "") +
                  (subs != null ? " -c:s mov_text " : "") +
-                 "-movflags faststart -strict unofficial " +
+                 "-movflags faststart -strict unofficial -f mp4 " +
                  $"\"{outPath}\"";
             LogDebug("ffmpeg命令：{0}", arguments);
             return RunExe(FFMPEG, arguments, FFMPEG != "ffmpeg");

@@ -940,6 +940,8 @@ namespace BBDown
                         if (audioTracks.Count == 0) audioPath = "";
                         if (skipMux) continue;
                         Log("开始合并音视频" + (subtitleInfo.Count > 0 ? "和字幕" : "") + "...");
+                        if (audioOnly)
+                            savePath = string.Join("", savePath.Take(savePath.Length - 4)) + ".m4a";
                         int code = MuxAV(useMp4box, videoPath, audioPath, savePath,
                             desc,
                             title,
@@ -1045,6 +1047,8 @@ namespace BBDown
                         MergeFLV(files, videoPath);
                         if (skipMux) continue;
                         Log("开始混流视频" + (subtitleInfo.Count > 0 ? "和字幕" : "") + "...");
+                        if (audioOnly)
+                            savePath = string.Join("", savePath.Take(savePath.Length - 4)) + ".m4a";
                         int code = MuxAV(false, videoPath, "", savePath,
                             desc,
                             title,
