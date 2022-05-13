@@ -553,6 +553,17 @@ namespace BBDown
                     Config.TOKEN = File.ReadAllText(Path.Combine(APP_DIR, "BBDownApp.data"));
                     Config.TOKEN = Config.TOKEN.Replace("access_token=", "");
                 }
+
+                // 检测是否登录了账号
+                if (!intlApi && !tvApi)
+                {
+                    Log("检测账号登录...");
+                    if (!await CheckLogin(Config.COOKIE))
+                    {
+                        LogWarn("你尚未登录B站账号, 解析可能受到限制");
+                    }
+                }
+
                 Log("获取aid...");
                 aidOri = await GetAvIdAsync(input);
                 Log("获取aid结束: " + aidOri);

@@ -840,5 +840,20 @@ namespace BBDown
             }
             return null;
         }
+
+        public static async Task<bool> CheckLogin(string cookie)
+        {
+            try
+            {
+                var api = "https://api.bilibili.com/x/web-interface/nav";
+                var source = await GetWebSourceAsync(api);
+                var json = JsonDocument.Parse(source).RootElement;
+                return json.GetProperty("data").GetProperty("isLogin").GetBoolean();
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
     }
 }
