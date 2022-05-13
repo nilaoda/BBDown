@@ -898,6 +898,8 @@ namespace BBDown
                                 }
                                 if (multiThread && !videoTracks[vIndex].baseUrl.Contains("-cmcc-"))
                                 {
+                                    // 下载前先清理残片
+                                    foreach (var file in new DirectoryInfo(Path.GetDirectoryName(videoPath)).EnumerateFiles("*.?clip")) file.Delete();
                                     Log($"开始多线程下载P{p.index}视频...");
                                     await MultiThreadDownloadFileAsync(videoTracks[vIndex].baseUrl, videoPath, useAria2c, aria2cProxy, forceHttp);
                                     Log("合并视频分片...");
@@ -920,12 +922,14 @@ namespace BBDown
                             {
                                 if (multiThread && !audioTracks[aIndex].baseUrl.Contains("-cmcc-"))
                                 {
+                                    // 下载前先清理残片
+                                    foreach (var file in new DirectoryInfo(Path.GetDirectoryName(audioPath)).EnumerateFiles("*.?clip")) file.Delete();
                                     Log($"开始多线程下载P{p.index}音频...");
                                     await MultiThreadDownloadFileAsync(audioTracks[aIndex].baseUrl, audioPath, useAria2c, aria2cProxy, forceHttp);
                                     Log("合并音频分片...");
                                     CombineMultipleFilesIntoSingleFile(GetFiles(Path.GetDirectoryName(audioPath), ".aclip"), audioPath);
                                     Log("清理分片...");
-                                    foreach (var file in new DirectoryInfo(Path.GetDirectoryName(videoPath)).EnumerateFiles("*.?clip")) file.Delete();
+                                    foreach (var file in new DirectoryInfo(Path.GetDirectoryName(audioPath)).EnumerateFiles("*.?clip")) file.Delete();
                                 }
                                 else
                                 {
@@ -1022,13 +1026,15 @@ namespace BBDown
                                 {
                                     if (videoTracks.Count != 0)
                                     {
+                                        // 下载前先清理残片
+                                        foreach (var file in new DirectoryInfo(Path.GetDirectoryName(videoPath)).EnumerateFiles("*.?clip")) file.Delete();
                                         Log($"开始多线程下载P{p.index}视频, 片段({(i + 1).ToString(pad)}/{clips.Count})...");
                                         await MultiThreadDownloadFileAsync(link, videoPath, useAria2c, aria2cProxy, forceHttp);
                                         Log("合并视频分片...");
                                         CombineMultipleFilesIntoSingleFile(GetFiles(Path.GetDirectoryName(videoPath), ".vclip"), videoPath);
+                                        Log("清理分片...");
+                                        foreach (var file in new DirectoryInfo(Path.GetDirectoryName(videoPath)).EnumerateFiles("*.?clip")) file.Delete();
                                     }
-                                    Log("清理分片...");
-                                    foreach (var file in new DirectoryInfo(Path.GetDirectoryName(videoPath)).EnumerateFiles("*.?clip")) file.Delete();
                                 }
                                 else
                                 {
