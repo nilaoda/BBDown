@@ -533,7 +533,7 @@ namespace BBDown
 
                 LogDebug("AppDirectory: {0}", APP_DIR);
                 LogDebug("运行参数：{0}", JsonSerializer.Serialize(myOption));
-                if (string.IsNullOrEmpty(Config.COOKIE) && File.Exists(Path.Combine(APP_DIR, "BBDown.data")) && !tvApi)
+                if (string.IsNullOrEmpty(Config.COOKIE) && File.Exists(Path.Combine(APP_DIR, "BBDown.data")))
                 {
                     Log("加载本地cookie...");
                     LogDebug("文件路径：{0}", Path.Combine(APP_DIR, "BBDown.data"));
