@@ -256,10 +256,10 @@ namespace BBDown.Core.Util
                     subtitles.Add(subtitle);
                 }
                 //无字幕片源 但是字幕没上导致的空列表，尝试从国际接口获取
-                if (subtitles.Count == 0 && !string.IsNullOrEmpty(epId))
-                {
-                    return await GetSubtitlesAsync(aid, cid, epId, true);
-                }
+                //if (subtitles.Count == 0 && !string.IsNullOrEmpty(epId))
+                //{
+                //    return await GetSubtitlesAsync(aid, cid, epId, true);
+                //}
                 return subtitles;
             }
             catch (Exception)
