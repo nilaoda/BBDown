@@ -10,10 +10,6 @@ namespace BBDown
 
         public static async Task<int> RunCommandCodeAsync(string command, string args)
         {
-            if (File.Exists(Path.Combine(Program.APP_DIR, $"{command}")))
-                command = Path.Combine(Program.APP_DIR, $"{command}");
-            if (File.Exists(Path.Combine(Program.APP_DIR, $"{command}.exe")))
-                command = Path.Combine(Program.APP_DIR, $"{command}.exe");
             using Process p = new Process();
             p.StartInfo.UseShellExecute = false;
             p.StartInfo.RedirectStandardOutput = false;
