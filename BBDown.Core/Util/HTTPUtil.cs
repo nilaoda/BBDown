@@ -63,7 +63,6 @@ namespace BBDown.Core.Util
             request.Headers.TryAddWithoutValidation("Cookie", Config.COOKIE);
             request.Content = new ByteArrayContent(postData);
             var webResponse = await AppHttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
-            Stream myRequestStream = await webResponse.Content.ReadAsStreamAsync();
             htmlCode = await webResponse.Content.ReadAsStringAsync();
             return htmlCode;
         }
