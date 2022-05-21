@@ -813,7 +813,7 @@ namespace BBDown
         public static string FindExecutable(string name)
         {
             var fileExt = OperatingSystem.IsWindows() ? ".exe" : "";
-            var searchPath = new List<string>() { Environment.CurrentDirectory, Program.APP_DIR };
+            var searchPath = new [] { Environment.CurrentDirectory, Program.APP_DIR };
             var envPath = Environment.GetEnvironmentVariable("PATH")?.Split(Path.PathSeparator) ??
                           Array.Empty<string>();
             return searchPath.Concat(envPath).Select(p => Path.Combine(p, name + fileExt)).FirstOrDefault(File.Exists);
