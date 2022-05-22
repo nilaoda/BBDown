@@ -471,34 +471,6 @@ namespace BBDown
                     LogDebug("切换工作目录至：{0}", dir);
                 }
 
-                //寻找ffmpeg或mp4box
-                if (!skipMux)
-                {
-                    if (useMp4box)
-                    {
-                        var binPath = FindExecutable("mp4box");
-                        if (string.IsNullOrEmpty(binPath))
-                            throw new Exception("找不到可执行的mp4box文件");
-                        BBDownMuxer.MP4BOX = binPath;
-                    }
-                    else
-                    {
-                        var binPath = FindExecutable("ffmpeg");
-                        if (string.IsNullOrEmpty(binPath))
-                            throw new Exception("找不到可执行的ffmpeg文件");
-                        BBDownMuxer.FFMPEG = binPath;
-                    }
-                }
-
-                //寻找aria2c
-                if (useAria2c)
-                {
-                    var binPath = FindExecutable("aria2c");
-                    if (string.IsNullOrEmpty(binPath))
-                        throw new Exception("找不到可执行的aria2c文件");
-                    BBDownAria2c.ARIA2C = binPath;
-                }
-
                 if (!string.IsNullOrEmpty(myOption.FFmpegPath) && File.Exists(myOption.FFmpegPath))
                 {
                     BBDownMuxer.FFMPEG = myOption.FFmpegPath;
@@ -513,6 +485,41 @@ namespace BBDown
                 {
                     BBDownAria2c.ARIA2C = myOption.Aria2cPath;
                 }
+                //寻找ffmpeg或mp4box
+                if (!skipMux)
+                {
+                    if (useMp4box)
+                    {
+                        if (string.IsNullOrEmpty(BBDownMuxer.MP4BOX))
+                        {
+                            var binPath = FindExecutable("mp4box");
+                            if (string.IsNullOrEmpty(binPath))
+                                throw new Exception("找不到可执行的mp4box文件");
+                            BBDownMuxer.MP4BOX = binPath;
+                        }
+                    }
+                    else if (string.IsNullOrEmpty(BBDownMuxer.FFMPEG))
+                    {
+                        var binPath = FindExecutable("ffmpeg");
+                        if (string.IsNullOrEmpty(binPath))
+                            throw new Exception("找不到可执行的ffmpeg文件");
+                        BBDownMuxer.FFMPEG = binPath;
+                    }
+                }
+
+                //寻找aria2c
+                if (useAria2c)
+                {
+                    if (string.IsNullOrEmpty(BBDownAria2c.ARIA2C))
+                    {
+                        var binPath = FindExecutable("aria2c");
+                        if (string.IsNullOrEmpty(binPath))
+                            throw new Exception("找不到可执行的aria2c文件");
+                        BBDownAria2c.ARIA2C = binPath;
+                    }
+                    
+                }
+
 
                 //audioOnly和videoOnly同时开启则全部忽视
                 if (audioOnly && videoOnly)
