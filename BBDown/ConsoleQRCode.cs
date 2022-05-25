@@ -24,9 +24,10 @@ namespace BBDown
             {
                 for (int x = 0; x < QrCodeData.ModuleMatrix[y].Count; x++)
                 {
-                    Console.BackgroundColor = QrCodeData.ModuleMatrix[y][x] ? ConsoleColor.White : ConsoleColor.Black;
-                    Console.Write("  ");
+                    Console.ForegroundColor = QrCodeData.ModuleMatrix[y][x] ? darkColor : lightColor;
+                    Console.Write("██");
                 }
+                Console.BackgroundColor = darkColor;
                 Console.WriteLine("");
             }
             Console.BackgroundColor = previousBackColor;
