@@ -335,7 +335,17 @@ namespace BBDown
                     var configArgs = File
                         .ReadAllLines(configPath)
                         .Where(s => !string.IsNullOrEmpty(s) && !s.StartsWith("#"))
-                        .SelectMany(s => s.Split(' ').Where(s => !string.IsNullOrEmpty(s)).Select(s => s.Trim('\"')));
+                        .SelectMany(s => {
+                                var trimLine = s.Trim();
+                                if (trimLine.IndexOf('-') == 0 && trimLine.IndexOf(' ') != -1) {  
+                                    var spaceIndex = trimLine.IndexOf(' ');
+                                    var paramsGroup = new String[] { trimLine.Substring(0,spaceIndex), trimLine.Substring(spaceIndex) };
+                                    return paramsGroup.Where(s => !string.IsNullOrEmpty(s)).Select(s => s.Trim(' ').Trim('\"'));
+                                } else {
+                                    return new String[] {trimLine.Trim('\"')};
+                                }                    
+                            }
+                        );
                     var configArgsResult = rootCommand.Parse(configArgs.ToArray());
                     foreach (var item in configArgsResult.CommandResult.Children)
                     {
