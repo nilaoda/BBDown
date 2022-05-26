@@ -22,6 +22,9 @@ namespace BBDown.Core.Fetcher
             string title = data.GetProperty("title").ToString();
             string desc = data.GetProperty("desc").ToString();
             string pic = data.GetProperty("pic").ToString();
+            var owner = data.GetProperty("owner");
+            string ownerMid = owner.GetProperty("mid").ToString();
+            string ownerName = owner.GetProperty("name").ToString();
             string pubTime = data.GetProperty("pubdate").ToString();
             pubTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc).AddSeconds(Convert.ToDouble(pubTime)).ToLocalTime().ToString();
             bool bangumi = false;
@@ -36,7 +39,12 @@ namespace BBDown.Core.Fetcher
                     "", //epid
                     page.GetProperty("part").ToString().Trim(),
                     page.GetProperty("duration").GetInt32(),
-                    page.GetProperty("dimension").GetProperty("width").ToString() + "x" + page.GetProperty("dimension").GetProperty("height").ToString());
+                    page.GetProperty("dimension").GetProperty("width").ToString() + "x" + page.GetProperty("dimension").GetProperty("height").ToString(),
+                    "",
+                    "",
+                    ownerName,
+                    ownerMid
+                    );
                 pagesInfo.Add(p);
             }
 

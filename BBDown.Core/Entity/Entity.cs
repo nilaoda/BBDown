@@ -17,6 +17,8 @@ namespace BBDown.Core.Entity
             public string res;
             public string cover;
             public string desc;
+            public string ownerName;
+            public string ownerMid;
             public List<ViewPoint> points = new List<ViewPoint>();
 
             public Page(int index, string aid, string cid, string epid, string title, int dur, string res)
@@ -55,6 +57,21 @@ namespace BBDown.Core.Entity
                 this.desc = desc;
             }
 
+            public Page(int index, string aid, string cid, string epid, string title, int dur, string res, string cover, string desc, string ownerName, string ownerMid)
+            {
+                this.aid = aid;
+                this.index = index;
+                this.cid = cid;
+                this.epid = epid;
+                this.title = title;
+                this.dur = dur;
+                this.res = res;
+                this.cover = cover;
+                this.desc = desc;
+                this.ownerName = ownerName;
+                this.ownerMid = ownerMid;
+            }
+
             public Page(int index, Page page)
             {
                 this.index = index;
@@ -65,6 +82,8 @@ namespace BBDown.Core.Entity
                 this.dur = page.dur;
                 this.res = page.res;
                 this.cover = page.cover;
+                this.ownerName = page.ownerName;
+                this.ownerMid = page.ownerMid;
             }
 
             public override bool Equals(object obj)

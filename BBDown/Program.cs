@@ -219,7 +219,9 @@ namespace BBDown
                     $"<videoCodecs>: 视频编码\r\n" +
                     $"<videoBandwidth>: 视频码率\r\n" +
                     $"<audioCodecs>: 音频编码\r\n" +
-                    $"<audioBandwidth>: 音频码率\r\n\r\n" +
+                    $"<audioBandwidth>: 音频码率\r\n" +
+                    $"<ownerName>: 上传者名称\r\n" +
+                    $"<ownerMid>: 上传者mid\r\n\r\n" +
                     $"默认为: {SinglePageDefaultSavePath}\r\n"),
                 new Option<string>(
                     new string[]{ "--multi-file-pattern", "-M"},
@@ -1209,6 +1211,8 @@ namespace BBDown
                     "pageTitle" => GetValidFileName(p.title, filterSlash: true),
                     "aid" => p.aid,
                     "cid" => p.cid,
+                    "ownerName" => p.ownerName == null ? "" : GetValidFileName(p.ownerName, filterSlash: true),
+                    "ownerMid" => p.ownerMid == null ? "" : p.ownerMid,
                     "dfn" => videoTrack == null ? "" : videoTrack.dfn,
                     "res" => videoTrack == null ? "" : videoTrack.res,
                     "fps" => videoTrack == null ? "" : videoTrack.fps,
