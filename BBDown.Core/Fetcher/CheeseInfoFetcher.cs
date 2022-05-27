@@ -23,6 +23,8 @@ namespace BBDown.Core.Fetcher
             string cover = data.GetProperty("cover").ToString();
             string title = data.GetProperty("title").ToString();
             string desc = data.GetProperty("subtitle").ToString();
+            string ownerName = data.GetProperty("up_info").GetProperty("uname").ToString();
+            string ownerMid = data.GetProperty("up_info").GetProperty("mid").ToString();
             var pages = data.GetProperty("episodes").EnumerateArray().ToList();
             List<Page> pagesInfo = new List<Page>();
             foreach (var page in pages)
@@ -32,7 +34,12 @@ namespace BBDown.Core.Fetcher
                     page.GetProperty("cid").ToString(),
                     page.GetProperty("id").ToString(),
                     page.GetProperty("title").ToString().Trim(),
-                    page.GetProperty("duration").GetInt32(), "");
+                    page.GetProperty("duration").GetInt32(),
+                    "",
+                    "",
+                    "",
+                    ownerName,
+                    ownerMid);
                 if (p.epid == id) index = p.index.ToString();
                 pagesInfo.Add(p);
             }

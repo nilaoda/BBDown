@@ -81,6 +81,8 @@ Options:
                                                  <videoBandwidth>: 视频码率
                                                  <audioCodecs>: 音频编码
                                                  <audioBandwidth>: 音频码率
+                                                 <ownerName>: 上传者名称
+                                                 <ownerMid>: 上传者mid
 
                                                  默认为: <videoTitle>
 
@@ -174,6 +176,8 @@ Commands:
 `<videoBandwidth>`|视频码率
 `<audioCodecs>`|音频编码
 `<audioBandwidth>`|音频码率
+`<ownerName>`|上传者名称(下载番剧时，该值为"")
+`<ownerMid>`|上传者mid(下载番剧时，该值为"")
 
 </details>
 

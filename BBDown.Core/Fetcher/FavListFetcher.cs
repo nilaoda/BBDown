@@ -83,7 +83,9 @@ namespace BBDown.Core.Fetcher
                         m.GetProperty("duration").GetInt32(),
                         "",
                         m.GetProperty("cover").ToString(),
-                        m.GetProperty("intro").ToString());
+                        m.GetProperty("intro").ToString(),
+                        m.GetProperty("upper").GetProperty("name").ToString(),
+                        m.GetProperty("upper").GetProperty("mid").ToString());
                     if (!pagesInfo.Contains(p)) pagesInfo.Add(p);
                 }
             }
