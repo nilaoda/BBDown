@@ -12,6 +12,11 @@ namespace BBDown.Core.Fetcher
 {
     public class CheeseInfoFetcher : IFetcher
     {
+        /// <summary>
+        /// 课程解析
+        /// https://www.bilibili.com/cheese/play/ep5662?csource=Detail_relevantclass
+        /// 
+        /// </summary>
         public async Task<VInfo> FetchAsync(string id)
         {
             id = id.Substring(7);
