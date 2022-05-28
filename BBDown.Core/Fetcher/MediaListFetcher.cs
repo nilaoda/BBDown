@@ -46,7 +46,9 @@ namespace BBDown.Core.Fetcher
                     var desc = m.GetProperty("intro").GetString();
                     var ownerName = m.GetProperty("upper").GetProperty("name").ToString();
                     var ownerMid = m.GetProperty("upper").GetProperty("mid").ToString();
-                    foreach (var page in m.GetProperty("pages").EnumerateArray())
+                    var pageList = m.GetProperty("pages").EnumerateArray().ToList();
+                    var isSingleP = pageList.Count > 1 ? false : true; 
+                    foreach (var page in pageList)
                     {
                         Page p = new Page(index++,
                         m.GetProperty("id").ToString(),
@@ -59,7 +61,8 @@ namespace BBDown.Core.Fetcher
                         m.GetProperty("cover").ToString(),
                         desc,
                         ownerName,
-                        ownerMid);
+                        ownerMid,
+                        isSingleP);
                         if (!pagesInfo.Contains(p)) pagesInfo.Add(p);
                         else index--;
                     }

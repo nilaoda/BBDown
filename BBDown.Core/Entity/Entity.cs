@@ -49,7 +49,7 @@ namespace BBDown.Core.Entity
                 this.desc = desc;
             }
 
-            public Page(int index, string aid, string cid, string epid, string videoTitle, string pageTitle, int dur, string res, string cover, string desc, string ownerName, string ownerMid)
+            public Page(int index, string aid, string cid, string epid, string videoTitle, string pageTitle, int dur, string res, string cover, string desc, string ownerName, string ownerMid, bool isSingleP)
             {
                 this.aid = aid;
                 this.index = index;
@@ -63,6 +63,7 @@ namespace BBDown.Core.Entity
                 this.desc = desc;
                 this.ownerName = ownerName;
                 this.ownerMid = ownerMid;
+                this.isSingleP = isSingleP;
             }
 
             public Page(int index, Page page)
@@ -79,6 +80,7 @@ namespace BBDown.Core.Entity
                 this.desc = page.desc;
                 this.ownerName = page.ownerName;
                 this.ownerMid = page.ownerMid;
+                this.isSingleP = page.isSingleP;
             }
 
             public override bool Equals(object obj)

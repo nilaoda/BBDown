@@ -707,12 +707,13 @@ namespace BBDown
                     pagesInfo = pagesInfo.Where(p => selectedPages.Contains(p.index.ToString())).ToList();
 
                 // 根据p数选择存储路径
-                savePathFormat = string.IsNullOrEmpty(myOption.FilePattern) ? SinglePageDefaultSavePath : myOption.FilePattern;
+                var singlePageSavePath = string.IsNullOrEmpty(myOption.FilePattern) ? SinglePageDefaultSavePath : myOption.FilePattern;
+                var multiPageSavePath = string.IsNullOrEmpty(myOption.MultiFilePattern) ? MultiPageDefaultSavePath : myOption.MultiFilePattern;
                 // 1. 多P; 2. 只有1P，但是是番剧，尚未完结时 按照多P处理
-                if (pagesCount > 1 || (bangumi && !vInfo.IsBangumiEnd))
-                {
-                    savePathFormat = string.IsNullOrEmpty(myOption.MultiFilePattern) ? MultiPageDefaultSavePath : myOption.MultiFilePattern;
-                }
+                // if (pagesCount > 1 || (bangumi && !vInfo.IsBangumiEnd))
+                // {
+                //     savePathFormat = string.IsNullOrEmpty(myOption.MultiFilePattern) ? MultiPageDefaultSavePath : myOption.MultiFilePattern;
+                // }
 
                 foreach (Page p in pagesInfo)
                 {
@@ -889,6 +890,8 @@ namespace BBDown
                                 audioTracks[aIndex].baseUrl = pcdnReg.Replace(audioTracks[aIndex].baseUrl, $"://{BACKUP_HOST}/");
                             }
 
+                            // 判断p的处理方式
+                            savePathFormat = p.isSingleP ? singlePageSavePath : multiPageSavePath;
                             LogDebug("Format Before: " + savePathFormat);
                             savePath = FormatSavePath(savePathFormat, title, videoTracks.ElementAtOrDefault(vIndex), audioTracks.ElementAtOrDefault(aIndex), p, pagesCount);
                             LogDebug("Format After: " + savePath);

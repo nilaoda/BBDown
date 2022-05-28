@@ -83,7 +83,7 @@ Options:
                                                  <audioBandwidth>: 音频码率
                                                  <ownerName>: 上传者名称
                                                  <ownerMid>: 上传者mid
-                                                 <mainTitle>: 视频主标题/合集标题/收藏夹标题（根据场景区分）
+                                                 <mainTitle>: 合集标题/收藏夹标题（下载合集标题和收藏夹时使用）
 
                                                  默认为: <videoTitle>
 

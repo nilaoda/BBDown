@@ -40,7 +40,8 @@ namespace BBDown.Core.Fetcher
                     cover,
                     desc.Trim(),
                     ownerName,
-                    ownerMid);
+                    ownerMid,
+                    false);
                 if (p.epid == id) index = p.index.ToString();
                 pagesInfo.Add(p);
             }

@@ -31,6 +31,7 @@ namespace BBDown.Core.Fetcher
 
             var pages = data.GetProperty("pages").EnumerateArray().ToList();
             List<Page> pagesInfo = new List<Page>();
+            var isSingleP = pages.Count > 1 ? false : true;
             foreach (var page in pages)
             {
                 Page p = new Page(page.GetProperty("page").GetInt32(),
@@ -44,7 +45,8 @@ namespace BBDown.Core.Fetcher
                     pic,
                     desc,
                     ownerName,
-                    ownerMid
+                    ownerMid,
+                    isSingleP
                     );
                 pagesInfo.Add(p);
             }
