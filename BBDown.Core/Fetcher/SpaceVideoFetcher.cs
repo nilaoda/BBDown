@@ -28,10 +28,10 @@ namespace BBDown.Core.Fetcher
             int totalCount = infoJson.RootElement.GetProperty("data").GetProperty("page").GetProperty("count").GetInt32();
             int totalPage = (int)Math.Ceiling((double)totalCount / pageSize);
 
-            while (pageNumber < totalPage)
+            while (pageNumber <= totalPage)
             {
-                pageNumber++;
                 aidList.AddRange(await GetVideosByPageAsync(pageNumber, pageSize, id));
+                pageNumber++;
             }
 
             List<Page> pagesInfo = new List<Page>();
@@ -39,6 +39,7 @@ namespace BBDown.Core.Fetcher
             foreach (var aid in aidList)
             {
                 var tmpInfo = await new NormalInfoFetcher().FetchAsync(aid);
+                Thread.Sleep(100);
                 foreach (var item in tmpInfo.PagesInfo)
                 {
                     Page p = new Page(index++, item);
