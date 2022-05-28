@@ -52,7 +52,8 @@ namespace BBDown.Core.Fetcher
                         m.GetProperty("id").ToString(),
                         page.GetProperty("id").ToString(),
                         "", //epid
-                        pageCount == 1 ? m.GetProperty("title").ToString() : $"{m.GetProperty("title").ToString()}_P{page.GetProperty("page").ToString()}_{page.GetProperty("title")}", //单P使用外层标题 多P则拼接内层子标题
+                        m.GetProperty("title").ToString(),
+                        page.GetProperty("title").ToString(),
                         page.GetProperty("duration").GetInt32(),
                         page.GetProperty("dimension").GetProperty("width").ToString() + "x" + page.GetProperty("dimension").GetProperty("height").ToString(),
                         m.GetProperty("cover").ToString(),
@@ -68,8 +69,6 @@ namespace BBDown.Core.Fetcher
 
             var info = new VInfo();
             info.Title = listTitle.Trim();
-            info.Desc = intro.Trim();
-            info.Pic = "";
             info.PubTime = pubTime;
             info.PagesInfo = pagesInfo;
             info.IsBangumi = false;

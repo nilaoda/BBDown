@@ -62,8 +62,13 @@ namespace BBDown.Core.Fetcher
                     page.GetProperty("aid").ToString(),
                     page.GetProperty("cid").ToString(),
                     page.GetProperty("id").ToString(),
+                    title.Trim(),
                     _title,
-                    0, res);
+                    0,
+                    res,
+                    cover,
+                    desc.Trim()
+                    );
                 if (p.epid == id) index = p.index.ToString();
                 pagesInfo.Add(p);
             }
@@ -71,8 +76,6 @@ namespace BBDown.Core.Fetcher
 
             var info = new VInfo();
             info.Title = title.Trim();
-            info.Desc = desc.Trim();
-            info.Pic = cover;
             info.PubTime = pubTime;
             info.PagesInfo = pagesInfo;
             info.IsBangumi = true;

@@ -12,58 +12,51 @@ namespace BBDown.Core.Entity
             public string aid;
             public string cid;
             public string epid;
-            public string title;
+            public string videoTitle;
+            public string pageTitle;
             public int dur;
             public string res;
             public string cover;
             public string desc;
             public string ownerName;
             public string ownerMid;
+            public bool isSingleP;
             public List<ViewPoint> points = new List<ViewPoint>();
 
-            public Page(int index, string aid, string cid, string epid, string title, int dur, string res)
+            public Page(int index, string aid, string cid, string epid, string videoTitle, string pageTitle, int dur, string res)
             {
                 this.aid = aid;
                 this.index = index;
                 this.cid = cid;
                 this.epid = epid;
-                this.title = title;
+                this.videoTitle = videoTitle;
+                this.pageTitle = pageTitle;
                 this.dur = dur;
                 this.res = res;
             }
 
-            public Page(int index, string aid, string cid, string epid, string title, int dur, string res, string cover)
+            public Page(int index, string aid, string cid, string epid, string videoTitle, string pageTitle, int dur, string res, string cover, string desc)
             {
                 this.aid = aid;
                 this.index = index;
                 this.cid = cid;
                 this.epid = epid;
-                this.title = title;
-                this.dur = dur;
-                this.res = res;
-                this.cover = cover;
-            }
-
-            public Page(int index, string aid, string cid, string epid, string title, int dur, string res, string cover, string desc)
-            {
-                this.aid = aid;
-                this.index = index;
-                this.cid = cid;
-                this.epid = epid;
-                this.title = title;
+                this.videoTitle = videoTitle;
+                this.pageTitle = pageTitle;
                 this.dur = dur;
                 this.res = res;
                 this.cover = cover;
                 this.desc = desc;
             }
 
-            public Page(int index, string aid, string cid, string epid, string title, int dur, string res, string cover, string desc, string ownerName, string ownerMid)
+            public Page(int index, string aid, string cid, string epid, string videoTitle, string pageTitle, int dur, string res, string cover, string desc, string ownerName, string ownerMid)
             {
                 this.aid = aid;
                 this.index = index;
                 this.cid = cid;
                 this.epid = epid;
-                this.title = title;
+                this.videoTitle = videoTitle;
+                this.pageTitle = pageTitle;
                 this.dur = dur;
                 this.res = res;
                 this.cover = cover;
@@ -78,10 +71,12 @@ namespace BBDown.Core.Entity
                 this.aid = page.aid;
                 this.cid = page.cid;
                 this.epid = page.epid;
-                this.title = page.title;
+                this.videoTitle = page.videoTitle;
+                this.pageTitle = page.pageTitle;
                 this.dur = page.dur;
                 this.res = page.res;
                 this.cover = page.cover;
+                this.desc = page.desc;
                 this.ownerName = page.ownerName;
                 this.ownerMid = page.ownerMid;
             }

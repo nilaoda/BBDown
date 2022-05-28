@@ -61,42 +61,21 @@ namespace BBDown.Core.Fetcher
             foreach (var m in medias)
             {
                 var pageCount = m.GetProperty("page").GetInt32();
-                if (pageCount > 1)
+                var tmpInfo = await new NormalInfoFetcher().FetchAsync(m.GetProperty("id").ToString());
+                foreach (var item in tmpInfo.PagesInfo)
                 {
-                    var tmpInfo = await new NormalInfoFetcher().FetchAsync(m.GetProperty("id").ToString());
-                    foreach (var item in tmpInfo.PagesInfo)
-                    {
-                        Page p = new Page(index++, item);
-                        p.title = m.GetProperty("title").ToString() + $"_P{item.index}_{item.title}";
-                        p.cover = tmpInfo.Pic;
-                        p.desc = m.GetProperty("intro").ToString();
-                        if (!pagesInfo.Contains(p)) pagesInfo.Add(p);
-                    }
-                }
-                else
-                {
-                    Page p = new Page(index++,
-                        m.GetProperty("id").ToString(),
-                        m.GetProperty("ugc").GetProperty("first_cid").ToString(),
-                        "", //epid
-                        m.GetProperty("title").ToString(),
-                        m.GetProperty("duration").GetInt32(),
-                        "",
-                        m.GetProperty("cover").ToString(),
-                        m.GetProperty("intro").ToString(),
-                        m.GetProperty("upper").GetProperty("name").ToString(),
-                        m.GetProperty("upper").GetProperty("mid").ToString());
+                    Page p = new Page(index++, item);
                     if (!pagesInfo.Contains(p)) pagesInfo.Add(p);
                 }
             }
 
             var info = new VInfo();
-            info.Title = title.Trim();
-            info.Desc = intro.Trim();
-            info.Pic = "";
+            // 收藏夹标题
+            info.Title = title;
             info.PubTime = pubTime;
             info.PagesInfo = pagesInfo;
             info.IsBangumi = false;
+            info.IsFavList = true;
 
             return info;
         }

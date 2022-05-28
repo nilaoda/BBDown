@@ -651,9 +651,14 @@ namespace BBDown
                 }
                 var vInfo = await fetcher.FetchAsync(aidOri);
                 string title = vInfo.Title;
-                string pic = vInfo.Pic;
                 string pubTime = vInfo.PubTime;
-                LogColor("视频标题: " + title);
+                if (vInfo.IsFavList) {
+                    LogColor("收藏夹标题: " + title);
+                } else if( vInfo.IsSeriesList || vInfo.IsMediaList){
+                    LogColor("合辑标题: " + title);
+                } else {
+                    LogColor("视频标题: " + title);
+                }
                 Log("发布时间: " + pubTime);
                 List<Page> pagesInfo = vInfo.PagesInfo;
                 List<Subtitle> subtitleInfo = new List<Subtitle>();
@@ -672,7 +677,7 @@ namespace BBDown
                     }
                     else
                     {
-                        Log($"P{p.index}: [{p.cid}] [{p.title}] [{FormatTime(p.dur)}]");
+                        Log($"P{p.index}: [{p.cid}] [{p.pageTitle}] [{FormatTime(p.dur)}]");
                     }
                 }
 
@@ -715,7 +720,7 @@ namespace BBDown
                 downloadPage:
                     try
                     {
-                        string desc = string.IsNullOrEmpty(p.desc) ? vInfo.Desc : p.desc;
+                        string desc = p.desc;
                         if (pagesInfo.Count > 1 && delay > 0)
                         {
                             Log($"停顿{delay}秒...");
@@ -738,7 +743,7 @@ namespace BBDown
                         var coverPath = $"{p.aid}/{p.aid}.jpg";
 
                         //处理文件夹以.结尾导致的异常情况
-                        if (title.EndsWith(".")) title += "_fix";
+                        if (p.videoTitle.EndsWith(".")) p.videoTitle += "_fix";
 
                         //处理封面&&字幕
                         if (!infoMode)
@@ -750,9 +755,8 @@ namespace BBDown
                             if (!skipCover && !subOnly && !File.Exists(coverPath))
                             {
                                 Log("下载封面...");
-                                var cover = pic == "" ? p.cover : pic;
-                                LogDebug("下载：{0}", cover);
-                                await using var response = await HTTPUtil.AppHttpClient.GetStreamAsync(cover);
+                                LogDebug("下载：{0}", p.cover);
+                                await using var response = await HTTPUtil.AppHttpClient.GetStreamAsync(p.cover);
                                 await using var fs = new FileStream(coverPath, FileMode.Create);
                                 await response.CopyToAsync(fs);
                             }
@@ -985,8 +989,8 @@ namespace BBDown
                                 savePath = string.Join("", savePath.Take(savePath.Length - 4)) + ".m4a";
                             int code = MuxAV(useMp4box, videoPath, audioPath, savePath,
                                 desc,
-                                title,
-                                (pagesCount > 1 || (bangumi && !vInfo.IsBangumiEnd)) ? p.title : "",
+                                p.videoTitle,
+                                (pagesCount > 1 || (bangumi && !vInfo.IsBangumiEnd)) ? p.pageTitle : "",
                                 File.Exists(coverPath) ? coverPath : "",
                                 lang,
                                 subtitleInfo, audioOnly, videoOnly, p.points);
@@ -1094,8 +1098,8 @@ namespace BBDown
                                 savePath = string.Join("", savePath.Take(savePath.Length - 4)) + ".m4a";
                             int code = MuxAV(false, videoPath, "", savePath,
                                 desc,
-                                title,
-                                (pagesCount > 1 || (bangumi && !vInfo.IsBangumiEnd)) ? p.title : "",
+                                p.videoTitle,
+                                (pagesCount > 1 || (bangumi && !vInfo.IsBangumiEnd)) ? p.pageTitle : "",
                                 File.Exists(coverPath) ? coverPath : "",
                                 lang,
                                 subtitleInfo, audioOnly, videoOnly, p.points);
@@ -1205,10 +1209,11 @@ namespace BBDown
                 var key = m.Groups[1].Value;
                 var v = key switch
                 {
-                    "videoTitle" => GetValidFileName(title, filterSlash: true),
+                    "mainTitle" => GetValidFileName(title, filterSlash: true),
+                    "videoTitle" => GetValidFileName(p.videoTitle, filterSlash: true),
                     "pageNumber" => p.index.ToString(),
                     "pageNumberWithZero" => p.index.ToString().PadLeft((int)Math.Log10(pagesCount) + 1, '0'),
-                    "pageTitle" => GetValidFileName(p.title, filterSlash: true),
+                    "pageTitle" => GetValidFileName(p.pageTitle, filterSlash: true),
                     "aid" => p.aid,
                     "cid" => p.cid,
                     "ownerName" => p.ownerName == null ? "" : GetValidFileName(p.ownerName, filterSlash: true),

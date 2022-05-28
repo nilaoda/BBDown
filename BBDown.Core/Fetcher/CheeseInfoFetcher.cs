@@ -33,11 +33,12 @@ namespace BBDown.Core.Fetcher
                     page.GetProperty("aid").ToString(),
                     page.GetProperty("cid").ToString(),
                     page.GetProperty("id").ToString(),
+                    title.Trim(),
                     page.GetProperty("title").ToString().Trim(),
                     page.GetProperty("duration").GetInt32(),
                     "",
-                    "",
-                    "",
+                    cover,
+                    desc.Trim(),
                     ownerName,
                     ownerMid);
                 if (p.epid == id) index = p.index.ToString();
@@ -48,8 +49,6 @@ namespace BBDown.Core.Fetcher
 
             var info = new VInfo();
             info.Title = title.Trim();
-            info.Desc = desc.Trim();
-            info.Pic = cover;
             info.PubTime = pubTime;
             info.PagesInfo = pagesInfo;
             info.IsBangumi = true;
