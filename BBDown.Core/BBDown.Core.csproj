@@ -9,12 +9,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Protos\**" />
-    <EmbeddedResource Remove="Protos\**" />
-    <None Remove="Protos\**" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="protobuf-net" Version="3.1.17" />
   </ItemGroup>
 
