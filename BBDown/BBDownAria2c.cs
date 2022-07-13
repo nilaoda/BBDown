@@ -10,7 +10,7 @@ namespace BBDown
 
         public static async Task<int> RunCommandCodeAsync(string command, string args)
         {
-            using Process p = new Process();
+            using Process p = new();
             p.StartInfo.UseShellExecute = false;
             p.StartInfo.RedirectStandardOutput = false;
             p.StartInfo.FileName = command;

@@ -1,13 +1,6 @@
 ﻿using BBDown.Core.Entity;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 using static BBDown.Core.Entity.Entity;
-using static BBDown.Core.Logger;
 using static BBDown.Core.Util.HTTPUtil;
 
 
@@ -22,7 +15,7 @@ namespace BBDown.Core.Fetcher
     {
         public async Task<VInfo> FetchAsync(string id)
         {
-            id = id.Substring(6);
+            id = id[6..];
             var favId = id.Split(':')[0];
             var mid = id.Split(':')[1];
             //查找默认收藏夹
@@ -34,7 +27,7 @@ namespace BBDown.Core.Fetcher
 
             int pageSize = 20;
             int index = 1;
-            List<Page> pagesInfo = new List<Page>();
+            List<Page> pagesInfo = new();
 
             var api = $"https://api.bilibili.com/x/v3/fav/resource/list?media_id={favId}&pn=1&ps={pageSize}&keyword=&order=mtime&type=0&tid=0&platform=web&jsonp=jsonp";
             var json = await GetWebSourceAsync(api);
@@ -42,8 +35,8 @@ namespace BBDown.Core.Fetcher
             var data = infoJson.RootElement.GetProperty("data");
             int totalCount = data.GetProperty("info").GetProperty("media_count").GetInt32();
             int totalPage = (int)Math.Ceiling((double)totalCount / pageSize);
-            var title = data.GetProperty("info").GetProperty("title").ToString();
-            var intro = data.GetProperty("info").GetProperty("intro").GetString();
+            var title = data.GetProperty("info").GetProperty("title").GetString()!;
+            var intro = data.GetProperty("info").GetProperty("intro").GetString()!;
             string pubTime = data.GetProperty("info").GetProperty("ctime").ToString();
             pubTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc).AddSeconds(Convert.ToDouble(pubTime)).ToLocalTime().ToString();
             var userName = data.GetProperty("info").GetProperty("upper").GetProperty("name").ToString();
@@ -66,16 +59,18 @@ namespace BBDown.Core.Fetcher
                     var tmpInfo = await new NormalInfoFetcher().FetchAsync(m.GetProperty("id").ToString());
                     foreach (var item in tmpInfo.PagesInfo)
                     {
-                        Page p = new Page(index++, item);
-                        p.title = m.GetProperty("title").ToString() + $"_P{item.index}_{item.title}";
-                        p.cover = tmpInfo.Pic;
-                        p.desc = m.GetProperty("intro").ToString();
+                        Page p = new(index++, item)
+                        {
+                            title = m.GetProperty("title").ToString() + $"_P{item.index}_{item.title}",
+                            cover = tmpInfo.Pic,
+                            desc = m.GetProperty("intro").ToString()
+                        };
                         if (!pagesInfo.Contains(p)) pagesInfo.Add(p);
                     }
                 }
                 else
                 {
-                    Page p = new Page(index++,
+                    Page p = new(index++,
                         m.GetProperty("id").ToString(),
                         m.GetProperty("ugc").GetProperty("first_cid").ToString(),
                         "", //epid
@@ -90,13 +85,15 @@ namespace BBDown.Core.Fetcher
                 }
             }
 
-            var info = new VInfo();
-            info.Title = title.Trim();
-            info.Desc = intro.Trim();
-            info.Pic = "";
-            info.PubTime = pubTime;
-            info.PagesInfo = pagesInfo;
-            info.IsBangumi = false;
+            var info = new VInfo
+            {
+                Title = title.Trim(),
+                Desc = intro.Trim(),
+                Pic = "",
+                PubTime = pubTime,
+                PagesInfo = pagesInfo,
+                IsBangumi = false
+            };
 
             return info;
         }

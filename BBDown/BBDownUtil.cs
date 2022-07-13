@@ -1,5 +1,4 @@
-﻿using ICSharpCode.SharpZipLib.GZip;
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Specialized;
@@ -7,14 +6,12 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Net.Cache;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
 using static BBDown.Core.Entity.Entity;
@@ -23,13 +20,13 @@ using static BBDown.Core.Util.HTTPUtil;
 
 namespace BBDown
 {
-    static class BBDownUtil
+    static partial class BBDownUtil
     {
         public static async Task CheckUpdateAsync()
         {
             try
             {
-                var ver = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+                var ver = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version!;
                 string nowVer = $"{ver.Major}.{ver.Minor}.{ver.Build}";
                 string redirctUrl = await Get302("https://github.com/nilaoda/BBDown/releases/latest");
                 string latestVer = redirctUrl.Replace("https://github.com/nilaoda/BBDown/releases/tag/", "");
@@ -49,37 +46,37 @@ namespace BBDown
             var avid = input;
             if (input.StartsWith("http"))
             {
-                Match match = null;
                 if (input.Contains("b23.tv"))
                     input = await Get302(input);
+                Match match;
                 if (input.Contains("video/av"))
                 {
-                    avid = Regex.Match(input, "av(\\d{1,})").Groups[1].Value;
+                    avid = AvRegex().Match(input).Groups[1].Value;
                 }
                 else if (input.Contains("video/BV"))
                 {
-                    avid = await GetAidByBVAsync(Regex.Match(input, "BV(\\w+)").Groups[1].Value);
+                    avid = await GetAidByBVAsync(BVRegex().Match(input).Groups[1].Value);
                 }
                 else if (input.Contains("video/bv"))
                 {
-                    avid = await GetAidByBVAsync(Regex.Match(input, "bv(\\w+)").Groups[1].Value);
+                    avid = await GetAidByBVAsync(BvRegex().Match(input).Groups[1].Value);
                 }
                 else if (input.Contains("/cheese/"))
                 {
                     string epId = "";
                     if (input.Contains("/ep"))
                     {
-                        epId = Regex.Match(input, "/ep(\\d{1,})").Groups[1].Value;
+                        epId = EpRegex().Match(input).Groups[1].Value;
                     }
                     else if (input.Contains("/ss"))
                     {
-                        epId = await GetEpidBySSIdAsync(Regex.Match(input, "/ss(\\d{1,})").Groups[1].Value);
+                        epId = await GetEpidBySSIdAsync(SsRegex().Match(input).Groups[1].Value);
                     }
                     avid = $"cheese:{epId}";
                 }
                 else if (input.Contains("/ep"))
                 {
-                    string epId = Regex.Match(input, "/ep(\\d{1,})").Groups[1].Value;
+                    string epId = EpRegex().Match(input).Groups[1].Value;
                     avid = $"ep:{epId}";
                 }
                 else if (input.Contains("/medialist/") && input.Contains("business_id=") && input.Contains("business=space_collection")) //列表类型是合集
@@ -104,13 +101,13 @@ namespace BBDown
                 }
                 else if (input.Contains("/space.bilibili.com/") && input.Contains("/favlist"))
                 {
-                    string mid = Regex.Match(input, "space\\.bilibili\\.com/(\\d{1,})").Groups[1].Value;
+                    string mid = UidRegex().Match(input).Groups[1].Value;
                     string fid = GetQueryString("fid", input);
                     avid = $"favId:{fid}:{mid}";
                 }
                 else if (input.Contains("/space.bilibili.com/"))
                 {
-                    string mid = Regex.Match(input, "space\\.bilibili\\.com/(\\d{1,})").Groups[1].Value;
+                    string mid = UidRegex().Match(input).Groups[1].Value;
                     avid = $"mid:{mid}";
                 }
                 else if (input.Contains("ep_id="))
@@ -118,12 +115,12 @@ namespace BBDown
                     string epId = GetQueryString("ep_id", input);
                     avid = $"ep:{epId}";
                 }
-                else if ((match = Regex.Match(input, "global\\.bilibili\\.com/play/\\d+/(\\d+)")).Success)
+                else if ((match = GlobalEpRegex().Match(input)).Success)
                 {
                     string epId = match.Groups[1].Value;
                     avid = $"ep:{epId}";
                 }
-                else if ((match = Regex.Match(input, "bangumi/media/(md\\d+)")).Success)
+                else if ((match = BangumiMdRegex().Match(input)).Success)
                 {
                     var mdId = match.Groups[1].Value;
                     avid = await GetAvIdAsync(mdId);
@@ -131,7 +128,7 @@ namespace BBDown
                 else
                 {
                     string web = await GetWebSourceAsync(input);
-                    Regex regex = new Regex("window.__INITIAL_STATE__=([\\s\\S].*?);\\(function\\(\\)");
+                    Regex regex = StateRegex();
                     string json = regex.Match(web).Groups[1].Value;
                     using var jDoc = JsonDocument.Parse(json);
                     string epId = jDoc.RootElement.GetProperty("epList").EnumerateArray().First().GetProperty("id").ToString();
@@ -140,25 +137,25 @@ namespace BBDown
             }
             else if (input.StartsWith("BV"))
             {
-                avid = await GetAidByBVAsync(input.Substring(2));
+                avid = await GetAidByBVAsync(input[2..]);
             }
             else if (input.StartsWith("bv"))
             {
-                avid = await GetAidByBVAsync(input.Substring(2));
+                avid = await GetAidByBVAsync(input[2..]);
             }
             else if (input.ToLower().StartsWith("av")) //av
             {
-                avid = input.ToLower().Substring(2);
+                avid = input.ToLower()[2..];
             }
             else if (input.StartsWith("ep"))
             {
-                string epId = Regex.Match(input, "ep(\\d{1,})").Groups[1].Value;
+                string epId = EpRegex2().Match(input).Groups[1].Value;
                 avid = $"ep:{epId}";
             }
             else if (input.StartsWith("ss"))
             {
                 string web = await GetWebSourceAsync("https://www.bilibili.com/bangumi/play/" + input);
-                Regex regex = new Regex("window.__INITIAL_STATE__=([\\s\\S].*?);\\(function\\(\\)");
+                Regex regex = StateRegex();
                 string json = regex.Match(web).Groups[1].Value;
                 try
                 {
@@ -173,7 +170,7 @@ namespace BBDown
             }
             else if (input.StartsWith("md"))
             {
-                string mdId = Regex.Match(input, "md(\\d{1,})").Groups[1].Value;
+                string mdId = MdRegex().Match(input).Groups[1].Value;
                 try
                 {
                     avid = await GetAvIdAsync(await GetSSIdByMDAsync(mdId));
@@ -192,36 +189,22 @@ namespace BBDown
 
         public static string FormatFileSize(double fileSize)
         {
-            if (fileSize < 0)
+            return fileSize switch
             {
-                throw new ArgumentOutOfRangeException("fileSize");
-            }
-            else if (fileSize >= 1024 * 1024 * 1024)
-            {
-                return string.Format("{0:########0.00} GB", ((double)fileSize) / (1024 * 1024 * 1024));
-            }
-            else if (fileSize >= 1024 * 1024)
-            {
-                return string.Format("{0:####0.00} MB", ((double)fileSize) / (1024 * 1024));
-            }
-            else if (fileSize >= 1024)
-            {
-                return string.Format("{0:####0.00} KB", ((double)fileSize) / 1024);
-            }
-            else
-            {
-                return string.Format("{0} bytes", fileSize);
-            }
+                < 0 => throw new ArgumentOutOfRangeException(nameof(fileSize)),
+                >= 1024 * 1024 * 1024 => string.Format("{0:########0.00} GB", (double)fileSize / (1024 * 1024 * 1024)),
+                >= 1024 * 1024 => string.Format("{0:####0.00} MB", (double)fileSize / (1024 * 1024)),
+                >= 1024 => string.Format("{0:####0.00} KB", (double)fileSize / 1024),
+                _ => string.Format("{0} bytes", fileSize)
+            };
         }
 
         public static string FormatTime(int time, bool absolute = false)
         {
-            TimeSpan ts = new TimeSpan(0, 0, time);
-            string str = "";
-            if (!absolute)
-            str = (ts.Hours.ToString("00") == "00" ? "" : ts.Hours.ToString("00") + "h") + ts.Minutes.ToString("00") + "m" + ts.Seconds.ToString("00") + "s";
-            else
-                str = ts.Hours.ToString("00") + ":" + ts.Minutes.ToString("00") + ":" + ts.Seconds.ToString("00");
+            TimeSpan ts = new(0, 0, time);
+            string str = !absolute
+                ? (ts.Hours.ToString("00") == "00" ? "" : ts.Hours.ToString("00") + "h") + ts.Minutes.ToString("00") + "m" + ts.Seconds.ToString("00") + "s"
+                : ts.Hours.ToString("00") + ":" + ts.Minutes.ToString("00") + ":" + ts.Seconds.ToString("00");
             return str;
         }
 
@@ -232,7 +215,7 @@ namespace BBDown
         /// <returns></returns>
         public static async Task<string> FixAvidAsync(string avid)
         {
-            if (!Regex.IsMatch(avid, "^\\d+$"))
+            if (!NumRegex().IsMatch(avid))
                 return avid;
             string api = $"https://api.bilibili.com/x/web-interface/archive/stat?aid={avid}";
             string json = await GetWebSourceAsync(api);
@@ -246,7 +229,7 @@ namespace BBDown
                 var data = infoJson.RootElement.GetProperty("data");
                 if (data.TryGetProperty("redirect_url", out _) && data.GetProperty("redirect_url").ToString().Contains("bangumi")) 
                 {
-                    var epId = Regex.Match(data.GetProperty("redirect_url").ToString(), "ep(\\d+)").Groups[1].Value;
+                    var epId = RedirectRegex().Match(data.GetProperty("redirect_url").ToString()).Groups[1].Value;
                     return $"ep:{epId}";
                 }
             }
@@ -283,48 +266,46 @@ namespace BBDown
         private static async Task RangeDownloadToTmpAsync(int id, string url, string tmpName, long fromPosition, long? toPosition, Action<int, long, long> onProgress, bool failOnRangeNotSupported = false)
         {
             DateTimeOffset? lastTime = File.Exists(tmpName) ? new FileInfo(tmpName).LastWriteTimeUtc : null;
-            using (var fileStream = new FileStream(tmpName, FileMode.Create))
+            using var fileStream = new FileStream(tmpName, FileMode.Create);
+            fileStream.Seek(0, SeekOrigin.End);
+            var downloadedBytes = fromPosition + fileStream.Position;
+
+            using var httpRequestMessage = new HttpRequestMessage();
+            if (!url.Contains("platform=android_tv_yst") && !url.Contains("platform=android"))
+                httpRequestMessage.Headers.TryAddWithoutValidation("Referer", "https://www.bilibili.com");
+            httpRequestMessage.Headers.TryAddWithoutValidation("User-Agent", "Mozilla/5.0");
+            httpRequestMessage.Headers.TryAddWithoutValidation("Cookie", Core.Config.COOKIE);
+            httpRequestMessage.Headers.Range = new(downloadedBytes, toPosition);
+            httpRequestMessage.Headers.IfRange = lastTime != null ? new(lastTime.Value) : null;
+            httpRequestMessage.RequestUri = new(url);
+
+            using var response = (await AppHttpClient.SendAsync(httpRequestMessage, HttpCompletionOption.ResponseHeadersRead)).EnsureSuccessStatusCode();
+
+            if (response.StatusCode == HttpStatusCode.OK) // server doesn't response a partial content
             {
-                fileStream.Seek(0, SeekOrigin.End);
-                var downloadedBytes = fromPosition + fileStream.Position;
-
-                using var httpRequestMessage = new HttpRequestMessage();
-                if (!url.Contains("platform=android_tv_yst") && !url.Contains("platform=android"))
-                    httpRequestMessage.Headers.TryAddWithoutValidation("Referer", "https://www.bilibili.com");
-                httpRequestMessage.Headers.TryAddWithoutValidation("User-Agent", "Mozilla/5.0");
-                httpRequestMessage.Headers.TryAddWithoutValidation("Cookie", Core.Config.COOKIE);
-                httpRequestMessage.Headers.Range = new(downloadedBytes, toPosition);
-                httpRequestMessage.Headers.IfRange = lastTime != null ? new(lastTime.Value) : null;
-                httpRequestMessage.RequestUri = new(url);
-
-                using var response = (await AppHttpClient.SendAsync(httpRequestMessage, HttpCompletionOption.ResponseHeadersRead)).EnsureSuccessStatusCode();
-
-                if (response.StatusCode == HttpStatusCode.OK) // server doesn't response a partial content
-                {
-                    if (failOnRangeNotSupported && (downloadedBytes > 0 || toPosition != null)) throw new NotSupportedException("Range request is not supported.");
-                    downloadedBytes = 0;
-                    fileStream.Seek(0, SeekOrigin.Begin);
-                }
-
-                using var stream = await response.Content.ReadAsStreamAsync();
-                var totalBytes = downloadedBytes + (response.Content.Headers.ContentLength ?? long.MaxValue - downloadedBytes);
-
-                const int blockSize = 1048576 / 4;
-                var buffer = new byte[blockSize];
-
-                while (downloadedBytes < totalBytes)
-                {
-                    var recevied = await stream.ReadAsync(buffer);
-                    if (recevied == 0) break;
-                    await fileStream.WriteAsync(buffer.AsMemory(0, recevied));
-                    await fileStream.FlushAsync();
-                    downloadedBytes += recevied;
-                    onProgress(id, downloadedBytes - fromPosition, totalBytes);
-                }
-
-                if (response.Content.Headers.ContentLength != null && (response.Content.Headers.ContentLength != new FileInfo(tmpName).Length)) 
-                    throw new Exception("Retry...");
+                if (failOnRangeNotSupported && (downloadedBytes > 0 || toPosition != null)) throw new NotSupportedException("Range request is not supported.");
+                downloadedBytes = 0;
+                fileStream.Seek(0, SeekOrigin.Begin);
             }
+
+            using var stream = await response.Content.ReadAsStreamAsync();
+            var totalBytes = downloadedBytes + (response.Content.Headers.ContentLength ?? long.MaxValue - downloadedBytes);
+
+            const int blockSize = 1048576 / 4;
+            var buffer = new byte[blockSize];
+
+            while (downloadedBytes < totalBytes)
+            {
+                var recevied = await stream.ReadAsync(buffer);
+                if (recevied == 0) break;
+                await fileStream.WriteAsync(buffer.AsMemory(0, recevied));
+                await fileStream.FlushAsync();
+                downloadedBytes += recevied;
+                onProgress(id, downloadedBytes - fromPosition, totalBytes);
+            }
+
+            if (response.Content.Headers.ContentLength != null && (response.Content.Headers.ContentLength != new FileInfo(tmpName).Length))
+                throw new Exception("Retry...");
         }
 
         /// <summary>
@@ -334,7 +315,7 @@ namespace BBDown
         /// <returns></returns>
         private static string ReplaceUrl(string url)
         {
-            if (Regex.IsMatch(url, "://.*mcdn\\.bilivideo\\.cn:\\d+"))
+            if (McdnRegex().IsMatch(url))
             {
                 LogDebug("对[*.mcdn.bilivideo.cn:xxx]域名不做处理");
                 return url;
@@ -352,7 +333,7 @@ namespace BBDown
             LogDebug("Start downloading: {0}", url);
             if (!Directory.Exists(Path.GetDirectoryName(Path.GetFullPath(path))))
             {
-                Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(path)));
+                Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(path))!);
             }
             if (aria2c)
             {
@@ -363,15 +344,13 @@ namespace BBDown
                 return;
             }
             int retry = 0;
-            string tmpName = Path.Combine(Path.GetDirectoryName(path), Path.GetFileNameWithoutExtension(path) + ".tmp");
+            string tmpName = Path.Combine(Path.GetDirectoryName(path)!, Path.GetFileNameWithoutExtension(path) + ".tmp");
         reDown:
             try
             {
-                using (var progress = new ProgressBar())
-                {
-                    await RangeDownloadToTmpAsync(0, url, tmpName, 0, null, (_, downloaded, total) => progress.Report((double)downloaded / total));
-                    File.Move(tmpName, path, true);
-                }
+                using var progress = new ProgressBar();
+                await RangeDownloadToTmpAsync(0, url, tmpName, 0, null, (_, downloaded, total) => progress.Report((double)downloaded / total));
+                File.Move(tmpName, path, true);
             }
             catch (Exception)
             {
@@ -406,49 +385,49 @@ namespace BBDown
             ConcurrentDictionary<int, long> clipProgress = new();
             foreach (var i in allClips) clipProgress[i.index] = 0;
 
-            using (var progress = new ProgressBar())
+            using var progress = new ProgressBar();
+            progress.Report(0);
+            await Parallel.ForEachAsync(allClips, async (clip, _) =>
             {
-                progress.Report(0);
-                await Parallel.ForEachAsync(allClips, async (clip, _) =>
+                int retry = 0;
+                string tmp = Path.Combine(Path.GetDirectoryName(path)!, clip.index.ToString("00000") + "_" + Path.GetFileNameWithoutExtension(path) + (Path.GetExtension(path).EndsWith(".mp4") ? ".vclip" : ".aclip"));
+            reDown:
+                try
                 {
-                    int retry = 0;
-                    string tmp = Path.Combine(Path.GetDirectoryName(path), clip.index.ToString("00000") + "_" + Path.GetFileNameWithoutExtension(path) + (Path.GetExtension(path).EndsWith(".mp4") ? ".vclip" : ".aclip"));
-                reDown:
-                    try
+                    await RangeDownloadToTmpAsync(clip.index, url, tmp, clip.from, clip.to == -1 ? null : clip.to, (index, downloaded, _) =>
                     {
-                        await RangeDownloadToTmpAsync(clip.index, url, tmp, clip.from, clip.to == -1 ? null : clip.to, (index, downloaded, _) =>
-                        {
-                            clipProgress[index] = downloaded;
-                            progress.Report((double)clipProgress.Values.Sum() / fileSize);
-                        }, true);
-                    }
-                    catch (NotSupportedException)
-                    {
-                        if (++retry == 3) throw new Exception($"服务器可能并不支持多线程下载，请使用 --multi-thread false 关闭多线程");
-                        goto reDown;
-                    }
-                    catch (Exception)
-                    {
-                        if (++retry == 3) throw new Exception($"Failed to download clip {clip.index}");
-                        goto reDown;
-                    }
-                });
-            }
+                        clipProgress[index] = downloaded;
+                        progress.Report((double)clipProgress.Values.Sum() / fileSize);
+                    }, true);
+                }
+                catch (NotSupportedException)
+                {
+                    if (++retry == 3) throw new Exception($"服务器可能并不支持多线程下载，请使用 --multi-thread false 关闭多线程");
+                    goto reDown;
+                }
+                catch (Exception)
+                {
+                    if (++retry == 3) throw new Exception($"Failed to download clip {clip.index}");
+                    goto reDown;
+                }
+            });
         }
 
         //此函数主要是切片下载逻辑
         private static List<Clip> GetAllClips(string url, long fileSize)
         {
-            List<Clip> clips = new List<Clip>();
+            List<Clip> clips = new();
             int index = 0;
             long counter = 0;
             int perSize = 10 * 1024 * 1024;
             while (fileSize > 0)
             {
-                Clip c = new Clip();
-                c.index = index;
-                c.from = counter;
-                c.to = c.from + perSize;
+                Clip c = new()
+                {
+                    index = index,
+                    from = counter,
+                    to = counter + perSize
+                };
                 //没到最后
                 if (fileSize - perSize > 0)
                 {
@@ -478,28 +457,24 @@ namespace BBDown
             if (files.Length == 0) return;
             if (files.Length == 1)
             {
-                FileInfo fi = new FileInfo(files[0]);
+                FileInfo fi = new(files[0]);
                 fi.MoveTo(outputFilePath, true);
                 return;
             }
 
             if (!Directory.Exists(Path.GetDirectoryName(outputFilePath)))
-                Directory.CreateDirectory(Path.GetDirectoryName(outputFilePath));
+                Directory.CreateDirectory(Path.GetDirectoryName(outputFilePath)!);
 
             string[] inputFilePaths = files;
-            using (var outputStream = File.Create(outputFilePath))
+            using var outputStream = File.Create(outputFilePath);
+            foreach (var inputFilePath in inputFilePaths)
             {
-                foreach (var inputFilePath in inputFilePaths)
-                {
-                    if (inputFilePath == "")
-                        continue;
-                    using (var inputStream = File.OpenRead(inputFilePath))
-                    {
-                        // Buffer size can be passed as the second argument.
-                        inputStream.CopyTo(outputStream);
-                    }
-                    //Console.WriteLine("The file {0} has been processed.", inputFilePath);
-                }
+                if (inputFilePath == "")
+                    continue;
+                using var inputStream = File.OpenRead(inputFilePath);
+                // Buffer size can be passed as the second argument.
+                inputStream.CopyTo(outputStream);
+                //Console.WriteLine("The file {0} has been processed.", inputFilePath);
             }
             //Global.ExplorerFile(outputFilePath);
         }
@@ -512,9 +487,9 @@ namespace BBDown
         /// <returns></returns>
         public static string[] GetFiles(string dir, string ext)
         {
-            List<string> al = new List<string>();
-            StringBuilder sb = new StringBuilder();
-            DirectoryInfo d = new DirectoryInfo(dir);
+            List<string> al = new();
+            StringBuilder sb = new();
+            DirectoryInfo d = new(dir);
             foreach (FileInfo fi in d.GetFiles())
             {
                 if (fi.Extension.ToUpper() == ext.ToUpper())
@@ -549,8 +524,8 @@ namespace BBDown
             {
                 AllowAutoRedirect = false
             };
-            string redirectedUrl = null;
-            using (HttpClient client = new HttpClient(handler))
+            string redirectedUrl = "";
+            using (HttpClient client = new(handler))
             using (HttpResponseMessage response = await client.GetAsync(url))
             using (HttpContent content = response.Content)
             {
@@ -592,9 +567,9 @@ namespace BBDown
         /// <returns></returns>    
         public static string GetQueryString(string name, string url)
         {
-            Regex re = new Regex(@"(^|&)?(\w+)=([^&]+)(&|$)?", System.Text.RegularExpressions.RegexOptions.Compiled);
+            Regex re = QueryRegex();
             MatchCollection mc = re.Matches(url);
-            foreach (Match m in mc)
+            foreach (Match m in mc.Cast<Match>())
             {
                 if (m.Result("$2").Equals(name))
                 {
@@ -607,9 +582,11 @@ namespace BBDown
         public static async Task<string> GetLoginStatusAsync(string oauthKey)
         {
             string queryUrl = "https://passport.bilibili.com/qrcode/getLoginInfo";
-            NameValueCollection postValues = new NameValueCollection();
-            postValues.Add("oauthKey", oauthKey);
-            postValues.Add("gourl", "https%3A%2F%2Fwww.bilibili.com%2F");
+            NameValueCollection postValues = new()
+            {
+                { "oauthKey", oauthKey },
+                { "gourl", "https%3A%2F%2Fwww.bilibili.com%2F" }
+            };
             byte[] responseArray = await (await AppHttpClient.PostAsync(queryUrl, new FormUrlEncodedContent(postValues.ToDictionary()))).Content.ReadAsByteArrayAsync();
             return Encoding.UTF8.GetString(responseArray);
         }
@@ -624,10 +601,9 @@ namespace BBDown
         public static string GetSign(string parms)
         {
             string toEncode = parms + "59b43e04ad6965f34319062b478f83dd";
-            MD5 md5 = MD5.Create();
             byte[] bs = Encoding.UTF8.GetBytes(toEncode);
-            byte[] hs = md5.ComputeHash(bs);
-            StringBuilder sb = new StringBuilder();
+            byte[] hs = MD5.HashData(bs);
+            StringBuilder sb = new();
             foreach (byte b in hs)
             {
                 sb.Append(b.ToString("x2"));
@@ -638,17 +614,13 @@ namespace BBDown
         public static string GetTimeStamp(bool bflag)
         {
             TimeSpan ts = DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, 0);
-            string ret = string.Empty;
-            if (bflag)
-                ret = Convert.ToInt64(ts.TotalSeconds).ToString();
-            else
-                ret = Convert.ToInt64(ts.TotalMilliseconds).ToString();
+            string ret = bflag ? Convert.ToInt64(ts.TotalSeconds).ToString() : Convert.ToInt64(ts.TotalMilliseconds).ToString();
 
             return ret;
         }
 
         //https://stackoverflow.com/questions/1344221/how-can-i-generate-random-alphanumeric-strings
-        private static Random random = new Random();
+        private static readonly Random random = new();
         public static string GetRandomString(int length)
         {
             const string chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_0123456789";
@@ -661,7 +633,7 @@ namespace BBDown
         {
             NameValueCollection httpValueCollection = HttpUtility.ParseQueryString(string.Empty);
             httpValueCollection.Add(nameValueCollection);
-            return httpValueCollection.ToString();
+            return httpValueCollection.ToString()!;
         }
 
         public static Dictionary<string, string> ToDictionary(this NameValueCollection nameValueCollection)
@@ -669,7 +641,7 @@ namespace BBDown
             var dict = new Dictionary<string, string>();
             foreach (var key in nameValueCollection.AllKeys)
             {
-                dict[key] = nameValueCollection[key];
+                dict[key!] = nameValueCollection[key]!;
             }
             return dict;
         }
@@ -680,7 +652,7 @@ namespace BBDown
             DateTime now = DateTime.Now;
             string deviceId = GetRandomString(20);
             string buvid = GetRandomString(37);
-            string fingerprint = $"{now.ToString("yyyyMMddHHmmssfff")}{GetRandomString(45)}";
+            string fingerprint = $"{now:yyyyMMddHHmmssfff}{GetRandomString(45)}";
             sb.Add("appkey", "4409e2ce8ffd12b8");
             sb.Add("auth_code", "");
             sb.Add("bili_local_id", deviceId);
@@ -728,7 +700,7 @@ namespace BBDown
                 process.Start();
                 string info = process.StandardOutput.ReadToEnd() + Environment.NewLine + process.StandardError.ReadToEnd();
                 process.WaitForExit();
-                var match = Regex.Match(info, "libavutil\\s+(\\d+)\\. (\\d+)\\.");
+                var match = LibavutilRegex().Match(info);
                 if (!match.Success) return false;
                 if((Convert.ToInt32(match.Groups[1].Value)==57 && Convert.ToInt32(match.Groups[1].Value) >= 17)
                     || Convert.ToInt32(match.Groups[1].Value) > 57)
@@ -762,7 +734,7 @@ namespace BBDown
                     {
                         ponints.Add(new ViewPoint()
                         {
-                            title = point.GetProperty("content").GetString(),
+                            title = point.GetProperty("content").GetString()!,
                             start = int.Parse(point.GetProperty("from").ToString()),
                             end = int.Parse(point.GetProperty("to").ToString())
                         });
@@ -780,7 +752,7 @@ namespace BBDown
         /// <returns></returns>
         public static string GetFFmpegMetaString(List<ViewPoint> points)
         {
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new();
             sb.AppendLine(";FFMETADATA");
             foreach (var p in points)
             {
@@ -802,7 +774,7 @@ namespace BBDown
         /// <returns></returns>
         public static string GetMp4boxMetaString(List<ViewPoint> points)
         {
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new();
             foreach (var p in points)
             {
                 sb.AppendLine($"{FormatTime(p.start, true)} {p.title}");
@@ -810,7 +782,7 @@ namespace BBDown
             return sb.ToString();
         }
 
-        public static string FindExecutable(string name)
+        public static string? FindExecutable(string name)
         {
             var fileExt = OperatingSystem.IsWindows() ? ".exe" : "";
             var searchPath = new [] { Environment.CurrentDirectory, Program.APP_DIR };
@@ -833,5 +805,38 @@ namespace BBDown
                 return false;
             }
         }
+
+        [RegexGenerator("av(\\d{1,})")]
+        private static partial Regex AvRegex();
+        [RegexGenerator("BV(\\w+)")]
+        private static partial Regex BVRegex();
+        [RegexGenerator("bv(\\w+)")]
+        private static partial Regex BvRegex();
+        [RegexGenerator("/ep(\\d{1,})")]
+        private static partial Regex EpRegex();
+        [RegexGenerator("/ss(\\d{1,})")]
+        private static partial Regex SsRegex();
+        [RegexGenerator("space\\.bilibili\\.com/(\\d{1,})")]
+        private static partial Regex UidRegex();
+        [RegexGenerator("global\\.bilibili\\.com/play/\\d+/(\\d+)")]
+        private static partial Regex GlobalEpRegex();
+        [RegexGenerator("bangumi/media/(md\\d+)")]
+        private static partial Regex BangumiMdRegex();
+        [RegexGenerator("window.__INITIAL_STATE__=([\\s\\S].*?);\\(function\\(\\)")]
+        private static partial Regex StateRegex();
+        [RegexGenerator("ep(\\d{1,})")]
+        private static partial Regex EpRegex2();
+        [RegexGenerator("md(\\d{1,})")]
+        private static partial Regex MdRegex();
+        [RegexGenerator("^\\d+$")]
+        private static partial Regex NumRegex();
+        [RegexGenerator("ep(\\d+)")]
+        private static partial Regex RedirectRegex();
+        [RegexGenerator("://.*mcdn\\.bilivideo\\.cn:\\d+")]
+        private static partial Regex McdnRegex();
+        [RegexGenerator("(^|&)?(\\w+)=([^&]+)(&|$)?", RegexOptions.Compiled)]
+        private static partial Regex QueryRegex();
+        [RegexGenerator("libavutil\\s+(\\d+)\\. (\\d+)\\.")]
+        private static partial Regex LibavutilRegex();
     }
 }

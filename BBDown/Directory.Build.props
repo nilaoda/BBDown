@@ -4,8 +4,7 @@
     <IlcOptimizationPreference>Speed</IlcOptimizationPreference>
     <IlcFoldIdenticalMethodBodies>true</IlcFoldIdenticalMethodBodies>
     <StaticallyLinked Condition="$(RuntimeIdentifier.StartsWith('win'))">true</StaticallyLinked>
-    <TrimMode>Link</TrimMode>
-    <TrimmerDefaultAction>link</TrimmerDefaultAction>
+    <TrimMode>full</TrimMode>
     <NativeAotCompilerVersion>7.0.0-*</NativeAotCompilerVersion>
   </PropertyGroup>
 
@@ -17,7 +16,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <IlcArg Include="--reflectedonly" />
     <RdXmlFile Include="rd.xml" />
   </ItemGroup>
 

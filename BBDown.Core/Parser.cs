@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Text;
 using System.Text.RegularExpressions;
-using System.Linq;
 using System.Text.Json;
-using System.Threading.Tasks;
 using static BBDown.Core.Logger;
 using static BBDown.Core.Util.HTTPUtil;
 using static BBDown.Core.Entity.Entity;
@@ -12,7 +8,7 @@ using System.Security.Cryptography;
 
 namespace BBDown.Core
 {
-    public class Parser
+    public partial class Parser
     {
         private static async Task<string> GetPlayJsonAsync(bool onlyAvc, string aidOri, string aid, string cid, string epId, bool tvApi, bool intl, bool appApi, string qn = "0")
         {
@@ -27,8 +23,8 @@ namespace BBDown.Core
 
             if (appApi) return await AppHelper.DoReqAsync(aid, cid, epId, qn, bangumi, onlyAvc, Config.TOKEN);
 
-            string prefix = tvApi ? (bangumi ? "api.snm0516.aisee.tv/pgc/player/api/playurltv" : "api.snm0516.aisee.tv/x/tv/ugc/playurl")
-                        : (bangumi ? "api.bilibili.com/pgc/player/web/playurl" : "api.bilibili.com/x/player/playurl");
+            string prefix = tvApi ? bangumi ? "api.snm0516.aisee.tv/pgc/player/api/playurltv" : "api.snm0516.aisee.tv/x/tv/ugc/playurl"
+                        : bangumi ? "api.bilibili.com/pgc/player/web/playurl" : "api.bilibili.com/x/player/playurl";
             string api = $"https://{prefix}?avid={aid}&cid={cid}&qn={qn}&type=&otype=json" + (tvApi ? "" : "&fourk=1") +
                 $"&fnver=0&fnval=4048" + (tvApi ? "&device=android&platform=android" +
                 "&mobi_app=android_tv_yst&npcybs=0&force_host=2&build=102801" +
@@ -57,7 +53,7 @@ namespace BBDown.Core
                 Log("此视频需要大会员，您大概率需要登录一个有大会员的账号才可以下载，尝试从网页源码解析");
                 string webUrl = "https://www.bilibili.com/bangumi/play/ep" + epId;
                 string webSource = await GetWebSourceAsync(webUrl);
-                webJson = Regex.Match(webSource, @"window.__playinfo__=([\s\S]*?)<\/script>").Groups[1].Value;
+                webJson = PlayerJsonRegex().Match(webSource).Groups[1].Value;
             }
             return webJson;
         }
@@ -72,10 +68,10 @@ namespace BBDown.Core
 
         public static async Task<(string, List<Video>, List<Audio>, List<string>, List<string>)> ExtractTracksAsync(string aidOri, string aid, string cid, string epId, bool tvApi, bool intlApi, bool appApi, string qn = "0")
         {
-            List<Video> videoTracks = new List<Video>();
-            List<Audio> audioTracks = new List<Audio>();
-            List<string> clips = new List<string>();
-            List<string> dfns = new List<string>();
+            List<Video> videoTracks = new();
+            List<Audio> audioTracks = new();
+            List<string> clips = new();
+            List<string> dfns = new();
             var intlCode = "0";
 
             //调用解析
@@ -92,18 +88,20 @@ namespace BBDown.Core
                 var audio = data.GetProperty("data").GetProperty("video_info").GetProperty("dash_audio").EnumerateArray().ToList();
                 foreach(var stream in data.GetProperty("data").GetProperty("video_info").GetProperty("stream_list").EnumerateArray())
                 {
-                    JsonElement dashVideo;
-                    if (stream.TryGetProperty("dash_video", out dashVideo))
+                    if (stream.TryGetProperty("dash_video", out JsonElement dashVideo))
                     {
                         if (dashVideo.GetProperty("base_url").ToString() != "")
                         {
-                            Video v = new Video();
-                            v.dur = pDur;
-                            v.id = stream.GetProperty("stream_info").GetProperty("quality").ToString();
-                            v.dfn = Config.qualitys[v.id];
-                            v.bandwith = Convert.ToInt64(dashVideo.GetProperty("bandwidth").ToString()) / 1000;
-                            v.baseUrl = dashVideo.GetProperty("base_url").ToString();
-                            v.codecs = GetVideoCodec(dashVideo.GetProperty("codecid").ToString());
+                            var videoId = stream.GetProperty("stream_info").GetProperty("quality").ToString();
+                            Video v = new()
+                            {
+                                dur = pDur,
+                                id = videoId,
+                                dfn = Config.qualitys[videoId],
+                                bandwith = Convert.ToInt64(dashVideo.GetProperty("bandwidth").ToString()) / 1000,
+                                baseUrl = dashVideo.GetProperty("base_url").ToString(),
+                                codecs = GetVideoCodec(dashVideo.GetProperty("codecid").ToString())
+                            };
                             if (!videoTracks.Contains(v)) videoTracks.Add(v);
                         }
                     }
@@ -111,13 +109,15 @@ namespace BBDown.Core
 
                 foreach(var node in audio)
                 {
-                    Audio a = new Audio();
-                    a.id = node.GetProperty("id").ToString();
-                    a.dfn = node.GetProperty("id").ToString();
-                    a.dur = pDur;
-                    a.bandwith = Convert.ToInt64(node.GetProperty("bandwidth").ToString()) / 1000;
-                    a.baseUrl = node.GetProperty("base_url").ToString();
-                    a.codecs = "M4A";
+                    Audio a = new()
+                    {
+                        id = node.GetProperty("id").ToString(),
+                        dfn = node.GetProperty("id").ToString(),
+                        dur = pDur,
+                        bandwith = Convert.ToInt64(node.GetProperty("bandwidth").ToString()) / 1000,
+                        baseUrl = node.GetProperty("base_url").ToString(),
+                        codecs = "M4A"
+                    };
                     if (!audioTracks.Contains(a)) audioTracks.Add(a);
                 }
 
@@ -133,8 +133,8 @@ namespace BBDown.Core
 
             if (webJsonStr.Contains("\"dash\":{")) //dash
             {
-                List<JsonElement> audio = null;
-                List<JsonElement> video = null;
+                List<JsonElement>? audio = null;
+                List<JsonElement>? video = null;
                 int pDur = 0;
                 string nodeName = "data";
                 if (webJsonStr.Contains("\"result\":{"))
@@ -157,11 +157,14 @@ namespace BBDown.Core
                 //处理杜比音频
                 try
                 {
-                    if (!tvApi && respJson.RootElement.GetProperty(nodeName).GetProperty("dash").TryGetProperty("dolby", out JsonElement dolby))
+                    if (audio != null)
                     {
-                        if(dolby.TryGetProperty("audio", out JsonElement db))
+                        if (!tvApi && respJson.RootElement.GetProperty(nodeName).GetProperty("dash").TryGetProperty("dolby", out JsonElement dolby))
                         {
-                            audio.AddRange(db.EnumerateArray().ToList());
+                            if (dolby.TryGetProperty("audio", out JsonElement db))
+                            {
+                                audio.AddRange(db.EnumerateArray().ToList());
+                            }
                         }
                     }
                 }
@@ -176,13 +179,16 @@ namespace BBDown.Core
                         {
                             urlList.AddRange(element.EnumerateArray().ToList().Select(i => i.ToString()));
                         }
-                        Video v = new Video();
-                        v.dur = pDur;
-                        v.id = node.GetProperty("id").ToString();
-                        v.dfn = Config.qualitys[v.id];
-                        v.bandwith = Convert.ToInt64(node.GetProperty("bandwidth").ToString()) / 1000;
-                        v.baseUrl = urlList.FirstOrDefault(i => !Regex.IsMatch(i, "http.*:\\d+"), urlList.First());
-                        v.codecs = GetVideoCodec(node.GetProperty("codecid").ToString());
+                        var videoId = node.GetProperty("id").ToString();
+                        Video v = new()
+                        {
+                            dur = pDur,
+                            id = videoId,
+                            dfn = Config.qualitys[videoId],
+                            bandwith = Convert.ToInt64(node.GetProperty("bandwidth").ToString()) / 1000,
+                            baseUrl = urlList.FirstOrDefault(i => !BaseUrlRegex().IsMatch(i), urlList.First()),
+                            codecs = GetVideoCodec(node.GetProperty("codecid").ToString())
+                        };
                         if (!tvApi && !appApi)
                         {
                             v.res = node.GetProperty("width").ToString() + "x" + node.GetProperty("height").ToString();
@@ -208,13 +214,16 @@ namespace BBDown.Core
                         {
                             urlList.AddRange(element.EnumerateArray().ToList().Select(i => i.ToString()));
                         }
-                        Audio a = new Audio();
-                        a.id = node.GetProperty("id").ToString();
-                        a.dfn = a.id;
-                        a.dur = pDur;
-                        a.bandwith = Convert.ToInt64(node.GetProperty("bandwidth").ToString()) / 1000;
-                        a.baseUrl = urlList.FirstOrDefault(i => !Regex.IsMatch(i, "http.*:\\d+"), urlList.First());
-                        a.codecs = node.GetProperty("codecs").ToString().Replace("mp4a.40.2", "M4A").Replace("ec-3", "E-AC-3");
+                        var audioId = node.GetProperty("id").ToString();
+                        Audio a = new()
+                        {
+                            id = audioId,
+                            dfn = audioId,
+                            dur = pDur,
+                            bandwith = Convert.ToInt64(node.GetProperty("bandwidth").ToString()) / 1000,
+                            baseUrl = urlList.FirstOrDefault(i => !BaseUrlRegex().IsMatch(i), urlList.First()),
+                            codecs = node.GetProperty("codecs").ToString().Replace("mp4a.40.2", "M4A").Replace("ec-3", "E-AC-3")
+                        };
                         audioTracks.Add(a);
                     }
                 }
@@ -244,16 +253,14 @@ namespace BBDown.Core
                         length += node.GetProperty("length").GetDouble();
                     }
                     //TV模式可用清晰度
-                    JsonElement qnExtras;
-                    JsonElement acceptQuality;
-                    if (dataNode.TryGetProperty("qn_extras", out qnExtras)) 
+                    if (dataNode.TryGetProperty("qn_extras", out JsonElement qnExtras))
                     {
                         foreach (var node in qnExtras.EnumerateArray())
                         {
                             dfns.Add(node.GetProperty("qn").ToString());
                         }
                     }
-                    else if (dataNode.TryGetProperty("accept_quality", out acceptQuality)) //非tv模式可用清晰度
+                    else if (dataNode.TryGetProperty("accept_quality", out JsonElement acceptQuality)) //非tv模式可用清晰度
                     {
                         foreach (var node in acceptQuality.EnumerateArray())
                         {
@@ -283,17 +290,15 @@ namespace BBDown.Core
                         length += node.GetProperty("length").GetDouble();
                     }
                     //TV模式可用清晰度
-                    JsonElement qnExtras;
-                    JsonElement acceptQuality;
-                    if (nodeJson.TryGetProperty("qn_extras", out qnExtras))
+                    if (nodeJson.TryGetProperty("qn_extras", out JsonElement qnExtras))
                     {
                         //获取可用清晰度
                         foreach (var node in qnExtras.EnumerateArray())
                         {
                             dfns.Add(node.GetProperty("qn").ToString());
                         }
-                    }                   
-                    else if (nodeJson.TryGetProperty("accept_quality", out acceptQuality)) //非tv模式可用清晰度
+                    }
+                    else if (nodeJson.TryGetProperty("accept_quality", out JsonElement acceptQuality)) //非tv模式可用清晰度
                     {
                         foreach (var node in acceptQuality.EnumerateArray())
                         {
@@ -304,13 +309,15 @@ namespace BBDown.Core
                     }
                 }
 
-                Video v = new Video();
-                v.id = quality;
-                v.dfn = Config.qualitys[quality];
-                v.baseUrl = url;
-                v.codecs = GetVideoCodec(videoCodecid);
-                v.dur = (int)length / 1000;
-                v.size = size;
+                Video v = new()
+                {
+                    id = quality,
+                    dfn = Config.qualitys[quality],
+                    baseUrl = url,
+                    codecs = GetVideoCodec(videoCodecid),
+                    dur = (int)length / 1000,
+                    size = size
+                };
                 if (!videoTracks.Contains(v)) videoTracks.Add(v);
             }
 
@@ -341,11 +348,7 @@ namespace BBDown.Core
         private static string GetTimeStamp(bool bflag)
         {
             TimeSpan ts = DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, 0);
-            string ret = string.Empty;
-            if (bflag)
-                ret = Convert.ToInt64(ts.TotalSeconds).ToString();
-            else
-                ret = Convert.ToInt64(ts.TotalMilliseconds).ToString();
+            string ret = bflag ? Convert.ToInt64(ts.TotalSeconds).ToString() : Convert.ToInt64(ts.TotalMilliseconds).ToString();
 
             return ret;
         }
@@ -353,15 +356,19 @@ namespace BBDown.Core
         private static string GetSign(string parms)
         {
             string toEncode = parms + "59b43e04ad6965f34319062b478f83dd";
-            MD5 md5 = MD5.Create();
             byte[] bs = Encoding.UTF8.GetBytes(toEncode);
-            byte[] hs = md5.ComputeHash(bs);
-            StringBuilder sb = new StringBuilder();
+            byte[] hs = MD5.HashData(bs);
+            StringBuilder sb = new();
             foreach (byte b in hs)
             {
                 sb.Append(b.ToString("x2"));
             }
             return sb.ToString();
         }
+
+        [RegexGenerator("window.__playinfo__=([\\s\\S]*?)<\\/script>")]
+        private static partial Regex PlayerJsonRegex();
+        [RegexGenerator("http.*:\\d+")]
+        private static partial Regex BaseUrlRegex();
     }
 }

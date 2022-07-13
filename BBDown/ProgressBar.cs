@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 
@@ -8,7 +7,7 @@ using System.Threading;
  */
 namespace BBDown
 {
-	class ProgressBar : IDisposable, IProgress<double>
+    class ProgressBar : IDisposable, IProgress<double>
 	{
 		private const int blockCount = 40;
 		private readonly TimeSpan animationInterval = TimeSpan.FromSeconds(1.0 / 8);
@@ -38,10 +37,10 @@ namespace BBDown
 		{
 			// Make sure value is in [0..1] range
 			value = Math.Max(0, Math.Min(1, value));
-			Interlocked.Exchange(ref currentProgress, value);
+            Interlocked.Exchange(ref currentProgress, value);
 		}
 
-		private void TimerHandler(object state)
+		private void TimerHandler(object? state)
 		{
 			lock (timer)
 			{
@@ -70,18 +69,18 @@ namespace BBDown
 			}
 
 			// Backtrack to the first differing character
-			StringBuilder outputBuilder = new StringBuilder();
-			outputBuilder.Append('\b', currentText.Length - commonPrefixLength);
+			StringBuilder outputBuilder = new();
+            outputBuilder.Append('\b', currentText.Length - commonPrefixLength);
 
-			// Output new suffix
-			outputBuilder.Append(text.Substring(commonPrefixLength));
+            // Output new suffix
+            outputBuilder.Append(text[commonPrefixLength..]);
 
 			// If the new text is shorter than the old one: delete overlapping characters
 			int overlapCount = currentText.Length - text.Length;
 			if (overlapCount > 0)
 			{
-				outputBuilder.Append(' ', overlapCount);
-				outputBuilder.Append('\b', overlapCount);
+                outputBuilder.Append(' ', overlapCount);
+                outputBuilder.Append('\b', overlapCount);
 			}
 
 			Console.Write(outputBuilder);
@@ -90,7 +89,7 @@ namespace BBDown
 
 		private void ResetTimer()
 		{
-			timer.Change(animationInterval, TimeSpan.FromMilliseconds(-1));
+            timer.Change(animationInterval, TimeSpan.FromMilliseconds(-1));
 		}
 
 		public void Dispose()

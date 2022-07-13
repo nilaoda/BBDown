@@ -1,11 +1,5 @@
 ﻿using BBDown.Core.Entity;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 using static BBDown.Core.Entity.Entity;
 using static BBDown.Core.Util.HTTPUtil;
 
@@ -21,17 +15,17 @@ namespace BBDown.Core.Fetcher
         {
             //套用BBDownMediaListFetcher.cs的代码
             //只修改id = id.Substring(12);以及api地址的type=5
-            id = id.Substring(12);
+            id = id[12..];
             var api = $"https://api.bilibili.com/x/v1/medialist/info?type=5&biz_id={id}&tid=0";
             var json = await GetWebSourceAsync(api);
             using var infoJson = JsonDocument.Parse(json);
             var data = infoJson.RootElement.GetProperty("data");
-            var listTitle = data.GetProperty("title").GetString();
-            var intro = data.GetProperty("intro").GetString();
+            var listTitle = data.GetProperty("title").GetString()!;
+            var intro = data.GetProperty("intro").GetString()!;
             string pubTime = data.GetProperty("ctime").ToString();
             pubTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc).AddSeconds(Convert.ToDouble(pubTime)).ToLocalTime().ToString();
 
-            List<Page> pagesInfo = new List<Page>();
+            List<Page> pagesInfo = new();
             bool hasMore = true;
             var oid = "";
             int index = 1;
@@ -45,16 +39,16 @@ namespace BBDown.Core.Fetcher
                 foreach (var m in data.GetProperty("media_list").EnumerateArray())
                 {
                     var pageCount = m.GetProperty("page").GetInt32();
-                    var desc = m.GetProperty("intro").GetString();
+                    var desc = m.GetProperty("intro").GetString()!;
                     var ownerName = m.GetProperty("upper").GetProperty("name").ToString();
                     var ownerMid = m.GetProperty("upper").GetProperty("mid").ToString();
                     foreach (var page in m.GetProperty("pages").EnumerateArray())
                     {
-                        Page p = new Page(index++,
+                        Page p = new(index++,
                         m.GetProperty("id").ToString(),
                         page.GetProperty("id").ToString(),
                         "", //epid
-                        pageCount == 1 ? m.GetProperty("title").ToString() : $"{m.GetProperty("title").ToString()}_P{page.GetProperty("page").ToString()}_{page.GetProperty("title")}", //单P使用外层标题 多P则拼接内层子标题
+                        pageCount == 1 ? m.GetProperty("title").ToString() : $"{m.GetProperty("title")}_P{page.GetProperty("page")}_{page.GetProperty("title")}", //单P使用外层标题 多P则拼接内层子标题
                         page.GetProperty("duration").GetInt32(),
                         page.GetProperty("dimension").GetProperty("width").ToString() + "x" + page.GetProperty("dimension").GetProperty("height").ToString(),
                         m.GetProperty("cover").ToString(),
@@ -68,13 +62,15 @@ namespace BBDown.Core.Fetcher
                 }
             }
 
-            var info = new VInfo();
-            info.Title = listTitle.Trim();
-            info.Desc = intro.Trim();
-            info.Pic = "";
-            info.PubTime = pubTime;
-            info.PagesInfo = pagesInfo;
-            info.IsBangumi = false;
+            var info = new VInfo
+            {
+                Title = listTitle.Trim(),
+                Desc = intro.Trim(),
+                Pic = "",
+                PubTime = pubTime,
+                PagesInfo = pagesInfo,
+                IsBangumi = false
+            };
 
             return info;
         }

@@ -1,41 +1,35 @@
 ﻿using ProtoBuf;
-using System;
-using System.Collections.Generic;
-using System.IO;
 using System.IO.Compression;
-using System.Linq;
-using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 using static BBDown.Core.Logger;
 
 namespace BBDown.Core
 {
     class AppHelper
     {
-        private static string API = "https://grpc.biliapi.net/bilibili.app.playurl.v1.PlayURL/PlayView";
-        private static string API2 = "https://app.bilibili.com/bilibili.pgc.gateway.player.v1.PlayURL/PlayView";
-        private static string dalvikVer = "2.1.0";
-        private static string osVer = "11";
-        private static string brand = "M2012K11AC";
-        private static string model = "Build/RKQ1.200826.002";
-        private static string appVer = "6.32.0";
-        private static int build = 6320200;
-        private static string channel = "xiaomi_cn_tv.danmaku.bili_zm20200902";
-        private static Network.Type networkType = Network.Type.Wifi;
-        private static string networkOid = "46007";
-        private static string cronet = "1.36.1";
-        private static string buvid = "";
-        private static string mobiApp = "android";
-        private static string appKey = "android64";
-        private static string sessionId = "dedf8669";
-        private static string platform = "android";
-        private static string env = "prod";
-        private static int appId = 1;
-        private static string region = "CN";
-        private static string language = "zh";
+        private static readonly string API = "https://grpc.biliapi.net/bilibili.app.playurl.v1.PlayURL/PlayView";
+        private static readonly string API2 = "https://app.bilibili.com/bilibili.pgc.gateway.player.v1.PlayURL/PlayView";
+        private static readonly string dalvikVer = "2.1.0";
+        private static readonly string osVer = "11";
+        private static readonly string brand = "M2012K11AC";
+        private static readonly string model = "Build/RKQ1.200826.002";
+        private static readonly string appVer = "6.32.0";
+        private static readonly int build = 6320200;
+        private static readonly string channel = "xiaomi_cn_tv.danmaku.bili_zm20200902";
+        private static readonly Network.Type networkType = Network.Type.Wifi;
+        private static readonly string networkOid = "46007";
+        private static readonly string cronet = "1.36.1";
+        private static readonly string buvid = "";
+        private static readonly string mobiApp = "android";
+        private static readonly string appKey = "android64";
+        private static readonly string sessionId = "dedf8669";
+        private static readonly string platform = "android";
+        private static readonly string env = "prod";
+        private static readonly int appId = 1;
+        private static readonly string region = "CN";
+        private static readonly string language = "zh";
 
         /// <summary>
         /// 发起请求并返回响应报文(protobuf -> json)
@@ -48,11 +42,11 @@ namespace BBDown.Core
         public static async Task<string> DoReqAsync(string aid, string cid, string epId, string qn, bool bangumi, bool onlyAvc, string appkey = "")
         {
             var headers = GetHeader(appkey);
-            LogDebug("App-Req-Headers: {0}", ConvertToString(headers));
+            LogDebug("App-Req-Headers: {0}", JsonSerializer.Serialize(headers, JsonContext.Default.DictionaryStringString));
             var body = GetPayload(Convert.ToInt64(aid), Convert.ToInt64(cid), Convert.ToInt64(qn), onlyAvc ? PlayViewReq.CodeType.Code264 : PlayViewReq.CodeType.Code265);
             //Console.WriteLine(ReadMessage<PlayViewReq>(body));
             var data = await GetPostResponseAsync(API, body, headers);
-            PlayViewReply resp = null;
+            PlayViewReply? resp;
             try
             {
                 resp = ReadMessage<PlayViewReply>(data);
@@ -75,7 +69,7 @@ namespace BBDown.Core
                     throw;
                 }
             }
-            LogDebug("PlayViewReplyPlain: {0}", ConvertToString(resp));
+            LogDebug("PlayViewReplyPlain: {0}", JsonSerializer.Serialize(resp, JsonContext.Default.PlayViewReply));
             return ConvertToDashJson(resp);
         }
 
@@ -144,23 +138,25 @@ namespace BBDown.Core
                 )
             );
 
-            return ConvertToString(json);
+            return JsonSerializer.Serialize(json, JsonContext.Default.DashJson);
         }
 
         private static byte[] GetPayload(long aid, long cid, long qn, PlayViewReq.CodeType codec)
         {
-            var obj = new PlayViewReq();
-            obj.epId = aid;
-            obj.Cid = cid;
-            //obj.Qn = qn;
-            obj.Qn = 126;
-            obj.Fnval = 976;
-            obj.Spmid = "main.ugc-video-detail.0.0";
-            obj.fromSpmid = "main.my-history.0.0";
-            obj.preferCodecType = codec;
-            obj.Download = 0; //0:播放 1:flv下载 2:dash下载
-            obj.forceHost = 2; //0:允许使用ip 1:使用http 2:使用https
-            LogDebug("PayLoadPlain: {0}", ConvertToString(obj));
+            var obj = new PlayViewReq
+            {
+                epId = aid,
+                Cid = cid,
+                //obj.Qn = qn;
+                Qn = 126,
+                Fnval = 976,
+                Spmid = "main.ugc-video-detail.0.0",
+                fromSpmid = "main.my-history.0.0",
+                preferCodecType = codec,
+                Download = 0, //0:播放 1:flv下载 2:dash下载
+                forceHost = 2 //0:允许使用ip 1:使用http 2:使用https
+            };
+            LogDebug("PayLoadPlain: {0}", JsonSerializer.Serialize(obj, JsonContext.Default.PlayViewReq));
             return PackMessage(ObjectToBytes(obj));
         }
 
@@ -190,54 +186,66 @@ namespace BBDown.Core
 
         private static string GenerateLocaleBin()
         {
-            var obj = new Locale();
-            obj.cLocale = new Locale.LocaleIds();
-            obj.cLocale.Language = language;
-            obj.cLocale.Region = region;
+            var obj = new Locale
+            {
+                cLocale = new Locale.LocaleIds
+                {
+                    Language = language,
+                    Region = region
+                }
+            };
             return SerializeToBase64(obj);
         }
 
         private static string GenerateNetworkBin()
         {
-            var obj = new Network();
-            obj.type = networkType;
-            obj.Oid = networkOid;
+            var obj = new Network
+            {
+                type = networkType,
+                Oid = networkOid
+            };
             return SerializeToBase64(obj);
         }
 
         private static string GenerateDeviceBin()
         {
-            var obj = new Device();
-            obj.appId = appId;
-            obj.Build = build;
-            obj.Buvid = buvid;
-            obj.mobiApp = mobiApp;
-            obj.Platform = platform;
-            obj.Channel = channel;
-            obj.Brand = brand;
-            obj.Model = model;
-            obj.Osver = osVer;
+            var obj = new Device
+            {
+                appId = appId,
+                Build = build,
+                Buvid = buvid,
+                mobiApp = mobiApp,
+                Platform = platform,
+                Channel = channel,
+                Brand = brand,
+                Model = model,
+                Osver = osVer
+            };
             return SerializeToBase64(obj);
         }
 
         private static string GenerateMetadataBin(string appkey)
         {
-            var obj = new Metadata();
-            obj.accessKey = appkey;
-            obj.mobiApp = mobiApp;
-            obj.Build = build;
-            obj.Channel = channel;
-            obj.Buvid = buvid;
-            obj.Platform = platform;
+            var obj = new Metadata
+            {
+                accessKey = appkey,
+                mobiApp = mobiApp,
+                Build = build,
+                Channel = channel,
+                Buvid = buvid,
+                Platform = platform
+            };
             return SerializeToBase64(obj);
         }
 
         private static string GenerateFawkesReqBin()
         {
-            var obj = new FawkesReq();
-            obj.Appkey = appKey;
-            obj.Env = env;
-            obj.sessionId = sessionId;
+            var obj = new FawkesReq
+            {
+                Appkey = appKey,
+                Env = env,
+                sessionId = sessionId
+            };
             return SerializeToBase64(obj);
         }
 
@@ -246,13 +254,11 @@ namespace BBDown.Core
         /// </summary>
         /// <param name="obj"></param>
         /// <returns></returns>
-        private static byte[] ObjectToBytes(object obj)
+        private static byte[] ObjectToBytes<T>(T obj)
         {
-            using (var stream = new MemoryStream())
-            {
-                Serializer.Serialize(stream, obj);
-                return stream.ToArray();
-            }
+            using var stream = new MemoryStream();
+            Serializer.Serialize(stream, obj);
+            return stream.ToArray();
         }
 
         /// <summary>
@@ -260,22 +266,12 @@ namespace BBDown.Core
         /// </summary>
         /// <param name="obj"></param>
         /// <returns></returns>
-        private static string SerializeToBase64(object obj)
+        private static string SerializeToBase64<T>(T obj)
         {
             return Convert.ToBase64String(ObjectToBytes(obj)).TrimEnd('=');
         }
 
         #endregion
-
-        /// <summary>
-        /// 对象转字符串(json)
-        /// </summary>
-        /// <param name="obj"></param>
-        /// <returns></returns>
-        private static string ConvertToString(object obj)
-        {
-            return JsonSerializer.Serialize(obj);
-        }
 
         /// <summary>
         /// 读取gRPC响应流 通过前5字节信息 解析/解压后面的报文体
@@ -287,11 +283,7 @@ namespace BBDown.Core
             byte first;
             int size;
             (first, size) = ReadInfo(data);
-            if (first == 1)
-            {
-                return GzipDecompress(data.Skip(5).ToArray());
-            }
-            return data.Skip(5).Take(size).ToArray();
+            return first == 1 ? GzipDecompress(data.Skip(5).ToArray()) : data.Skip(5).Take(size).ToArray();
         }
 
         /// <summary>
@@ -314,16 +306,12 @@ namespace BBDown.Core
         /// <returns></returns>
         private static (byte first, int size) ReadInfo(byte[] data)
         {
-            using (var stream = new MemoryStream(data.Take(5).ToArray()))
-            {
-                using (var reader = new BinaryReader(stream))
-                {
-                    var value1 = reader.ReadByte();
-                    var value2 = reader.ReadBytes(4);
+            using var stream = new MemoryStream(data.Take(5).ToArray());
+            using var reader = new BinaryReader(stream);
+            var value1 = reader.ReadByte();
+            var value2 = reader.ReadBytes(4);
 
-                    return (value1, BitConverter.ToInt32(value2.Reverse().ToArray()));
-                }
-            }
+            return (value1, BitConverter.ToInt32(value2.Reverse().ToArray()));
         }
 
         /// <summary>
@@ -333,18 +321,16 @@ namespace BBDown.Core
         /// <returns></returns>
         private static byte[] PackMessage(byte[] input)
         {
-            using (var stream = new MemoryStream())
+            using var stream = new MemoryStream();
+            using (var writer = new BinaryWriter(stream))
             {
-                using (var writer = new BinaryWriter(stream))
-                {
-                    var comp = GzipCompress(input);
-                    var reverse = BitConverter.GetBytes(comp.Length).Reverse().ToArray();
-                    writer.Write((byte)1);
-                    writer.Write(reverse);
-                    writer.Write(comp);
-                }
-                return stream.ToArray();
+                var comp = GzipCompress(input);
+                var reverse = BitConverter.GetBytes(comp.Length).Reverse().ToArray();
+                writer.Write((byte)1);
+                writer.Write(reverse);
+                writer.Write(comp);
             }
+            return stream.ToArray();
         }
 
         /// <summary>
@@ -354,14 +340,12 @@ namespace BBDown.Core
         /// <returns></returns>
         private static byte[] GzipCompress(byte[] data)
         {
-            using (var output = new MemoryStream())
+            using var output = new MemoryStream();
+            using (var comp = new GZipStream(output, CompressionMode.Compress))
             {
-                using (var comp = new GZipStream(output, CompressionMode.Compress))
-                {
-                    comp.Write(data, 0, data.Length);
-                }
-                return output.ToArray();
+                comp.Write(data, 0, data.Length);
             }
+            return output.ToArray();
         }
 
         /// <summary>
@@ -371,27 +355,23 @@ namespace BBDown.Core
         /// <returns></returns>
         private static byte[] GzipDecompress(byte[] data)
         {
-            using (var output = new MemoryStream())
+            using var output = new MemoryStream();
+            using (var input = new MemoryStream(data))
             {
-                using (var input = new MemoryStream(data))
-                {
-                    using (var decomp = new GZipStream(input, CompressionMode.Decompress))
-                    {
-                        decomp.CopyTo(output);
-                    }
-                }
-                return output.ToArray();
+                using var decomp = new GZipStream(input, CompressionMode.Decompress);
+                decomp.CopyTo(output);
             }
+            return output.ToArray();
         }
 
         public static async Task<byte[]> GetPostResponseAsync(string Url, byte[] postData, Dictionary<string, string> headers)
         {
             LogDebug("Post to: {0}, data: {1}", Url, Convert.ToBase64String(postData));
 
-            ByteArrayContent content = new ByteArrayContent(postData);
+            ByteArrayContent content = new(postData);
             content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/grpc");
 
-            HttpRequestMessage request = new HttpRequestMessage()
+            HttpRequestMessage request = new()
             {
                 RequestUri = new Uri(Url),
                 Method = HttpMethod.Post,
@@ -409,6 +389,13 @@ namespace BBDown.Core
             return bytes;
         }
     }
+
+
+    [JsonSerializable(typeof(DashJson))]
+    [JsonSerializable(typeof(PlayViewReq))]
+    [JsonSerializable(typeof(PlayViewReply))]
+    [JsonSerializable(typeof(Dictionary<string, string>))]
+    internal partial class JsonContext : JsonSerializerContext { }
 
     internal class AudioInfoWithCodecName
     {
@@ -432,7 +419,7 @@ namespace BBDown.Core
             Codecs = codecs;
         }
 
-        public override bool Equals(object obj) => obj is AudioInfoWithCodecName other && Id == other.Id && BaseUrl == other.BaseUrl && BackupUrl.SequenceEqual(other.BackupUrl) && Bandwidth == other.Bandwidth && Codecs == other.Codecs;
+        public override bool Equals(object? obj) => obj is AudioInfoWithCodecName other && Id == other.Id && BaseUrl == other.BaseUrl && BackupUrl.SequenceEqual(other.BackupUrl) && Bandwidth == other.Bandwidth && Codecs == other.Codecs;
         public override int GetHashCode() => HashCode.Combine(Id, BaseUrl, BackupUrl, Bandwidth, Codecs);
     }
 
@@ -455,7 +442,7 @@ namespace BBDown.Core
             Codecid = codecid;
         }
 
-        public override bool Equals(object obj) => obj is AudioInfoWitCodecId other && Id == other.Id && BaseUrl == other.BaseUrl && Bandwidth == other.Bandwidth && Codecid == other.Codecid;
+        public override bool Equals(object? obj) => obj is AudioInfoWitCodecId other && Id == other.Id && BaseUrl == other.BaseUrl && Bandwidth == other.Bandwidth && Codecid == other.Codecid;
         public override int GetHashCode() => HashCode.Combine(Id, BaseUrl, Bandwidth, Codecid);
     }
 
@@ -472,7 +459,7 @@ namespace BBDown.Core
             Audio = audio;
         }
 
-        public override bool Equals(object obj) => obj is DashInfo other && EqualityComparer<List<object>>.Default.Equals(Video, other.Video) && EqualityComparer<List<object>>.Default.Equals(Audio, other.Audio);
+        public override bool Equals(object? obj) => obj is DashInfo other && EqualityComparer<List<object>>.Default.Equals(Video, other.Video) && EqualityComparer<List<object>>.Default.Equals(Audio, other.Audio);
         public override int GetHashCode() => HashCode.Combine(Video, Audio);
     }
 
@@ -489,7 +476,7 @@ namespace BBDown.Core
             Dash = dash;
         }
 
-        public override bool Equals(object obj) => obj is DashData other && TimeLength == other.TimeLength && EqualityComparer<DashInfo>.Default.Equals(Dash, other.Dash);
+        public override bool Equals(object? obj) => obj is DashData other && TimeLength == other.TimeLength && EqualityComparer<DashInfo>.Default.Equals(Dash, other.Dash);
         public override int GetHashCode() => HashCode.Combine(TimeLength, Dash);
     }
 
@@ -512,7 +499,7 @@ namespace BBDown.Core
             Data = data;
         }
 
-        public override bool Equals(object obj) => obj is DashJson other && Code == other.Code && Message == other.Message && Ttl == other.Ttl && EqualityComparer<DashData>.Default.Equals(Data, other.Data);
+        public override bool Equals(object? obj) => obj is DashJson other && Code == other.Code && Message == other.Message && Ttl == other.Ttl && EqualityComparer<DashData>.Default.Equals(Data, other.Data);
         public override int GetHashCode() => HashCode.Combine(Code, Message, Ttl, Data);
     }
 }

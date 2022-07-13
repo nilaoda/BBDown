@@ -1,25 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
+﻿using System.Text;
 using static BBDown.Core.Entity.Entity;
 using static BBDown.Core.Util.HTTPUtil;
 using System.Text.RegularExpressions;
 using System.Text.Json;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace BBDown.Core.Util
 {
-    public class SubUtil
+    public partial class SubUtil
     {
         //https://i0.hdslb.com/bfs/subtitle/subtitle_lan.json
         public static (string, string) GetSubtitleCode(string key)
         {
             //zh-hans => zh-Hans
-            if (Regex.IsMatch(key, "-[a-z]"))
+            if (NonCapsRegex().Match(key) is { Success: true } result)
             {
-                var v = Regex.Match(key, "-[a-z]").Value;
+                var v = result.Value;
                 key = key.Replace(v, v.ToUpper());
             }
 
@@ -219,7 +214,7 @@ namespace BBDown.Core.Util
 
         public static async Task<List<Subtitle>> GetSubtitlesAsync(string aid, string cid, string epId, bool intl)
         {
-            List<Subtitle> subtitles = new List<Subtitle>();
+            List<Subtitle> subtitles = new();
             if (intl)
             {
                 try
@@ -230,10 +225,14 @@ namespace BBDown.Core.Util
                     var subs = infoJson.RootElement.GetProperty("data").GetProperty("subtitles").EnumerateArray();
                     foreach (var sub in subs)
                     {
-                        Subtitle subtitle = new Subtitle();
-                        subtitle.url = sub.GetProperty("url").ToString();
-                        subtitle.lan = sub.GetProperty("lang_key").ToString();
-                        subtitle.path = $"{aid}/{aid}.{cid}.{subtitle.lan}{(subtitle.url.Contains(".json") ? ".srt" : ".ass")}";
+                        var lan = sub.GetProperty("lang_key").ToString();
+                        var url = sub.GetProperty("url").ToString();
+                        Subtitle subtitle = new()
+                        {
+                            url = url,
+                            lan = lan,
+                            path = $"{aid}/{aid}.{cid}.{lan}{(url.Contains(".json") ? ".srt" : ".ass")}"
+                        };
                         subtitles.Add(subtitle);
                     }
                     return subtitles;
@@ -249,10 +248,13 @@ namespace BBDown.Core.Util
                 var subs = infoJson.RootElement.GetProperty("data").GetProperty("subtitle").GetProperty("list").EnumerateArray();
                 foreach (var sub in subs)
                 {
-                    Subtitle subtitle = new Subtitle();
-                    subtitle.url = sub.GetProperty("subtitle_url").ToString();
-                    subtitle.lan = sub.GetProperty("lan").ToString();
-                    subtitle.path = $"{aid}/{aid}.{cid}.{subtitle.lan}.srt";
+                    var lan = sub.GetProperty("lan").ToString();
+                    Subtitle subtitle = new()
+                    {
+                        url = sub.GetProperty("subtitle_url").ToString(),
+                        lan = lan,
+                        path = $"{aid}/{aid}.{cid}.{lan}.srt"
+                    };
                     subtitles.Add(subtitle);
                 }
                 //无字幕片源 但是字幕没上导致的空列表，尝试从国际接口获取
@@ -274,30 +276,32 @@ namespace BBDown.Core.Util
                     byte[] data = new byte[18];
                     data[0] = 0x0; data[1] = 0x0; data[2] = 0x0; data[3] = 0x0; data[4] = 0xD; //先固定死了
                     int i = 5;
-                    data[i++] = Convert.ToByte(1 << 3 | 0); // index=1
+                    data[i++] = Convert.ToByte((1 << 3) | 0); // index=1
                     while ((_aid & -128) != 0)
                     {
                         data[i++] = Convert.ToByte((_aid & 127) | 128);
-                        _aid = _aid >> 7;
+                        _aid >>= 7;
                     }
                     data[i++] = Convert.ToByte(_aid);
-                    data[i++] = Convert.ToByte(2 << 3 | 0); // index=2
+                    data[i++] = Convert.ToByte((2 << 3) | 0); // index=2
                     while ((_cid & -128) != 0)
                     {
                         data[i++] = Convert.ToByte((_cid & 127) | 128);
-                        _cid = _cid >> 7;
+                        _cid >>= 7;
                     }
                     data[i++] = Convert.ToByte(_cid);
-                    data[i++] = Convert.ToByte(3 << 3 | 0); // index=3
+                    data[i++] = Convert.ToByte((3 << 3) | 0); // index=3
                     data[i++] = Convert.ToByte(_type);
                     string t = await GetPostResponseAsync(api, data);
-                    Regex reg = new Regex("(zh-Han[st]).*?(http.*?\\.json)");
-                    foreach (Match m in reg.Matches(t))
+                    Regex reg = CnJsonRegex();
+                    foreach (Match m in reg.Matches(t).Cast<Match>())
                     {
-                        Subtitle subtitle = new Subtitle();
-                        subtitle.url = m.Groups[2].Value;
-                        subtitle.lan = m.Groups[1].Value;
-                        subtitle.path = $"{aid}/{aid}.{cid}.{subtitle.lan}.srt";
+                        Subtitle subtitle = new()
+                        {
+                            url = m.Groups[2].Value,
+                            lan = m.Groups[1].Value,
+                            path = $"{aid}/{aid}.{cid}.{m.Groups[1].Value}.srt"
+                        };
                         subtitles.Add(subtitle);
                     }
                     return subtitles;
@@ -316,16 +320,14 @@ namespace BBDown.Core.Util
 
         private static string ConvertSubFromJson(string jsonString)
         {
-            StringBuilder lines = new StringBuilder();
+            StringBuilder lines = new();
             var json = JsonDocument.Parse(jsonString);
             var sub = json.RootElement.GetProperty("body").EnumerateArray().ToList();
             for(int i = 0; i < sub.Count; i++)
             {
                 var line = sub[i];
                 lines.AppendLine((i + 1).ToString());
-                JsonElement from;
-                JsonElement content;
-                if (line.TryGetProperty("from", out from)) 
+                if (line.TryGetProperty("from", out JsonElement from))
                 {
                     lines.AppendLine($"{FormatTime(from.ToString())} --> {FormatTime(line.GetProperty("to").ToString())}");
                 }
@@ -334,7 +336,7 @@ namespace BBDown.Core.Util
                     lines.AppendLine($"{FormatTime("0")} --> {FormatTime(line.GetProperty("to").ToString())}");
                 }
                 //有的没有内容
-                if (line.TryGetProperty("content", out content))
+                if (line.TryGetProperty("content", out JsonElement content))
                     lines.AppendLine(content.ToString());
                 lines.AppendLine();
             }
@@ -344,14 +346,17 @@ namespace BBDown.Core.Util
         private static string FormatTime(string sec) //64.13
         {
             string[] v = { sec, "" };
-            if (sec.Contains("."))
+            if (sec.Contains('.'))
                 v = sec.Split('.');
-            v[1] = v[1].PadRight(3, '0').Substring(0, 3);
-            int secs = Convert.ToInt32(v[0]);
-            TimeSpan ts = new TimeSpan(0, 0, secs);
-            string str = "";
-            str = ts.Hours.ToString("00") + ":" + ts.Minutes.ToString("00") + ":" + ts.Seconds.ToString("00") + "," + v[1];
+            v[1] = v[1].PadRight(3, '0')[..3];
+            TimeSpan ts = new(0, 0, Convert.ToInt32(v[0]));
+            string str = ts.Hours.ToString("00") + ":" + ts.Minutes.ToString("00") + ":" + ts.Seconds.ToString("00") + "," + v[1];
             return str;
         }
+
+        [RegexGenerator("-[a-z]")]
+        private static partial Regex NonCapsRegex();
+        [RegexGenerator("(zh-Han[st]).*?(http.*?\\.json)")]
+        private static partial Regex CnJsonRegex();
     }
 }
