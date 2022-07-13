@@ -1,17 +1,12 @@
 ﻿using BBDown.Core.Entity;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using static BBDown.Core.Entity.Entity;
 using static BBDown.Core.Util.HTTPUtil;
 
 namespace BBDown.Core.Fetcher
 {
-    public class NormalInfoFetcher : IFetcher
+    public partial class NormalInfoFetcher : IFetcher
     {
         public async Task<VInfo> FetchAsync(string id)
         {
@@ -30,10 +25,10 @@ namespace BBDown.Core.Fetcher
             bool bangumi = false;
 
             var pages = data.GetProperty("pages").EnumerateArray().ToList();
-            List<Page> pagesInfo = new List<Page>();
+            List<Page> pagesInfo = new();
             foreach (var page in pages)
             {
-                Page p = new Page(page.GetProperty("page").GetInt32(),
+                Page p = new(page.GetProperty("page").GetInt32(),
                     id,
                     page.GetProperty("cid").ToString(),
                     "", //epid
@@ -53,7 +48,7 @@ namespace BBDown.Core.Fetcher
                 if (data.GetProperty("redirect_url").ToString().Contains("bangumi"))
                 {
                     bangumi = true;
-                    string epId = Regex.Match(data.GetProperty("redirect_url").ToString(), "ep(\\d+)").Groups[1].Value;
+                    string epId = EpIdRegex().Match(data.GetProperty("redirect_url").ToString()).Groups[1].Value;
                     //番剧内容通常不会有分P，如果有分P则不需要epId参数
                     if (pages.Count == 1)
                     {
@@ -63,15 +58,20 @@ namespace BBDown.Core.Fetcher
             }
             catch { }
 
-            var info = new VInfo();
-            info.Title = title.Trim();
-            info.Desc = desc.Trim();
-            info.Pic = pic;
-            info.PubTime = pubTime;
-            info.PagesInfo = pagesInfo;
-            info.IsBangumi = bangumi;
+            var info = new VInfo
+            {
+                Title = title.Trim(),
+                Desc = desc.Trim(),
+                Pic = pic,
+                PubTime = pubTime,
+                PagesInfo = pagesInfo,
+                IsBangumi = bangumi
+            };
 
             return info;
         }
+
+        [RegexGenerator("ep(\\d+)")]
+        private static partial Regex EpIdRegex();
     }
 }

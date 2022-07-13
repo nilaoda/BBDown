@@ -12,7 +12,7 @@ namespace BBDown.Core
         private const double MOVE_SPEND_TIME = 8.00;    //单条条滚动弹幕存在时间（控制速度）
         private const double TOP_SPEND_TIME = 4.00;     //单条顶部或底部弹幕存在时间
         private const int PROTECT_LENGTH = 50;          //滚动弹幕屏占百分比
-        public static readonly DanmakuComparer comparer = new DanmakuComparer();
+        public static readonly DanmakuComparer comparer = new();
 
         /*public static async Task DownloadAsync(Page p, string xmlPath, bool aria2c, string aria2cProxy)
         {
@@ -20,12 +20,14 @@ namespace BBDown.Core
             await DownloadFile(danmakuUrl, xmlPath, aria2c, aria2cProxy);
         }*/
 
-        public static DanmakuItem[] ParseXml(string xmlPath)
+        public static DanmakuItem[]? ParseXml(string xmlPath)
         {
             // 解析xml文件
-            XmlDocument xmlFile = new XmlDocument();
-            XmlReaderSettings settings = new XmlReaderSettings();
-            settings.IgnoreComments = true;//忽略文档里面的注释
+            XmlDocument xmlFile = new();
+            XmlReaderSettings settings = new()
+            {
+                IgnoreComments = true//忽略文档里面的注释
+            };
             var danmakus = new List<DanmakuItem>();
             using (var reader = XmlReader.Create(xmlPath, settings))
 			{
@@ -92,25 +94,19 @@ namespace BBDown.Core
             sb.AppendLine("[Events]");
             sb.AppendLine("Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text");
             
-            PositionController controller = new PositionController();   // 弹幕位置控制器
+            PositionController controller = new();   // 弹幕位置控制器
             Array.Sort(danmakus, comparer);
             foreach (DanmakuItem danmaku in danmakus)
             {
-                int height = controller.updatePosition(danmaku.DanmakuMode, danmaku.Second, danmaku.Content.Length);
+                int height = controller.UpdatePosition(danmaku.DanmakuMode, danmaku.Second, danmaku.Content.Length);
                 if (height == -1) continue;
                 string effect = "";
-                switch (danmaku.DanmakuMode)
+                effect += danmaku.DanmakuMode switch
                 {
-                    case 3:
-                        effect += $"\\an8\\pos({MONITOR_WIDTH / 2}, {MONITOR_HEIGHT - FONT_SIZE - height})";
-                        break;
-                    case 2:
-                        effect += $"\\an8\\pos({MONITOR_WIDTH / 2}, {height})";
-                        break;
-                    default:
-                        effect += $"\\move({MONITOR_WIDTH}, {height}, {-danmaku.Content.Length * FONT_SIZE}, {height})";
-                        break;
-                }
+                    3 => $"\\an8\\pos({MONITOR_WIDTH / 2}, {MONITOR_HEIGHT - FONT_SIZE - height})",
+                    2 => $"\\an8\\pos({MONITOR_WIDTH / 2}, {height})",
+                    _ => $"\\move({MONITOR_WIDTH}, {height}, {-danmaku.Content.Length * FONT_SIZE}, {height})",
+                };
                 if (danmaku.Color != "FFFFFF")
                 {
                     effect += $"\\c&{danmaku.Color}&";
@@ -123,11 +119,12 @@ namespace BBDown.Core
 
         protected class PositionController
         {
-            int maxLine = MONITOR_HEIGHT * PROTECT_LENGTH / FONT_SIZE / 100;    //总行数
-            // 三个位置的弹幕队列，记录弹幕结束时间
-            List<double> moveQueue = new List<double>();
-            List<double> topQueue = new List<double>();
-            List<double> bottomQueue = new List<double>();
+            readonly int maxLine = MONITOR_HEIGHT * PROTECT_LENGTH / FONT_SIZE / 100;    //总行数
+                                                                                        // 三个位置的弹幕队列，记录弹幕结束时间
+
+            readonly List<double> moveQueue = new();
+            readonly List<double> topQueue = new();
+            readonly List<double> bottomQueue = new();
 
             public PositionController()
             {
@@ -139,7 +136,7 @@ namespace BBDown.Core
                 }
             }
 
-            public int updatePosition(int type, double time, int length)
+            public int UpdatePosition(int type, double time, int length)
             {
                 // 获取可用位置
                 List<double> vs;
@@ -155,7 +152,7 @@ namespace BBDown.Core
                 else
                 {
                     vs = moveQueue;
-                    displayTime = MOVE_SPEND_TIME * (length + 5) * FONT_SIZE / (MONITOR_WIDTH + length * MOVE_SPEND_TIME);
+                    displayTime = MOVE_SPEND_TIME * (length + 5) * FONT_SIZE / (MONITOR_WIDTH + (length * MOVE_SPEND_TIME));
                 }
                 for (int i = 0; i < maxLine; i++)
                 {
@@ -173,24 +170,18 @@ namespace BBDown.Core
         {
             public DanmakuItem(string[] attrs, string content)
             {
-                switch (attrs[1])
+                DanmakuMode = attrs[1] switch
                 {
-                    case "4":
-                        DanmakuMode = POS_BOTTOM;
-                        break;
-                    case "5":
-                        DanmakuMode = POS_TOP;
-                        break;
-                    default:
-                        DanmakuMode = POS_MOVE;
-                        break;
-                }
+                    "4" => POS_BOTTOM,
+                    "5" => POS_TOP,
+                    _ => POS_MOVE,
+                };
                 try
                 {
                     double second = double.Parse(attrs[0]);
                     Second = second;
-                    StartTime = computeTime(second);
-                    EndTime = computeTime(second + (DanmakuMode == 1 ? MOVE_SPEND_TIME : TOP_SPEND_TIME));
+                    StartTime = ComputeTime(second);
+                    EndTime = ComputeTime(second + (DanmakuMode == 1 ? MOVE_SPEND_TIME : TOP_SPEND_TIME));
                 }
                 catch (Exception e)
                 {
@@ -209,11 +200,11 @@ namespace BBDown.Core
                 Timestamp = attrs[4];
                 Content = content;
             }
-            private string computeTime(double second)
+            private static string ComputeTime(double second)
             {
                 int hour = (int)second / 3600;
-                int minute = (int)(second - hour * 3600) / 60;
-                second -= hour * 3600 + minute * 60;
+                int minute = (int)(second - (hour * 3600)) / 60;
+                second -= (hour * 3600) + (minute * 60);
                 return hour.ToString() + string.Format(":{0:D2}:", minute) + string.Format("{0:00.00}", second);
             }
             public string Content { get; set; } = "";

@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Diagnostics.CodeAnalysis;
 
 namespace BBDown.Core.Entity
 {
@@ -8,19 +6,20 @@ namespace BBDown.Core.Entity
     {
         public class Page
         {
-            public int index;
-            public string aid;
-            public string cid;
-            public string epid;
-            public string title;
-            public int dur;
-            public string res;
-            public string cover;
-            public string desc;
-            public string ownerName;
-            public string ownerMid;
-            public List<ViewPoint> points = new List<ViewPoint>();
+            public required int index;
+            public required string aid;
+            public required string cid;
+            public required string epid;
+            public required string title;
+            public required int dur;
+            public required string res;
+            public string? cover;
+            public string? desc;
+            public string? ownerName;
+            public string? ownerMid;
+            public List<ViewPoint> points = new();
 
+            [SetsRequiredMembers]
             public Page(int index, string aid, string cid, string epid, string title, int dur, string res)
             {
                 this.aid = aid;
@@ -32,6 +31,7 @@ namespace BBDown.Core.Entity
                 this.res = res;
             }
 
+            [SetsRequiredMembers]
             public Page(int index, string aid, string cid, string epid, string title, int dur, string res, string cover)
             {
                 this.aid = aid;
@@ -44,6 +44,7 @@ namespace BBDown.Core.Entity
                 this.cover = cover;
             }
 
+            [SetsRequiredMembers]
             public Page(int index, string aid, string cid, string epid, string title, int dur, string res, string cover, string desc)
             {
                 this.aid = aid;
@@ -57,6 +58,7 @@ namespace BBDown.Core.Entity
                 this.desc = desc;
             }
 
+            [SetsRequiredMembers]
             public Page(int index, string aid, string cid, string epid, string title, int dur, string res, string cover, string desc, string ownerName, string ownerMid)
             {
                 this.aid = aid;
@@ -72,6 +74,7 @@ namespace BBDown.Core.Entity
                 this.ownerMid = ownerMid;
             }
 
+            [SetsRequiredMembers]
             public Page(int index, Page page)
             {
                 this.index = index;
@@ -86,7 +89,7 @@ namespace BBDown.Core.Entity
                 this.ownerMid = page.ownerMid;
             }
 
-            public override bool Equals(object obj)
+            public override bool Equals(object? obj)
             {
                 return obj is Page page &&
                        aid == page.aid &&
@@ -102,24 +105,24 @@ namespace BBDown.Core.Entity
 
         public class ViewPoint
         {
-            public string title;
-            public int start;
-            public int end;
+            public required string title;
+            public required int start;
+            public required int end;
         }
 
         public class Video
         {
-            public string id;
-            public string dfn;
-            public string baseUrl;
-            public string res;
-            public string fps;
-            public string codecs;
+            public required string id;
+            public required string dfn;
+            public required string baseUrl;
+            public string? res;
+            public string? fps;
+            public required string codecs;
             public long bandwith;
             public int dur;
             public double size;
 
-            public override bool Equals(object obj)
+            public override bool Equals(object? obj)
             {
                 return obj is Video video &&
                        id == video.id &&
@@ -139,14 +142,14 @@ namespace BBDown.Core.Entity
 
         public class Audio
         {
-            public string id;
-            public string dfn;
-            public string baseUrl;
-            public string codecs;
-            public long bandwith;
-            public int dur;
+            public required string id;
+            public required string dfn;
+            public required string baseUrl;
+            public required string codecs;
+            public required long bandwith;
+            public required int dur;
 
-            public override bool Equals(object obj)
+            public override bool Equals(object? obj)
             {
                 return obj is Audio audio &&
                        id == audio.id &&
@@ -164,16 +167,16 @@ namespace BBDown.Core.Entity
 
         public class Subtitle
         {
-            public string lan;
-            public string url;
-            public string path;
+            public required string lan;
+            public required string url;
+            public required string path;
         }
 
         public class Clip
         {
-            public int index;
-            public long from;
-            public long to;
+            public required int index;
+            public required long from;
+            public required long to;
         }
     }
 }

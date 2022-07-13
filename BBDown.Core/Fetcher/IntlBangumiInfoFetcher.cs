@@ -1,21 +1,16 @@
 ﻿using BBDown.Core.Entity;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using static BBDown.Core.Entity.Entity;
 using static BBDown.Core.Util.HTTPUtil;
 
 namespace BBDown.Core.Fetcher
 {
-    public class IntlBangumiInfoFetcher : IFetcher
+    public partial class IntlBangumiInfoFetcher : IFetcher
     {
         public async Task<VInfo> FetchAsync(string id)
         {
-            id = id.Substring(3);
+            id = id[3..];
             string index = "";
             //string api = $"https://api.global.bilibili.com/intl/gateway/ogv/m/view?ep_id={id}&s_locale=ja_JP";
             string api = $"https://api.bilibili.tv/intl/gateway/v2/ogv/view/app/season?ep_id={id}&platform=android&s_locale=zh_SG&mobi_app=bstar_a" + (Config.TOKEN != "" ? $"&access_key={Config.TOKEN}" : "");
@@ -34,7 +29,7 @@ namespace BBDown.Core.Fetcher
                 var web = await GetWebSourceAsync(animeUrl);
                 if (web != "")
                 {
-                    Regex regex = new Regex("window.__INITIAL_STATE__=([\\s\\S].*?);\\(function\\(\\)");
+                    Regex regex = StateRegex();
                     string _json = regex.Match(web).Groups[1].Value;
                     using var _tempJson = JsonDocument.Parse(_json);
                     cover = _tempJson.RootElement.GetProperty("mediaInfo").GetProperty("cover").ToString();
@@ -49,11 +44,10 @@ namespace BBDown.Core.Fetcher
             {
                 pages = result.GetProperty("episodes").EnumerateArray().ToList();
             }
-            List<Page> pagesInfo = new List<Page>();
+            List<Page> pagesInfo = new();
             int i = 1;
 
-            JsonElement modules;
-            if (result.TryGetProperty("modules", out modules))
+            if (result.TryGetProperty("modules", out JsonElement modules))
             {
                 foreach (var section in modules.EnumerateArray())
                 {
@@ -89,8 +83,7 @@ namespace BBDown.Core.Fetcher
             foreach (var page in pages)
             {
                 //跳过预告
-                JsonElement badge;
-                if (page.TryGetProperty("badge", out badge) && badge.ToString() == "预告") continue;
+                if (page.TryGetProperty("badge", out JsonElement badge) && badge.ToString() == "预告") continue;
                 string res = "";
                 try
                 {
@@ -99,7 +92,7 @@ namespace BBDown.Core.Fetcher
                 catch (Exception) { }
                 string _title = page.GetProperty("title").ToString() + " " + page.GetProperty("long_title").ToString();
                 _title = _title.Trim();
-                Page p = new Page(i++,
+                Page p = new(i++,
                     page.GetProperty("aid").ToString(),
                     page.GetProperty("cid").ToString(),
                     page.GetProperty("id").ToString(),
@@ -110,17 +103,22 @@ namespace BBDown.Core.Fetcher
             }
 
 
-            var info = new VInfo();
-            info.Title = title.Trim();
-            info.Desc = desc.Trim();
-            info.Pic = cover;
-            info.PubTime = pubTime;
-            info.PagesInfo = pagesInfo;
-            info.IsBangumi = true;
-            info.IsCheese = true;
-            info.Index = index;
+            var info = new VInfo
+            {
+                Title = title.Trim(),
+                Desc = desc.Trim(),
+                Pic = cover,
+                PubTime = pubTime,
+                PagesInfo = pagesInfo,
+                IsBangumi = true,
+                IsCheese = true,
+                Index = index
+            };
 
             return info;
         }
+
+        [RegexGenerator("window.__INITIAL_STATE__=([\\s\\S].*?);\\(function\\(\\)")]
+        private static partial Regex StateRegex();
     }
 }

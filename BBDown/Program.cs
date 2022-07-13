@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.CommandLine;
-using System.CommandLine.Invocation;
 using System.CommandLine.Parsing;
 using System.IO;
 using System.Net;
@@ -21,49 +20,77 @@ using System.Text.RegularExpressions;
 using BBDown.Core;
 using BBDown.Core.Util;
 using BBDown.Core.Fetcher;
+using System.Text.Json.Serialization;
+using System.CommandLine.Binding;
 
 namespace BBDown
 {
-    class Program
+    partial class Program
     {
-        private static string BACKUP_HOST = "upos-sz-mirrorcoso1.bilivideo.com";
+        private static readonly string BACKUP_HOST = "upos-sz-mirrorcoso1.bilivideo.com";
         public static string SinglePageDefaultSavePath { get; set; } = "<videoTitle>";
         public static string MultiPageDefaultSavePath { get; set; } = "<videoTitle>/[P<pageNumberWithZero>]<pageTitle>";
 
-        public static string APP_DIR = Path.GetDirectoryName(System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName);
-
-        private static int Compare(Video r1, Video r2, Dictionary<string, byte> encodingPriority, Dictionary<string, int> dfnPriority)
-        {
-            if (r1.dfn != r2.dfn)
-            {
-                if (!dfnPriority.TryGetValue(r1.dfn, out int r1Priority)) { r1Priority = int.MaxValue; }
-                if (!dfnPriority.TryGetValue(r2.dfn, out int r2Priority)) { r2Priority = int.MaxValue; }
-                if (r1Priority != r2Priority) { return r1Priority < r2Priority ? -1 : 1; }
-            }
-            if (r1.codecs != r2.codecs)
-            {
-                if (!encodingPriority.TryGetValue(r1.codecs, out byte r1Priority)) { r1Priority = byte.MaxValue; }
-                if (!encodingPriority.TryGetValue(r2.codecs, out byte r2Priority)) { r2Priority = byte.MaxValue; }
-                if (r1Priority != r2Priority) { return r1Priority < r2Priority ? -1 : 1; }
-
-            }
-            return (Convert.ToInt32(r1.id) * 100000 + r1.bandwith) > (Convert.ToInt32(r2.id) * 100000 + r2.bandwith) ? -1 : 1;
-        }
+        public readonly static string APP_DIR = Path.GetDirectoryName(Environment.ProcessPath)!;
 
         private static int Compare(Audio r1, Audio r2)
         {
             return r1.bandwith - r2.bandwith > 0 ? -1 : 1;
         }
 
+        [JsonSerializable(typeof(MyOption))]
+        partial class MyOptionJsonContext : JsonSerializerContext { }
+
+        private readonly static Argument<string> Url = new("url", description: "视频地址 或 av|bv|BV|ep|ss");
+        private readonly static Option<bool> UseTvApi = new(new string[] { "--use-tv-api", "-tv" }, "使用TV端解析模式");
+        private readonly static Option<bool> UseAppApi = new(new string[] { "--use-app-api", "-app" }, "使用APP端解析模式");
+        private readonly static Option<bool> UseIntlApi = new(new string[] { "--use-intl-api", "-intl" }, "使用国际版解析模式");
+        private readonly static Option<bool> UseMP4box = new(new string[] { "--use-mp4box" }, "使用MP4Box来混流");
+        private readonly static Option<string> EncodingPriority = new(new string[] { "--encoding-priority" }, "视频编码的选择优先级,用逗号分割 例:\"hevc,av1,avc\"");
+        private readonly static Option<string> DfnPriority = new(new string[] { "--dfn-priority" }, "画质优先级,用逗号分隔 例:\"8K 超高清, 1080P 高码率, HDR 真彩, 杜比视界\"");
+        private readonly static Option<bool> OnlyShowInfo = new(new string[] { "--only-show-info", "-info" }, "仅解析而不进行下载");
+        private readonly static Option<bool> HideStreams = new(new string[] { "--hide-streams", "-hs" }, "不要显示所有可用音视频流");
+        private readonly static Option<bool> Interactive = new(new string[] { "--interactive", "-ia" }, "交互式选择清晰度");
+        private readonly static Option<bool> ShowAll = new(new string[] { "--show-all" }, "展示所有分P标题");
+        private readonly static Option<bool> UseAria2c = new(new string[] { "--use-aria2c" }, "调用aria2c进行下载(你需要自行准备好二进制可执行文件)");
+        private readonly static Option<string> Aria2cProxy = new(new string[] { "--aria2c-proxy" }, "调用aria2c进行下载时的代理地址配置");
+        private readonly static Option<bool> MultiThread = new(new string[] { "--multi-thread", "-mt" }, "使用多线程下载(默认开启)");
+        private readonly static Option<string> SelectPage = new(new string[] { "--select-page", "-p" }, "选择指定分p或分p范围：(-p 8 或 -p 1,2 或 -p 3-5 或 -p ALL)");
+        private readonly static Option<bool> AudioOnly = new(new string[] { "--audio-only" }, "仅下载音频");
+        private readonly static Option<bool> VideoOnly = new(new string[] { "--video-only" }, "仅下载视频");
+        private readonly static Option<bool> SubOnly = new(new string[] { "--sub-only" }, "仅下载字幕");
+        private readonly static Option<bool> Debug = new(new string[] { "--debug" }, "输出调试日志");
+        private readonly static Option<bool> SkipMux = new(new string[] { "--skip-mux" }, "跳过混流步骤");
+        private readonly static Option<bool> SkipSubtitle = new(new string[] { "--skip-subtitle" }, "跳过字幕下载");
+        private readonly static Option<bool> SkipCover = new(new string[] { "--skip-cover" }, "跳过封面下载");
+        private readonly static Option<bool> ForceHttp = new(new string[] { "--force-http" }, "下载音视频时强制使用HTTP协议替换HTTPS(默认开启)");
+        private readonly static Option<bool> DownloadDanmaku = new(new string[] { "--download-danmaku", "-dd" }, "下载弹幕");
+        private readonly static Option<string> Language = new(new string[] { "--language" }, "设置混流的音频语言(代码)，如chi, jpn等");
+        private readonly static Option<string> Cookie = new(new string[] { "--cookie", "-c" }, "设置字符串cookie用以下载网页接口的会员内容");
+        private readonly static Option<string> AccessToken = new(new string[] { "--access-token", "-token" }, "设置access_token用以下载TV/APP接口的会员内容");
+        private readonly static Option<string> WorkDir = new(new string[] { "--work-dir" }, "设置程序的工作目录");
+        private readonly static Option<string> FFmpegPath = new(new string[] { "--ffmpeg-path" }, "设置ffmpeg的路径");
+        private readonly static Option<string> Mp4boxPath = new(new string[] { "--mp4box-path" }, "设置mp4box的路径");
+        private readonly static Option<string> Aria2cPath = new(new string[] { "--aria2c-path" }, "设置aria2c的路径");
+        private readonly static Option<string> DelayPerPage = new(new string[] { "--delay-per-page" }, "设置下载合集分P之间的下载间隔时间(单位: 秒, 默认无间隔)");
+        private readonly static Option<string> FilePattern = new(new string[] { "--file-pattern", "-F" }, $"使用内置变量自定义单P存储文件名:\r\n\r\n" + $"<videoTitle>: 视频主标题\r\n" + $"<pageNumber>: 视频分P序号\r\n" + $"<pageNumberWithZero>: 视频分P序号(前缀补零)\r\n" + $"<pageTitle>: 视频分P标题\r\n" + $"<aid>: 视频aid\r\n" + $"<cid>: 视频cid\r\n" + $"<dfn>: 视频清晰度\r\n" + $"<res>: 视频分辨率\r\n" + $"<fps>: 视频帧率\r\n" + $"<videoCodecs>: 视频编码\r\n" + $"<videoBandwidth>: 视频码率\r\n" + $"<audioCodecs>: 音频编码\r\n" + $"<audioBandwidth>: 音频码率\r\n" + $"<ownerName>: 上传者名称\r\n" + $"<ownerMid>: 上传者mid\r\n\r\n" + $"默认为: {SinglePageDefaultSavePath}\r\n");
+        private readonly static Option<string> MultiFilePattern = new(new string[] { "--multi-file-pattern", "-M" }, $"使用内置变量自定义多P存储文件名:\r\n\r\n" + $"默认为: {MultiPageDefaultSavePath}\r\n");
+        private readonly static Option<string> ConfigFile = new(new string[] { "--config-file" }, "读取指定的BBDown本地配置文件(默认为: BBDown.config)");//以下仅为兼容旧版本命令行，不建议使用
+        private readonly static Option<bool> OnlyHevc = new(new string[] { "--only-hevc", "-hevc" }, "只下载hevc编码") { IsHidden = true };
+        private readonly static Option<bool> OnlyAvc = new(new string[] { "--only-avc", "-avc" }, "只下载avc编码") { IsHidden = true };
+        private readonly static Option<bool> OnlyAv1 = new(new string[] { "--only-av1", "-av1" }, "只下载av1编码") { IsHidden = true };
+        private readonly static Option<bool> AddDfnSubfix = new(new string[] { "--add-dfn-subfix" }, "为文件加入清晰度后缀，如XXX[1080P 高码率]") { IsHidden = true };
+        private readonly static Option<bool> NoPaddingPageNum = new(new string[] { "--no-padding-page-num" }, "不给分P序号补零") { IsHidden = true };
+
         class MyOption
         {
-            public string Url { get; set; }
+            public string Url { get; set; } = default!;
             public bool UseTvApi { get; set; }
             public bool UseAppApi { get; set; }
             public bool UseIntlApi { get; set; }
             public bool UseMP4box { get; set; }
-            public string EncodingPriority { get; set; }
-            public string DfnPriority { get; set; }
+            public string? EncodingPriority { get; set; }
+            public string? DfnPriority { get; set; }
             public bool OnlyShowInfo { get; set; }
             public bool ShowAll { get; set; }
             public bool UseAria2c { get; set; }
@@ -91,7 +118,7 @@ namespace BBDown
             public string Mp4boxPath { get; set; } = "";
             public string Aria2cPath { get; set; } = "";
             public string DelayPerPage { get; set; } = "0";
-            public string ConfigFile { get; set; }
+            public string? ConfigFile { get; set; }
             //以下仅为兼容旧版本命令行，不建议使用
             public bool OnlyHevc { get; set; }
             public bool OnlyAvc { get; set; }
@@ -100,174 +127,111 @@ namespace BBDown
             public bool NoPaddingPageNum { get; set; }
         }
 
+        class MyOptionBinder : BinderBase<MyOption>
+        {
+            protected override MyOption GetBoundValue(BindingContext bindingContext)
+            {
+                var option = new MyOption
+                {
+                    Url = bindingContext.ParseResult.GetValueForArgument(Url)
+                };
+
+                if (bindingContext.ParseResult.HasOption(UseTvApi)) option.UseTvApi = bindingContext.ParseResult.GetValueForOption(UseTvApi)!;
+                if (bindingContext.ParseResult.HasOption(UseAppApi)) option.UseAppApi = bindingContext.ParseResult.GetValueForOption(UseAppApi)!;
+                if (bindingContext.ParseResult.HasOption(UseIntlApi)) option.UseIntlApi = bindingContext.ParseResult.GetValueForOption(UseIntlApi)!;
+                if (bindingContext.ParseResult.HasOption(UseMP4box)) option.UseMP4box = bindingContext.ParseResult.GetValueForOption(UseMP4box)!;
+                if (bindingContext.ParseResult.HasOption(EncodingPriority)) option.EncodingPriority = bindingContext.ParseResult.GetValueForOption(EncodingPriority)!;
+                if (bindingContext.ParseResult.HasOption(DfnPriority)) option.DfnPriority = bindingContext.ParseResult.GetValueForOption(DfnPriority)!;
+                if (bindingContext.ParseResult.HasOption(OnlyShowInfo)) option.OnlyShowInfo = bindingContext.ParseResult.GetValueForOption(OnlyShowInfo)!;
+                if (bindingContext.ParseResult.HasOption(ShowAll)) option.ShowAll = bindingContext.ParseResult.GetValueForOption(ShowAll)!;
+                if (bindingContext.ParseResult.HasOption(UseAria2c)) option.UseAria2c = bindingContext.ParseResult.GetValueForOption(UseAria2c)!;
+                if (bindingContext.ParseResult.HasOption(Interactive)) option.Interactive = bindingContext.ParseResult.GetValueForOption(Interactive)!;
+                if (bindingContext.ParseResult.HasOption(HideStreams)) option.HideStreams = bindingContext.ParseResult.GetValueForOption(HideStreams)!;
+                if (bindingContext.ParseResult.HasOption(MultiThread)) option.MultiThread = bindingContext.ParseResult.GetValueForOption(MultiThread)!;
+                if (bindingContext.ParseResult.HasOption(VideoOnly)) option.VideoOnly = bindingContext.ParseResult.GetValueForOption(VideoOnly)!;
+                if (bindingContext.ParseResult.HasOption(AudioOnly)) option.AudioOnly = bindingContext.ParseResult.GetValueForOption(AudioOnly)!;
+                if (bindingContext.ParseResult.HasOption(SubOnly)) option.SubOnly = bindingContext.ParseResult.GetValueForOption(SubOnly)!;
+                if (bindingContext.ParseResult.HasOption(Debug)) option.Debug = bindingContext.ParseResult.GetValueForOption(Debug)!;
+                if (bindingContext.ParseResult.HasOption(SkipMux)) option.SkipMux = bindingContext.ParseResult.GetValueForOption(SkipMux)!;
+                if (bindingContext.ParseResult.HasOption(SkipSubtitle)) option.SkipSubtitle = bindingContext.ParseResult.GetValueForOption(SkipSubtitle)!;
+                if (bindingContext.ParseResult.HasOption(SkipCover)) option.SkipCover = bindingContext.ParseResult.GetValueForOption(SkipCover)!;
+                if (bindingContext.ParseResult.HasOption(ForceHttp)) option.ForceHttp = bindingContext.ParseResult.GetValueForOption(ForceHttp)!;
+                if (bindingContext.ParseResult.HasOption(DownloadDanmaku)) option.DownloadDanmaku = bindingContext.ParseResult.GetValueForOption(DownloadDanmaku)!;
+                if (bindingContext.ParseResult.HasOption(FilePattern)) option.FilePattern = bindingContext.ParseResult.GetValueForOption(FilePattern)!;
+                if (bindingContext.ParseResult.HasOption(MultiFilePattern)) option.MultiFilePattern = bindingContext.ParseResult.GetValueForOption(MultiFilePattern)!;
+                if (bindingContext.ParseResult.HasOption(SelectPage)) option.SelectPage = bindingContext.ParseResult.GetValueForOption(SelectPage)!;
+                if (bindingContext.ParseResult.HasOption(Language)) option.Language = bindingContext.ParseResult.GetValueForOption(Language)!;
+                if (bindingContext.ParseResult.HasOption(Cookie)) option.Cookie = bindingContext.ParseResult.GetValueForOption(Cookie)!;
+                if (bindingContext.ParseResult.HasOption(AccessToken)) option.AccessToken = bindingContext.ParseResult.GetValueForOption(AccessToken)!;
+                if (bindingContext.ParseResult.HasOption(Aria2cProxy)) option.Aria2cProxy = bindingContext.ParseResult.GetValueForOption(Aria2cProxy)!;
+                if (bindingContext.ParseResult.HasOption(WorkDir)) option.WorkDir = bindingContext.ParseResult.GetValueForOption(WorkDir)!;
+                if (bindingContext.ParseResult.HasOption(FFmpegPath)) option.FFmpegPath = bindingContext.ParseResult.GetValueForOption(FFmpegPath)!;
+                if (bindingContext.ParseResult.HasOption(Mp4boxPath)) option.Mp4boxPath = bindingContext.ParseResult.GetValueForOption(Mp4boxPath)!;
+                if (bindingContext.ParseResult.HasOption(Aria2cPath)) option.Aria2cPath = bindingContext.ParseResult.GetValueForOption(Aria2cPath)!;
+                if (bindingContext.ParseResult.HasOption(DelayPerPage)) option.DelayPerPage = bindingContext.ParseResult.GetValueForOption(DelayPerPage)!;
+                if (bindingContext.ParseResult.HasOption(ConfigFile)) option.ConfigFile = bindingContext.ParseResult.GetValueForOption(ConfigFile)!;
+                if (bindingContext.ParseResult.HasOption(OnlyHevc)) option.OnlyHevc = bindingContext.ParseResult.GetValueForOption(OnlyHevc)!;
+                if (bindingContext.ParseResult.HasOption(OnlyAvc)) option.OnlyAvc = bindingContext.ParseResult.GetValueForOption(OnlyAvc)!;
+                if (bindingContext.ParseResult.HasOption(OnlyAv1)) option.OnlyAv1 = bindingContext.ParseResult.GetValueForOption(OnlyAv1)!;
+                if (bindingContext.ParseResult.HasOption(AddDfnSubfix)) option.AddDfnSubfix = bindingContext.ParseResult.GetValueForOption(AddDfnSubfix)!;
+                if (bindingContext.ParseResult.HasOption(NoPaddingPageNum)) option.NoPaddingPageNum = bindingContext.ParseResult.GetValueForOption(NoPaddingPageNum)!;
+                return option;
+            }
+        }
+
         public static async Task<int> Main(params string[] args)
         {
             ServicePointManager.DefaultConnectionLimit = 2048;
 
             var rootCommand = new RootCommand
             {
-                new Argument<string>(
-                    "url",
-                    description: "视频地址 或 av|bv|BV|ep|ss"),
-                new Option<bool>(
-                    new string[]{ "--use-tv-api" ,"-tv"},
-                    "使用TV端解析模式"),
-                new Option<bool>(
-                    new string[]{ "--use-app-api" ,"-app"},
-                    "使用APP端解析模式"),
-                new Option<bool>(
-                    new string[]{ "--use-intl-api" ,"-intl"},
-                    "使用国际版解析模式"),
-                new Option<bool>(
-                    new string[]{ "--use-mp4box"},
-                    "使用MP4Box来混流"),
-                new Option<string>(
-                    new string[]{ "--encoding-priority" },
-                    "视频编码的选择优先级,用逗号分割 例:\"hevc,av1,avc\""
-                    ),
-                new Option<string>(
-                    new string[] { "--dfn-priority" },
-                    "画质优先级,用逗号分隔 例:\"8K 超高清, 1080P 高码率, HDR 真彩, 杜比视界\""
-                    ),
-                new Option<bool>(
-                    new string[]{ "--only-show-info" ,"-info"},
-                    "仅解析而不进行下载"),
-                new Option<bool>(
-                    new string[]{ "--hide-streams", "-hs"},
-                    "不要显示所有可用音视频流"),
-                new Option<bool>(
-                    new string[]{ "--interactive", "-ia"},
-                    "交互式选择清晰度"),
-                new Option<bool>(
-                    new string[]{ "--show-all"},
-                    "展示所有分P标题"),
-                new Option<bool>(
-                    new string[]{ "--use-aria2c"},
-                    "调用aria2c进行下载(你需要自行准备好二进制可执行文件)"),
-                new Option<string>(
-                    new string[]{ "--aria2c-proxy"},
-                    "调用aria2c进行下载时的代理地址配置"),
-                new Option<bool>(
-                    new string[]{ "--multi-thread", "-mt"},
-                    "使用多线程下载(默认开启)"),
-                new Option<string>(
-                    new string[]{ "--select-page" ,"-p"},
-                    "选择指定分p或分p范围：(-p 8 或 -p 1,2 或 -p 3-5 或 -p ALL)"),
-                new Option<bool>(
-                    new string[]{ "--audio-only"},
-                    "仅下载音频"),
-                new Option<bool>(
-                    new string[]{ "--video-only"},
-                    "仅下载视频"),
-                new Option<bool>(
-                    new string[]{ "--sub-only"},
-                    "仅下载字幕"),
-                new Option<bool>(
-                    new string[]{ "--debug"},
-                    "输出调试日志"),
-                new Option<bool>(
-                    new string[]{ "--skip-mux"},
-                    "跳过混流步骤"),
-                new Option<bool>(
-                    new string[]{ "--skip-subtitle"},
-                    "跳过字幕下载"),
-                new Option<bool>(
-                    new string[]{ "--skip-cover"},
-                    "跳过封面下载"),
-                new Option<bool>(
-                    new string[]{ "--force-http"},
-                    "下载音视频时强制使用HTTP协议替换HTTPS(默认开启)"),
-                new Option<bool>(
-                    new string[]{ "--download-danmaku", "-dd"},
-                    "下载弹幕"),
-                new Option<string>(
-                    new string[]{ "--language"},
-                    "设置混流的音频语言(代码)，如chi, jpn等"),
-                new Option<string>(
-                    new string[]{ "--cookie" ,"-c"},
-                    "设置字符串cookie用以下载网页接口的会员内容"),
-                new Option<string>(
-                    new string[]{ "--access-token" ,"-token"},
-                    "设置access_token用以下载TV/APP接口的会员内容"),
-                new Option<string>(
-                    new string[]{ "--work-dir"},
-                    "设置程序的工作目录"),
-                new Option<string>(
-                    new string[]{ "--ffmpeg-path"},
-                    "设置ffmpeg的路径"),
-                new Option<string>(
-                    new string[]{ "--mp4box-path"},
-                    "设置mp4box的路径"),
-                new Option<string>(
-                    new string[]{ "--aria2c-path"},
-                    "设置aria2c的路径"),
-                new Option<string>(
-                    new string[]{ "--delay-per-page"},
-                    "设置下载合集分P之间的下载间隔时间(单位: 秒, 默认无间隔)"),
-                new Option<string>(
-                    new string[]{ "--file-pattern", "-F"},
-                    $"使用内置变量自定义单P存储文件名:\r\n\r\n" +
-                    $"<videoTitle>: 视频主标题\r\n" +
-                    $"<pageNumber>: 视频分P序号\r\n" +
-                    $"<pageNumberWithZero>: 视频分P序号(前缀补零)\r\n" +
-                    $"<pageTitle>: 视频分P标题\r\n" +
-                    $"<aid>: 视频aid\r\n" +
-                    $"<cid>: 视频cid\r\n" +
-                    $"<dfn>: 视频清晰度\r\n" +
-                    $"<res>: 视频分辨率\r\n" +
-                    $"<fps>: 视频帧率\r\n" +
-                    $"<videoCodecs>: 视频编码\r\n" +
-                    $"<videoBandwidth>: 视频码率\r\n" +
-                    $"<audioCodecs>: 音频编码\r\n" +
-                    $"<audioBandwidth>: 音频码率\r\n" +
-                    $"<ownerName>: 上传者名称\r\n" +
-                    $"<ownerMid>: 上传者mid\r\n\r\n" +
-                    $"默认为: {SinglePageDefaultSavePath}\r\n"),
-                new Option<string>(
-                    new string[]{ "--multi-file-pattern", "-M"},
-                    $"使用内置变量自定义多P存储文件名:\r\n\r\n" +
-                    $"默认为: {MultiPageDefaultSavePath}\r\n"),
-                new Option<string>(
-                    new string[]{ "--config-file"},
-                    "读取指定的BBDown本地配置文件(默认为: BBDown.config)"),
-                //以下仅为兼容旧版本命令行，不建议使用
-                new Option<bool>(
-                    new string[]{ "--only-hevc" ,"-hevc"},
-                    "只下载hevc编码")
-                {
-                    IsHidden = true
-                },
-                new Option<bool>(
-                    new string[]{ "--only-avc" ,"-avc"},
-                    "只下载avc编码")
-                {
-                    IsHidden = true
-                },
-                new Option<bool>(
-                    new string[]{ "--only-av1" ,"-av1"},
-                    "只下载av1编码")
-                {
-                    IsHidden = true
-                },
-                new Option<bool>(
-                    new string[]{ "--add-dfn-subfix"},
-                    "为文件加入清晰度后缀，如XXX[1080P 高码率]")
-                {
-                    IsHidden = true
-                },
-                new Option<bool>(
-                    new string[]{ "--no-padding-page-num"},
-                    "不给分P序号补零")
-                {
-                    IsHidden = true
-                },
+                Url,
+                UseTvApi,
+                UseAppApi,
+                UseIntlApi,
+                UseMP4box,
+                EncodingPriority,
+                DfnPriority,
+                OnlyShowInfo,
+                ShowAll,
+                UseAria2c,
+                Interactive,
+                HideStreams,
+                MultiThread,
+                VideoOnly,
+                AudioOnly,
+                SubOnly,
+                Debug,
+                SkipMux,
+                SkipSubtitle,
+                SkipCover,
+                ForceHttp,
+                DownloadDanmaku,
+                FilePattern,
+                MultiFilePattern,
+                SelectPage,
+                Language,
+                Cookie,
+                AccessToken,
+                Aria2cProxy,
+                WorkDir,
+                FFmpegPath,
+                Mp4boxPath,
+                Aria2cPath,
+                DelayPerPage,
+                ConfigFile,
+                OnlyHevc,
+                OnlyAvc,
+                OnlyAv1,
+                AddDfnSubfix,
+                NoPaddingPageNum
             };
 
-            Command loginCommand = new Command(
+            Command loginCommand = new(
                 "login",
                 "通过APP扫描二维码以登录您的WEB账号");
             rootCommand.AddCommand(loginCommand);
-            Command loginTVCommand = new Command(
+            Command loginTVCommand = new(
                 "logintv",
                 "通过APP扫描二维码以登录您的TV账号");
             rootCommand.AddCommand(loginTVCommand);
@@ -275,19 +239,16 @@ namespace BBDown
             rootCommand.TreatUnmatchedTokensAsErrors = true;
 
             //WEB登录
-            loginCommand.Handler = CommandHandler.Create(loginWEB);
+            loginCommand.SetHandler(LoginWEB);
 
             //TV登录
-            loginTVCommand.Handler = CommandHandler.Create(loginTV);
+            loginTVCommand.SetHandler(LoginTV);
 
-            rootCommand.Handler = CommandHandler.Create<MyOption>(async (myOption) =>
-            {
-                await DoWorkAsync(myOption);
-            });
+            rootCommand.SetHandler(async (myOption) => await DoWorkAsync(myOption), new MyOptionBinder());
 
             Console.BackgroundColor = ConsoleColor.DarkBlue;
             Console.ForegroundColor = ConsoleColor.White;
-            var ver = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+            var ver = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version!;
             Console.Write($"BBDown version {ver.Major}.{ver.Minor}.{ver.Build}, Bilibili Downloader.\r\n");
             Console.ResetColor();
             Console.Write("欢迎到讨论区交流：\r\n" +
@@ -304,14 +265,12 @@ namespace BBDown
 
             foreach (var item in commandLineResult.CommandResult.Children)
             {
-                if (item is ArgumentResult)
+                if (item is ArgumentResult a)
                 {
-                    var a = (ArgumentResult)item;
-                    newArgsList.Add(a.Tokens.First().Value);
+                    newArgsList.Add(a.Tokens[0].Value);
                 }
-                else if (item is OptionResult)
+                else if (item is OptionResult o)
                 {
-                    var o = (OptionResult)item;
                     newArgsList.Add("--" + o.Option.Name);
                     newArgsList.AddRange(o.Tokens.Select(t => t.Value));
                 }
@@ -321,39 +280,35 @@ namespace BBDown
             //处理配置文件
             try
             {
-                var configPath = "";
-                if (newArgsList.Contains("--config-file"))
-                {
-                    configPath = newArgsList.ElementAt(newArgsList.IndexOf("--config-file") + 1);
-                }
-                else
-                {
-                    configPath = Path.Combine(APP_DIR, "BBDown.config");
-                }
-
+                var configPath = newArgsList.Contains("--config-file")
+                    ? newArgsList.ElementAt(newArgsList.IndexOf("--config-file") + 1)
+                    : Path.Combine(APP_DIR, "BBDown.config");
                 if (File.Exists(configPath))
                 {
                     Log($"加载配置文件: {configPath}");
                     var configArgs = File
                         .ReadAllLines(configPath)
                         .Where(s => !string.IsNullOrEmpty(s) && !s.StartsWith("#"))
-                        .SelectMany(s => {
-                                var trimLine = s.Trim();
-                                if (trimLine.IndexOf('-') == 0 && trimLine.IndexOf(' ') != -1) {  
-                                    var spaceIndex = trimLine.IndexOf(' ');
-                                    var paramsGroup = new String[] { trimLine.Substring(0,spaceIndex), trimLine.Substring(spaceIndex) };
-                                    return paramsGroup.Where(s => !string.IsNullOrEmpty(s)).Select(s => s.Trim(' ').Trim('\"'));
-                                } else {
-                                    return new String[] {trimLine.Trim('\"')};
-                                }                    
+                        .SelectMany(s =>
+                        {
+                            var trimLine = s.Trim();
+                            if (trimLine.IndexOf('-') == 0 && trimLine.IndexOf(' ') != -1)
+                            {
+                                var spaceIndex = trimLine.IndexOf(' ');
+                                var paramsGroup = new string[] { trimLine[..spaceIndex], trimLine[spaceIndex..] };
+                                return paramsGroup.Where(s => !string.IsNullOrEmpty(s)).Select(s => s.Trim(' ').Trim('\"'));
                             }
+                            else
+                            {
+                                return new string[] { trimLine.Trim('\"') };
+                            }
+                        }
                         );
                     var configArgsResult = rootCommand.Parse(configArgs.ToArray());
                     foreach (var item in configArgsResult.CommandResult.Children)
                     {
-                        if (item is OptionResult)
+                        if (item is OptionResult o)
                         {
-                            var o = (OptionResult)item;
                             if (!newArgsList.Contains("--" + o.Option.Name))
                             {
                                 newArgsList.Add("--" + o.Option.Name);
@@ -377,10 +332,7 @@ namespace BBDown
         private static async Task DoWorkAsync(MyOption myOption)
         {
             //检测更新
-            new Thread(async () =>
-            {
-                await CheckUpdateAsync();
-            }).Start();
+            new Thread(async () => await CheckUpdateAsync()).Start();
             try
             {
                 //兼容旧版本命令行参数并给出警告
@@ -425,7 +377,7 @@ namespace BBDown
                 bool appApi = myOption.UseAppApi;
                 bool intlApi = myOption.UseIntlApi;
                 bool useMp4box = myOption.UseMP4box;
-                
+
                 var encodingPriority = new Dictionary<string, byte>();
                 if (myOption.EncodingPriority != null)
                 {
@@ -440,16 +392,16 @@ namespace BBDown
                 }
                 var dfnPriority = new Dictionary<string, int>();
                 if (myOption.DfnPriority != null)
-				{
+                {
                     var dfnPriorityTemp = myOption.DfnPriority.Replace("，", ",").Split(',').Select(s => s.ToUpper().Trim()).Where(s => !string.IsNullOrEmpty(s));
                     int index = 0;
                     foreach (string dfn in dfnPriorityTemp)
-					{
+                    {
                         if (dfnPriority.ContainsKey(dfn)) { continue; }
                         dfnPriority[dfn] = index;
                         index++;
-					}
-				}
+                    }
+                }
 
                 bool hideStreams = myOption.HideStreams;
                 bool multiThread = myOption.MultiThread;
@@ -532,7 +484,7 @@ namespace BBDown
                             throw new Exception("找不到可执行的aria2c文件");
                         BBDownAria2c.ARIA2C = binPath;
                     }
-                    
+
                 }
 
 
@@ -546,15 +498,17 @@ namespace BBDown
                 if (skipSubtitle)
                     subOnly = false;
 
-                List<string> selectedPages = null;
+                List<string>? selectedPages = null;
                 if (!string.IsNullOrEmpty(GetQueryString("p", input)))
                 {
-                    selectedPages = new List<string>();
-                    selectedPages.Add(GetQueryString("p", input));
+                    selectedPages = new List<string>
+                    {
+                        GetQueryString("p", input)
+                    };
                 }
 
                 LogDebug("AppDirectory: {0}", APP_DIR);
-                LogDebug("运行参数：{0}", JsonSerializer.Serialize(myOption));
+                LogDebug("运行参数：{0}", JsonSerializer.Serialize(myOption, MyOptionJsonContext.Default.MyOption));
                 if (string.IsNullOrEmpty(Config.COOKIE) && File.Exists(Path.Combine(APP_DIR, "BBDown.data")))
                 {
                     Log("加载本地cookie...");
@@ -597,7 +551,7 @@ namespace BBDown
                     {
                         string tmp = selectPage;
                         tmp = tmp.Trim().Trim(',');
-                        if (tmp.Contains("-"))
+                        if (tmp.Contains('-'))
                         {
                             int start = int.Parse(tmp.Split('-')[0]);
                             int end = int.Parse(tmp.Split('-')[1]);
@@ -628,10 +582,7 @@ namespace BBDown
                 }
                 else if (aidOri.StartsWith("ep"))
                 {
-                    if (intlApi)
-                        fetcher = new IntlBangumiInfoFetcher();
-                    else
-                        fetcher = new BangumiInfoFetcher();
+                    fetcher = intlApi ? new IntlBangumiInfoFetcher() : new BangumiInfoFetcher();
                 }
                 else if (aidOri.StartsWith("mid"))
                 {
@@ -656,7 +607,7 @@ namespace BBDown
                 LogColor("视频标题: " + title);
                 Log("发布时间: " + pubTime);
                 List<Page> pagesInfo = vInfo.PagesInfo;
-                List<Subtitle> subtitleInfo = new List<Subtitle>();
+                List<Subtitle> subtitleInfo = new();
                 bool more = false;
                 bool bangumi = vInfo.IsBangumi;
                 bool cheese = vInfo.IsCheese;
@@ -677,7 +628,7 @@ namespace BBDown
                 }
 
                 //选择最新分P
-                if (!string.IsNullOrEmpty(selectPage) && (selectPage == "LAST" || selectPage == "NEW")) 
+                if (!string.IsNullOrEmpty(selectPage) && (selectPage == "LAST" || selectPage == "NEW"))
                 {
                     try
                     {
@@ -728,10 +679,10 @@ namespace BBDown
                         p.points = await FetchPointsAsync(p.cid, p.aid);
 
                         string webJsonStr = "";
-                        List<Video> videoTracks = new List<Video>();
-                        List<Audio> audioTracks = new List<Audio>();
-                        List<string> clips = new List<string>();
-                        List<string> dfns = new List<string>();
+                        List<Video> videoTracks = new();
+                        List<Audio> audioTracks = new();
+                        List<string> clips = new();
+                        List<string> dfns = new();
 
                         string videoPath = $"{p.aid}/{p.aid}.P{p.index}.{p.cid}.mp4";
                         string audioPath = $"{p.aid}/{p.aid}.P{p.index}.{p.cid}.m4a";
@@ -751,10 +702,13 @@ namespace BBDown
                             {
                                 Log("下载封面...");
                                 var cover = pic == "" ? p.cover : pic;
-                                LogDebug("下载：{0}", cover);
-                                await using var response = await HTTPUtil.AppHttpClient.GetStreamAsync(cover);
-                                await using var fs = new FileStream(coverPath, FileMode.Create);
-                                await response.CopyToAsync(fs);
+                                if (cover != null)
+                                {
+                                    LogDebug("下载：{0}", cover);
+                                    await using var response = await HTTPUtil.AppHttpClient.GetStreamAsync(cover);
+                                    await using var fs = new FileStream(coverPath, FileMode.Create);
+                                    await response.CopyToAsync(fs);
+                                }
                             }
 
                             if (!skipSubtitle)
@@ -769,12 +723,12 @@ namespace BBDown
                                     if (subOnly && File.Exists(s.path) && File.ReadAllText(s.path) != "")
                                     {
                                         var _outSubPath = FormatSavePath(savePathFormat, title, null, null, p, pagesCount);
-                                        if (_outSubPath.Contains("/"))
+                                        if (_outSubPath.Contains('/'))
                                         {
                                             if (!Directory.Exists(_outSubPath.Split('/').First()))
                                                 Directory.CreateDirectory(_outSubPath.Split('/').First());
                                         }
-                                        _outSubPath = _outSubPath.Substring(0, _outSubPath.LastIndexOf('.')) + ".srt";
+                                        _outSubPath = _outSubPath[.._outSubPath.LastIndexOf('.')] + ".srt";
                                         File.Move(s.path, _outSubPath, true);
                                     }
                                 }
@@ -872,7 +826,7 @@ namespace BBDown
                                 LogColor($"[音频] [{audioTracks[aIndex].codecs}] [{audioTracks[aIndex].bandwith} kbps] [~{FormatFileSize(audioTracks[aIndex].dur * audioTracks[aIndex].bandwith * 1024 / 8)}]", false);
 
                             //处理PCDN
-                            var pcdnReg = new Regex("://.*:\\d+/");
+                            var pcdnReg = PcdnRegex();
                             if (videoTracks.Count > 0 && pcdnReg.IsMatch(videoTracks[vIndex].baseUrl))
                             {
                                 LogWarn($"检测到视频流为PCDN，尝试强制替换为{BACKUP_HOST}……");
@@ -891,8 +845,8 @@ namespace BBDown
 
                             if (downloadDanmaku)
                             {
-                                var danmakuXmlPath = savePath.Substring(0, savePath.LastIndexOf('.')) + ".xml";
-                                var danmakuAssPath = savePath.Substring(0, savePath.LastIndexOf('.')) + ".ass";
+                                var danmakuXmlPath = savePath[..savePath.LastIndexOf('.')] + ".xml";
+                                var danmakuAssPath = savePath[..savePath.LastIndexOf('.')] + ".ass";
                                 Log("正在下载弹幕Xml文件");
                                 string danmakuUrl = "https://comment.bilibili.com/" + p.cid + ".xml";
                                 await DownloadFile(danmakuUrl, danmakuXmlPath, false, aria2cProxy);
@@ -932,13 +886,13 @@ namespace BBDown
                                 if (multiThread && !videoTracks[vIndex].baseUrl.Contains("-cmcc-"))
                                 {
                                     // 下载前先清理残片
-                                    foreach (var file in new DirectoryInfo(Path.GetDirectoryName(videoPath)).EnumerateFiles("*.?clip")) file.Delete();
+                                    foreach (var file in new DirectoryInfo(Path.GetDirectoryName(videoPath)!).EnumerateFiles("*.?clip")) file.Delete();
                                     Log($"开始多线程下载P{p.index}视频...");
                                     await MultiThreadDownloadFileAsync(videoTracks[vIndex].baseUrl, videoPath, useAria2c, aria2cProxy, forceHttp);
                                     Log("合并视频分片...");
-                                    CombineMultipleFilesIntoSingleFile(GetFiles(Path.GetDirectoryName(videoPath), ".vclip"), videoPath);
+                                    CombineMultipleFilesIntoSingleFile(GetFiles(Path.GetDirectoryName(videoPath)!, ".vclip"), videoPath);
                                     Log("清理分片...");
-                                    foreach (var file in new DirectoryInfo(Path.GetDirectoryName(videoPath)).EnumerateFiles("*.?clip")) file.Delete();
+                                    foreach (var file in new DirectoryInfo(Path.GetDirectoryName(videoPath)!).EnumerateFiles("*.?clip")) file.Delete();
                                 }
                                 else
                                 {
@@ -956,13 +910,13 @@ namespace BBDown
                                 if (multiThread && !audioTracks[aIndex].baseUrl.Contains("-cmcc-"))
                                 {
                                     // 下载前先清理残片
-                                    foreach (var file in new DirectoryInfo(Path.GetDirectoryName(audioPath)).EnumerateFiles("*.?clip")) file.Delete();
+                                    foreach (var file in new DirectoryInfo(Path.GetDirectoryName(audioPath)!).EnumerateFiles("*.?clip")) file.Delete();
                                     Log($"开始多线程下载P{p.index}音频...");
                                     await MultiThreadDownloadFileAsync(audioTracks[aIndex].baseUrl, audioPath, useAria2c, aria2cProxy, forceHttp);
                                     Log("合并音频分片...");
-                                    CombineMultipleFilesIntoSingleFile(GetFiles(Path.GetDirectoryName(audioPath), ".aclip"), audioPath);
+                                    CombineMultipleFilesIntoSingleFile(GetFiles(Path.GetDirectoryName(audioPath)!, ".aclip"), audioPath);
                                     Log("清理分片...");
-                                    foreach (var file in new DirectoryInfo(Path.GetDirectoryName(audioPath)).EnumerateFiles("*.?clip")) file.Delete();
+                                    foreach (var file in new DirectoryInfo(Path.GetDirectoryName(audioPath)!).EnumerateFiles("*.?clip")) file.Delete();
                                 }
                                 else
                                 {
@@ -998,7 +952,7 @@ namespace BBDown
                             Thread.Sleep(200);
                             if (videoTracks.Count > 0) File.Delete(videoPath);
                             if (audioTracks.Count > 0) File.Delete(audioPath);
-                            if (p.points.Count > 0) File.Delete(Path.Combine(Path.GetDirectoryName(string.IsNullOrEmpty(videoPath) ? audioPath : videoPath), "chapters"));
+                            if (p.points.Count > 0) File.Delete(Path.Combine(Path.GetDirectoryName(string.IsNullOrEmpty(videoPath) ? audioPath : videoPath)!, "chapters"));
                             foreach (var s in subtitleInfo) File.Delete(s.path);
                             if (pagesInfo.Count == 1 || p.index == pagesInfo.Last().index || p.aid != pagesInfo.Last().aid)
                                 File.Delete(coverPath);
@@ -1033,7 +987,7 @@ namespace BBDown
                             int index = 0;
                             foreach (var v in videoTracks)
                             {
-                                LogColor($"{index++}. [{v.dfn}] [{v.res}] [{v.codecs}] [{v.fps}] [~{(v.size / 1024 / v.dur * 8).ToString("00")} kbps] [{FormatFileSize(v.size)}]".Replace("[] ", ""), false);
+                                LogColor($"{index++}. [{v.dfn}] [{v.res}] [{v.codecs}] [{v.fps}] [~{v.size / 1024 / v.dur * 8:00} kbps] [{FormatFileSize(v.size)}]".Replace("[] ", ""), false);
                                 if (infoMode)
                                 {
                                     clips.ForEach(delegate (string c) { Console.WriteLine(c); });
@@ -1060,13 +1014,13 @@ namespace BBDown
                                     if (videoTracks.Count != 0)
                                     {
                                         // 下载前先清理残片
-                                        foreach (var file in new DirectoryInfo(Path.GetDirectoryName(videoPath)).EnumerateFiles("*.?clip")) file.Delete();
+                                        foreach (var file in new DirectoryInfo(Path.GetDirectoryName(videoPath)!).EnumerateFiles("*.?clip")) file.Delete();
                                         Log($"开始多线程下载P{p.index}视频, 片段({(i + 1).ToString(pad)}/{clips.Count})...");
                                         await MultiThreadDownloadFileAsync(link, videoPath, useAria2c, aria2cProxy, forceHttp);
                                         Log("合并视频分片...");
-                                        CombineMultipleFilesIntoSingleFile(GetFiles(Path.GetDirectoryName(videoPath), ".vclip"), videoPath);
+                                        CombineMultipleFilesIntoSingleFile(GetFiles(Path.GetDirectoryName(videoPath)!, ".vclip"), videoPath);
                                         Log("清理分片...");
-                                        foreach (var file in new DirectoryInfo(Path.GetDirectoryName(videoPath)).EnumerateFiles("*.?clip")) file.Delete();
+                                        foreach (var file in new DirectoryInfo(Path.GetDirectoryName(videoPath)!).EnumerateFiles("*.?clip")) file.Delete();
                                     }
                                 }
                                 else
@@ -1085,7 +1039,7 @@ namespace BBDown
                             }
                             Log($"下载P{p.index}完毕");
                             Log("开始合并分段...");
-                            var files = GetFiles(Path.GetDirectoryName(videoPath), ".mp4");
+                            var files = GetFiles(Path.GetDirectoryName(videoPath)!, ".mp4");
                             videoPath = $"{p.aid}/{p.aid}.P{p.index}.{p.cid}.mp4";
                             MergeFLV(files, videoPath);
                             if (skipMux) continue;
@@ -1107,7 +1061,7 @@ namespace BBDown
                             Thread.Sleep(200);
                             if (videoTracks.Count != 0) File.Delete(videoPath);
                             foreach (var s in subtitleInfo) File.Delete(s.path);
-                            if (p.points.Count > 0) File.Delete(Path.Combine(Path.GetDirectoryName(string.IsNullOrEmpty(videoPath) ? audioPath : videoPath), "chapters"));
+                            if (p.points.Count > 0) File.Delete(Path.Combine(Path.GetDirectoryName(string.IsNullOrEmpty(videoPath) ? audioPath : videoPath)!, "chapters"));
                             if (pagesInfo.Count == 1 || p.index == pagesInfo.Last().index || p.aid != pagesInfo.Last().aid)
                                 File.Delete(coverPath);
                             if (Directory.Exists(p.aid) && Directory.GetFiles(p.aid).Length == 0) Directory.Delete(p.aid, true);
@@ -1160,47 +1114,26 @@ namespace BBDown
         private static List<Video> SortTracks(List<Video> videoTracks, Dictionary<string, int> dfnPriority, Dictionary<string, byte> encodingPriority)
         {
             //用户同时输入了自定义分辨率优先级和自定义编码优先级，则根据输入顺序依次进行排序
-            if (dfnPriority.Count > 0 && encodingPriority.Count > 0 && Environment.CommandLine.IndexOf("--encoding-priority") < Environment.CommandLine.IndexOf("--dfn-priority"))
-            {
-                return videoTracks
-                    .OrderBy(v =>
-                    {
-                        if (encodingPriority.TryGetValue(v.codecs, out byte i)) return i;
-                        return 100;
-                    })
-                    .ThenBy(v =>
-                    {
-                        if (dfnPriority.TryGetValue(v.dfn, out int i)) return i;
-                        return 100;
-                    })
+            return dfnPriority.Count > 0 && encodingPriority.Count > 0 && Environment.CommandLine.IndexOf("--encoding-priority") < Environment.CommandLine.IndexOf("--dfn-priority")
+                ? videoTracks
+                    .OrderBy(v => encodingPriority.TryGetValue(v.codecs, out byte i) ? i : 100)
+                    .ThenBy(v => dfnPriority.TryGetValue(v.dfn, out int i) ? i : 100)
+                    .ThenByDescending(v => Convert.ToInt32(v.id))
+                    .ThenByDescending(v => v.bandwith)
+                    .ToList()
+                : videoTracks
+                    .OrderBy(v => dfnPriority.TryGetValue(v.dfn, out int i) ? i : 100)
+                    .ThenBy(v => encodingPriority.TryGetValue(v.codecs, out byte i) ? i : 100)
                     .ThenByDescending(v => Convert.ToInt32(v.id))
                     .ThenByDescending(v => v.bandwith)
                     .ToList();
-            }
-            else
-            {
-                return videoTracks
-                    .OrderBy(v =>
-                    {
-                        if (dfnPriority.TryGetValue(v.dfn, out int i)) return i;
-                        return 100;
-                    })
-                    .ThenBy(v =>
-                    {
-                        if (encodingPriority.TryGetValue(v.codecs, out byte i)) return i;
-                        return 100;
-                    })
-                    .ThenByDescending(v => Convert.ToInt32(v.id))
-                    .ThenByDescending(v => v.bandwith)
-                    .ToList(); 
-            }
         }
 
-        private static string FormatSavePath(string savePathFormat, string title, Video videoTrack, Audio audioTrack, Page p, int pagesCount)
+        private static string FormatSavePath(string savePathFormat, string title, Video? videoTrack, Audio? audioTrack, Page p, int pagesCount)
         {
             var result = savePathFormat.Replace('\\', '/');
-            var regex = new Regex("<(\\w+?)>");
-            foreach (Match m in regex.Matches(result))
+            var regex = InfoRegex();
+            foreach (Match m in regex.Matches(result).Cast<Match>())
             {
                 var key = m.Groups[1].Value;
                 var v = key switch
@@ -1212,7 +1145,7 @@ namespace BBDown
                     "aid" => p.aid,
                     "cid" => p.cid,
                     "ownerName" => p.ownerName == null ? "" : GetValidFileName(p.ownerName, filterSlash: true),
-                    "ownerMid" => p.ownerMid == null ? "" : p.ownerMid,
+                    "ownerMid" => p.ownerMid ?? "",
                     "dfn" => videoTrack == null ? "" : videoTrack.dfn,
                     "res" => videoTrack == null ? "" : videoTrack.res,
                     "fps" => videoTrack == null ? "" : videoTrack.fps,
@@ -1228,7 +1161,7 @@ namespace BBDown
             return result;
         }
 
-        private static async Task loginWEB()
+        private static async Task LoginWEB()
         {
             try
             {
@@ -1240,9 +1173,9 @@ namespace BBDown
                 //Log(url);
                 bool flag = false;
                 Log("生成二维码...");
-                QRCodeGenerator qrGenerator = new QRCodeGenerator();
+                QRCodeGenerator qrGenerator = new();
                 QRCodeData qrCodeData = qrGenerator.CreateQrCode(url, QRCodeGenerator.ECCLevel.Q);
-                PngByteQRCode pngByteCode = new PngByteQRCode(qrCodeData);
+                PngByteQRCode pngByteCode = new(qrCodeData);
                 File.WriteAllBytes("qrcode.png", pngByteCode.GetGraphic(7));
                 Log("生成二维码成功：qrcode.png, 请打开并扫描, 或扫描打印的二维码");
                 var consoleQRCode = new ConsoleQRCode(qrCodeData);
@@ -1275,7 +1208,7 @@ namespace BBDown
                         string cc = JsonDocument.Parse(w).RootElement.GetProperty("data").GetProperty("url").ToString();
                         Log("登录成功: SESSDATA=" + GetQueryString("SESSDATA", cc));
                         //导出cookie
-                        File.WriteAllText(Path.Combine(APP_DIR, "BBDown.data"), cc.Substring(cc.IndexOf('?') + 1).Replace("&", ";"));
+                        File.WriteAllText(Path.Combine(APP_DIR, "BBDown.data"), cc[(cc.IndexOf('?') + 1)..].Replace("&", ";"));
                         File.Delete("qrcode.png");
                         break;
                     }
@@ -1284,7 +1217,7 @@ namespace BBDown
             catch (Exception e) { LogError(e.Message); }
         }
 
-        private static async Task loginTV()
+        private static async Task LoginTV()
         {
             try
             {
@@ -1297,9 +1230,9 @@ namespace BBDown
                 string url = JsonDocument.Parse(web).RootElement.GetProperty("data").GetProperty("url").ToString();
                 string authCode = JsonDocument.Parse(web).RootElement.GetProperty("data").GetProperty("auth_code").ToString();
                 Log("生成二维码...");
-                QRCodeGenerator qrGenerator = new QRCodeGenerator();
+                QRCodeGenerator qrGenerator = new();
                 QRCodeData qrCodeData = qrGenerator.CreateQrCode(url, QRCodeGenerator.ECCLevel.Q);
-                PngByteQRCode pngByteCode = new PngByteQRCode(qrCodeData);
+                PngByteQRCode pngByteCode = new(qrCodeData);
                 File.WriteAllBytes("qrcode.png", pngByteCode.GetGraphic(7));
                 Log("生成二维码成功：qrcode.png, 请打开并扫描, 或扫描打印的二维码");
                 var consoleQRCode = new ConsoleQRCode(qrCodeData);
@@ -1336,5 +1269,10 @@ namespace BBDown
             }
             catch (Exception e) { LogError(e.Message); }
         }
+
+        [RegexGenerator("://.*:\\d+/")]
+        private static partial Regex PcdnRegex();
+        [RegexGenerator("<(\\w+?)>")]
+        private static partial Regex InfoRegex();
     }
 }

@@ -1,10 +1,5 @@
 ﻿using BBDown.Core.Entity;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 using static BBDown.Core.Util.HTTPUtil;
 using static BBDown.Core.Logger;
 
@@ -14,10 +9,10 @@ namespace BBDown.Core.Fetcher
     {
         public async Task<VInfo> FetchAsync(string id)
         {
-            id = id.Substring(4);
+            id = id[4..];
             string userInfoApi = $"https://api.bilibili.com/x/space/acc/info?mid={id}&jsonp=jsonp";
             string userName = GetValidFileName(JsonDocument.Parse(await GetWebSourceAsync(userInfoApi)).RootElement.GetProperty("data").GetProperty("name").ToString(), ".", true);
-            List<string> urls = new List<string>();
+            List<string> urls = new();
             int pageSize = 50;
             int pageNumber = 1;
             string api = $"https://api.bilibili.com/x/space/arc/search?mid={id}&ps={pageSize}&tid=0&pn={pageNumber}&keyword=&order=pubdate&jsonp=jsonp";
@@ -45,9 +40,9 @@ pause");
             throw new Exception("暂不支持该功能");
         }
 
-        async Task<List<string>> GetVideosByPageAsync(int pageNumber, int pageSize, string mid)
+        static async Task<List<string>> GetVideosByPageAsync(int pageNumber, int pageSize, string mid)
         {
-            List<string> urls = new List<string>();
+            List<string> urls = new();
             string api = $"https://api.bilibili.com/x/space/arc/search?mid={mid}&ps={pageSize}&tid=0&pn={pageNumber}&keyword=&order=pubdate&jsonp=jsonp";
             string json = await GetWebSourceAsync(api);
             var infoJson = JsonDocument.Parse(json);

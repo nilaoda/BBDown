@@ -1,13 +1,15 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>library</OutputType>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <LangVersion>preview</LangVersion>
   </PropertyGroup>
-	
- <ItemGroup>
-  	<PackageReference Include="protobuf-net" Version="3.0.101" />
+
+  <ItemGroup>
+    <PackageReference Include="protobuf-net" Version="3.1.17" />
   </ItemGroup>
+
 </Project>

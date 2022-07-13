@@ -3,7 +3,7 @@ name: Build Latest
 on: [push]
 
 env:
-  DOTNET_SDK_VERSION: '6.0.x'
+  DOTNET_SDK_VERSION: '7.0.x'
 
 jobs:
 
@@ -80,23 +80,6 @@ jobs:
         uses: actions/upload-artifact@v1.0.0
         with:
           name: BBDown_linux-arm64
-          path: artifact/BBDown
-  
-  build-linux-musl-x64:
-
-    runs-on: ubuntu-latest
-    container: mcr.microsoft.com/dotnet/sdk:6.0-alpine
-
-    steps:
-      - uses: actions/checkout@v2
-      - run: apk update
-      - run: apk --no-cache add clang clang-dev musl-dev git gcc krb5-dev zlib-dev libexecinfo lldb binutils build-base zlib-static
-      - run: dotnet publish BBDown -r linux-musl-x64 -c Release -o artifact
-      - run: strip artifact/BBDown
-      - name: Upload Artifact[linux-musl-x64]
-        uses: actions/upload-artifact@v1.0.0
-        with:
-          name: BBDown_linux-musl-x64
           path: artifact/BBDown
 
   build-mac-x64:

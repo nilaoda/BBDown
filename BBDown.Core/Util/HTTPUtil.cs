@@ -1,21 +1,5 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Collections.Specialized;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Net.Cache;
-using System.Net.Http;
+﻿using System.Net;
 using System.Net.Http.Headers;
-using System.Security.Cryptography;
-using System.Text;
-using System.Text.Json;
-using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Web;
 using static BBDown.Core.Logger;
 
 namespace BBDown.Core.Util
@@ -34,7 +18,6 @@ namespace BBDown.Core.Util
 
         public static async Task<string> GetWebSourceAsync(string url)
         {
-            string htmlCode = string.Empty;
             using var webRequest = new HttpRequestMessage(HttpMethod.Get, url);
             webRequest.Headers.TryAddWithoutValidation("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0 Safari/605.1.15");
             webRequest.Headers.TryAddWithoutValidation("Accept-Encoding", "gzip, deflate");
@@ -47,7 +30,7 @@ namespace BBDown.Core.Util
             LogDebug("获取网页内容：Url: {0}, Headers: {1}", url, webRequest.Headers);
             var webResponse = (await AppHttpClient.SendAsync(webRequest, HttpCompletionOption.ResponseHeadersRead)).EnsureSuccessStatusCode();
 
-            htmlCode = await webResponse.Content.ReadAsStringAsync();
+            string htmlCode = await webResponse.Content.ReadAsStringAsync();
             LogDebug("Response: {0}", htmlCode);
             return htmlCode;
         }
@@ -55,7 +38,6 @@ namespace BBDown.Core.Util
         public static async Task<string> GetPostResponseAsync(string Url, byte[] postData)
         {
             LogDebug("Post to: {0}, data: {1}", Url, Convert.ToBase64String(postData));
-            string htmlCode = string.Empty;
             using HttpRequestMessage request = new(HttpMethod.Post, Url);
             request.Headers.TryAddWithoutValidation("Content-Type", "application/grpc");
             request.Headers.TryAddWithoutValidation("Content-Length", postData.Length.ToString());
@@ -63,7 +45,7 @@ namespace BBDown.Core.Util
             request.Headers.TryAddWithoutValidation("Cookie", Config.COOKIE);
             request.Content = new ByteArrayContent(postData);
             var webResponse = await AppHttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
-            htmlCode = await webResponse.Content.ReadAsStringAsync();
+            string htmlCode = await webResponse.Content.ReadAsStringAsync();
             return htmlCode;
         }
     }
