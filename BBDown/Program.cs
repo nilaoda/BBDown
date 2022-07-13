@@ -826,7 +826,7 @@ namespace BBDown
                                 LogColor($"[音频] [{audioTracks[aIndex].codecs}] [{audioTracks[aIndex].bandwith} kbps] [~{FormatFileSize(audioTracks[aIndex].dur * audioTracks[aIndex].bandwith * 1024 / 8)}]", false);
 
                             //处理PCDN
-                            var pcdnReg = new Regex("://.*:\\d+/");
+                            var pcdnReg = PcdnRegex();
                             if (videoTracks.Count > 0 && pcdnReg.IsMatch(videoTracks[vIndex].baseUrl))
                             {
                                 LogWarn($"检测到视频流为PCDN，尝试强制替换为{BACKUP_HOST}……");
@@ -1132,7 +1132,7 @@ namespace BBDown
         private static string FormatSavePath(string savePathFormat, string title, Video? videoTrack, Audio? audioTrack, Page p, int pagesCount)
         {
             var result = savePathFormat.Replace('\\', '/');
-            var regex = new Regex("<(\\w+?)>");
+            var regex = InfoRegex();
             foreach (Match m in regex.Matches(result).Cast<Match>())
             {
                 var key = m.Groups[1].Value;
@@ -1269,5 +1269,10 @@ namespace BBDown
             }
             catch (Exception e) { LogError(e.Message); }
         }
+
+        [RegexGenerator("://.*:\\d+/")]
+        private static partial Regex PcdnRegex();
+        [RegexGenerator("<(\\w+?)>")]
+        private static partial Regex InfoRegex();
     }
 }

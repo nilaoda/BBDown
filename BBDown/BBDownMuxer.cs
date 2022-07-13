@@ -10,7 +10,7 @@ using System.IO;
 
 namespace BBDown
 {
-    class BBDownMuxer
+    partial class BBDownMuxer
     {
         public static string FFMPEG = "ffmpeg";
         public static string MP4BOX = "mp4box";
@@ -48,7 +48,7 @@ namespace BBDown
             StringBuilder metaArg = new();
             inputArg.Append(" -inter 500 -noprog ");
             if (!string.IsNullOrEmpty(videoPath))
-                inputArg.Append($" -add \"{videoPath}#trackID={((audioOnly && audioPath == "") ? "2" : "1")}:name=\" ");
+                inputArg.Append($" -add \"{videoPath}#trackID={(audioOnly && audioPath == "" ? "2" : "1")}:name=\" ");
             if (!string.IsNullOrEmpty(audioPath))
                 inputArg.Append($" -add \"{audioPath}:lang={(lang == "" ? "und" : lang)}\" ");
             if (points != null && points.Count > 0)
@@ -123,7 +123,7 @@ namespace BBDown
 
             if (!string.IsNullOrEmpty(pic))
                 metaArg.Append($" -disposition:v:{(audioOnly ? "0" : "1")} attached_pic ");
-            var inputCount = Regex.Matches(inputArg.ToString(), "-i \"").Count;
+            var inputCount = InputRegex().Matches(inputArg.ToString()).Count;
 
             if (points != null && points.Count > 0)
             {
@@ -173,5 +173,8 @@ namespace BBDown
                 foreach (var s in f) File.Delete(s);
             }
         }
+
+        [RegexGenerator("-i \"")]
+        private static partial Regex InputRegex();
     }
 }
