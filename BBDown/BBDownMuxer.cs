@@ -146,7 +146,7 @@ namespace BBDown
                  (episodeId == "" ? "" : $"-metadata album=\"{title}\" ") +
                  $"-c copy " + (audioOnly && audioPath == "" ? " -vn " : "") +
                  (subs != null ? " -c:s mov_text " : "") +
-                 "-movflags faststart -strict unofficial -f mp4 " +
+                 "-movflags faststart -strict unofficial -strict -2 -f mp4 " +
                  $"\"{outPath}\"";
             LogDebug("ffmpeg命令：{0}", arguments);
             return RunExe(FFMPEG, arguments, FFMPEG != "ffmpeg");

@@ -169,7 +169,23 @@ namespace BBDown.Core
                     }
                 }
                 catch (Exception) { ; }
-                
+
+                //处理Hi-Res无损
+                try
+                {
+                    if (audio != null)
+                    {
+                        if (!tvApi && respJson.RootElement.GetProperty(nodeName).GetProperty("dash").TryGetProperty("flac", out JsonElement hiRes))
+                        {
+                            if (hiRes.TryGetProperty("audio", out JsonElement db))
+                            {
+                                audio.Add(db);
+                            }
+                        }
+                    }
+                }
+                catch (Exception) {; }
+
                 if (video != null)
                 {
                     foreach (var node in video)
@@ -222,7 +238,7 @@ namespace BBDown.Core
                             dur = pDur,
                             bandwith = Convert.ToInt64(node.GetProperty("bandwidth").ToString()) / 1000,
                             baseUrl = urlList.FirstOrDefault(i => !BaseUrlRegex().IsMatch(i), urlList.First()),
-                            codecs = node.GetProperty("codecs").ToString().Replace("mp4a.40.2", "M4A").Replace("ec-3", "E-AC-3")
+                            codecs = node.GetProperty("codecs").ToString().Replace("mp4a.40.2", "M4A").Replace("ec-3", "E-AC-3").Replace("fLaC", "FLAC")
                         };
                         audioTracks.Add(a);
                     }
