@@ -391,6 +391,8 @@ namespace BBDown.Core
     }
 
 
+    [JsonSerializable(typeof(AudioInfoWithCodecName))]
+    [JsonSerializable(typeof(AudioInfoWitCodecId))]
     [JsonSerializable(typeof(DashJson))]
     [JsonSerializable(typeof(PlayViewReq))]
     [JsonSerializable(typeof(PlayViewReply))]
