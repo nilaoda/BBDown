@@ -1,0 +1,10 @@
+syntax = "proto2";
+option csharp_namespace = "BBDown.Core.Protobuf";
+
+message DmViewReq {
+    optional int64 pid = 1;
+    optional int64 oid = 2;
+    optional int32 type = 3;
+    optional string spmid = 4;
+    optional int32 isHardBoot = 5;
+}

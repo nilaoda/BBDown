@@ -1,0 +1,19 @@
+syntax = "proto2";
+option csharp_namespace = "BBDown.Core.Protobuf";
+
+message Device {
+    optional int32 appId = 1;
+    optional int32 build = 2;
+    optional string buvid = 3;
+    optional string mobiApp = 4;
+    optional string platform = 5;
+    optional string device = 6;
+    optional string channel = 7;
+    optional string brand = 8;
+    optional string model = 9;
+    optional string osver = 10;
+    optional string fpLocal  = 11;
+    optional string fpRemote  = 12;
+    optional string versionName  = 13;
+    optional string fp = 14;
+}

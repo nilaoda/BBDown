@@ -1,0 +1,24 @@
+syntax = "proto2";
+option csharp_namespace = "BBDown.Core.Protobuf";
+
+message PlayViewReq {
+    optional int64 epId = 1;
+    optional int64 cid = 2;
+    optional int64 qn = 3;
+    optional int32 fnver = 4;
+    optional int32 fnval = 5;
+    optional uint32 download = 6;
+    optional int32 forceHost = 7;
+    optional bool fourk = 8;
+    optional string spmid = 9;
+    optional string fromSpmid = 10;
+    optional int32 teenagersMode = 11;
+    enum CodeType {
+        NOCODE = 0;
+        CODE264 = 1;
+        CODE265 = 2;
+    }
+    optional CodeType preferCodecType = 12;
+    optional bool isPreview = 13;
+    optional int64 roomId = 14;
+}

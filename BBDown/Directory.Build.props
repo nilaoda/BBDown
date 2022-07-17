@@ -5,7 +5,11 @@
     <IlcFoldIdenticalMethodBodies>true</IlcFoldIdenticalMethodBodies>
     <StaticallyLinked Condition="$(RuntimeIdentifier.StartsWith('win'))">true</StaticallyLinked>
     <TrimMode>full</TrimMode>
+    <TrimmerDefaultAction>link</TrimmerDefaultAction>
+    <IlcTrimMetadata>true</IlcTrimMetadata>
     <NativeAotCompilerVersion>7.0.0-*</NativeAotCompilerVersion>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <IlcGenerateStackTraceData>false</IlcGenerateStackTraceData>
   </PropertyGroup>
 
   <ItemGroup>
@@ -13,10 +17,6 @@
     <!-- Cross-compilation for Windows x64-arm64 and Linux x64-arm64 -->
     <PackageReference Condition="'$(RuntimeIdentifier)'=='win-arm64'" Include="runtime.win-x64.Microsoft.DotNet.ILCompiler" Version="$(NativeAotCompilerVersion)" />
     <PackageReference Condition="'$(RuntimeIdentifier)'=='linux-arm64'" Include="runtime.linux-x64.Microsoft.DotNet.ILCompiler" Version="$(NativeAotCompilerVersion)" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <RdXmlFile Include="rd.xml" />
   </ItemGroup>
 
 </Project>

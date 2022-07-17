@@ -1,0 +1,25 @@
+syntax = "proto2";
+option csharp_namespace = "BBDown.Core.Protobuf";
+
+message Network {
+    enum TYPE {
+        NT_UNKNOWN = 0;
+        WIFI = 1;
+        CELLULAR = 2;
+        OFFLINE = 3;
+        OTHERNET = 4;
+        ETHERNET = 5;
+    }
+    optional TYPE type = 1;
+    enum TF {
+        TF_UNKNOWN = 0;
+        U_CARD = 1;
+        U_PKG = 2;
+        C_CARD = 3;
+        C_PKG = 4;
+        T_CARD = 5;
+        T_PKG = 6;
+    }
+    optional TF tf = 2;
+    optional string oid = 3;
+}

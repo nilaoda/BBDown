@@ -1,0 +1,104 @@
+syntax = "proto2";
+option csharp_namespace = "BBDown.Core.Protobuf";
+
+message DmViewReply {
+    optional bool closed = 1;
+    optional VideoMask mask = 2;
+    optional VideoSubtitle subtitle = 3;
+    repeated string specialDms = 4;
+    optional DanmakuFlagConfig aiFlag = 5;
+    optional DanmuPlayerViewConfig playerConfig = 6;
+    optional int32 sendBoxStyle = 7;
+    optional bool allow = 8;
+    optional string checkBoxShowMsg = 9;
+    optional bool checkBox = 10;
+    optional string textPlaceholder = 11;
+}
+
+message VideoMask {
+    optional int64 cid = 1;
+    optional int32 plat = 2;
+    optional int32 fps = 3;
+    optional int64 time = 4;
+    optional string maskUrl = 5;
+}
+
+message VideoSubtitle {
+    optional string lan = 1;
+    optional string lanDoc = 2;
+    optional SubtitleItem subtitles = 3;
+
+}
+
+message DanmakuFlagConfig {
+    optional int32 recFlag = 1;
+    optional string recText = 2;
+    optional int32 recSwitch = 3;
+}
+
+message DanmuPlayerViewConfig {
+    optional DanmuDefaultPlayerConfig danmukuDefaultPlayerConfig = 1;
+    optional DanmuPlayerConfig danmukuPlayerConfig = 2;
+    optional DanmuPlayerDynamicConfig danmukuPlayerDynamicConfig = 3;
+}
+
+message SubtitleItem {
+    optional UserInfo author = 6;
+    optional string idStr = 1;
+    optional int64 id = 2;
+    optional string lanDoc = 4;
+    optional string lan = 3;
+    optional string subtitleUrl = 5;
+}
+
+message UserInfo {
+    optional string face = 4;
+    optional int64 mid = 1;
+    optional string name = 2;
+    optional int32 rank = 6;
+    optional string sex = 3;
+    optional string sign = 5;
+}
+
+message DanmuDefaultPlayerConfig {
+    optional bool playerDanmakuUseDefaultConfig = 1;
+    optional bool playerDanmakuAiRecommendedSwitch = 4;
+    optional int32 playerDanmakuAiRecommendedLevel = 5;
+    optional bool playerDanmakuBlocktop = 6;
+    optional bool playerDanmakuBlockscroll = 7;
+    optional bool playerDanmakuBlockbottom = 8;
+    optional bool playerDanmakuBlockcolorful = 9;
+    optional bool playerDanmakuBlockrepeat = 10;
+    optional bool playerDanmakuBlockspecial = 11;
+    optional float playerDanmakuOpacity = 12;
+    optional float playerDanmakuScalingfactor = 13;
+    optional float playerDanmakuDomain = 14;
+    optional int32 playerDanmakuSpeed = 15;
+    optional bool inlinePlayerDanmakuSwitch = 16;
+}
+
+message DanmuPlayerConfig {
+    optional bool playerDanmakuSwitchSave = 1;
+    optional bool playerDanmakuSwitch = 2;
+    optional bool playerDanmakuUseDefaultConfig = 3;
+    optional bool playerDanmakuAiRecommendedSwitch = 4;
+    optional int32 playerDanmakuAiRecommendedLevel = 5;
+    optional bool playerDanmakuBlocktop = 6;
+    optional bool playerDanmakuBlockscroll = 7;
+    optional bool playerDanmakuBlockbottom = 8;
+    optional bool playerDanmakuBlockcolorful = 9;
+    optional bool playerDanmakuBlockrepeat = 10;
+    optional bool playerDanmakuBlockspecial = 11;
+    optional float playerDanmakuOpacity = 12;
+    optional float playerDanmakuScalingfactor = 13;
+    optional float playerDanmakuDomain = 14;
+    optional int32 playerDanmakuSpeed = 15;
+    optional bool playerDanmakuEnableblocklist = 16;
+    optional bool inlinePlayerDanmakuSwitch = 17;
+    optional int32 inlinePlayerDanmakuConfig = 18;
+}
+
+message DanmuPlayerDynamicConfig {
+    optional int32 progress = 1;
+    optional float playerDanmakuDomain = 14;
+}

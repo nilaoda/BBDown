@@ -1,4 +1,6 @@
-﻿using ProtoBuf;
+﻿using BBDown.Core.Protobuf;
+using Google.Protobuf;
+using System.Buffers.Binary;
 using System.IO.Compression;
 using System.Net.Http.Headers;
 using System.Text.Json;
@@ -18,7 +20,7 @@ namespace BBDown.Core
         private static readonly string appVer = "6.32.0";
         private static readonly int build = 6320200;
         private static readonly string channel = "xiaomi_cn_tv.danmaku.bili_zm20200902";
-        private static readonly Network.Type networkType = Network.Type.Wifi;
+        private static readonly Network.Types.TYPE networkType = Network.Types.TYPE.Wifi;
         private static readonly string networkOid = "46007";
         private static readonly string cronet = "1.36.1";
         private static readonly string buvid = "";
@@ -43,13 +45,13 @@ namespace BBDown.Core
         {
             var headers = GetHeader(appkey);
             LogDebug("App-Req-Headers: {0}", JsonSerializer.Serialize(headers, JsonContext.Default.DictionaryStringString));
-            var body = GetPayload(Convert.ToInt64(aid), Convert.ToInt64(cid), Convert.ToInt64(qn), onlyAvc ? PlayViewReq.CodeType.Code264 : PlayViewReq.CodeType.Code265);
+            var body = GetPayload(Convert.ToInt64(aid), Convert.ToInt64(cid), Convert.ToInt64(qn), onlyAvc ? PlayViewReq.Types.CodeType.Code264 : PlayViewReq.Types.CodeType.Code265);
             //Console.WriteLine(ReadMessage<PlayViewReq>(body));
             var data = await GetPostResponseAsync(API, body, headers);
             PlayViewReply? resp;
             try
             {
-                resp = ReadMessage<PlayViewReply>(data);
+                resp = new MessageParser<PlayViewReply>(() => new PlayViewReply()).ParseFrom(ReadMessage(data));
             }
             catch (Exception ex)
             {
@@ -60,9 +62,9 @@ namespace BBDown.Core
 
                 if (bangumi)
                 {
-                    body = GetPayload(Convert.ToInt64(epId), Convert.ToInt64(cid), Convert.ToInt64(qn), onlyAvc ? PlayViewReq.CodeType.Code264 : PlayViewReq.CodeType.Code265);
+                    body = GetPayload(Convert.ToInt64(epId), Convert.ToInt64(cid), Convert.ToInt64(qn), onlyAvc ? PlayViewReq.Types.CodeType.Code264 : PlayViewReq.Types.CodeType.Code265);
                     data = await GetPostResponseAsync(API2, body, headers);
-                    resp = ReadMessage<PlayViewReply>(data);
+                    resp = new MessageParser<PlayViewReply>(() => new PlayViewReply()).ParseFrom(ReadMessage(data));
                 }
                 else
                 {
@@ -84,43 +86,43 @@ namespace BBDown.Core
             var videos = new List<object>();
             var audios = new List<object>();
 
-            if (resp.videoInfo.streamLists != null)
+            if (resp.VideoInfo.StreamList != null)
             {
-                foreach (var item in resp.videoInfo.streamLists)
+                foreach (var item in resp.VideoInfo.StreamList)
                 {
-                    if (item.dashVideo != null)
+                    if (item.DashVideo != null)
                     {
                         videos.Add(new AudioInfoWitCodecId(
-                            item.streamInfo.Quality,
-                            item.dashVideo.baseUrl,
-                            (uint)(item.dashVideo.Size * 8 / (resp.videoInfo.Timelength / 1000)),
-                            item.dashVideo.Codecid
+                            item.StreamInfo.Quality,
+                            item.DashVideo.BaseUrl,
+                            (uint)(item.DashVideo.Size * 8 / (resp.VideoInfo.Timelength / 1000)),
+                            item.DashVideo.Codecid
                         ));
                     }
                 }
             }
 
-            if (resp.videoInfo.dashAudioes != null)
+            if (resp.VideoInfo.DashAudio != null)
             {
-                foreach (var item in resp.videoInfo.dashAudioes)
+                foreach (var item in resp.VideoInfo.DashAudio)
                 {
                     audios.Add(new AudioInfoWithCodecName(
                         item.Id,
-                        item.baseUrl,
-                        item.backupUrls,
+                        item.BaseUrl,
+                        item.BackupUrl.ToList(),
                         item.Bandwidth,
                         "M4A"
                     ));
                 }
             }
 
-            if (resp.videoInfo.Dolby != null && resp.videoInfo.Dolby.Audio != null)
+            if (resp.VideoInfo.Dolby != null && resp.VideoInfo.Dolby.Audio != null)
             {
                 audios.Add(new AudioInfoWithCodecName(
-                    resp.videoInfo.Dolby.Audio.Id,
-                    resp.videoInfo.Dolby.Audio.baseUrl,
-                    resp.videoInfo.Dolby.Audio.backupUrls,
-                    resp.videoInfo.Dolby.Audio.Bandwidth,
+                    resp.VideoInfo.Dolby.Audio.Id,
+                    resp.VideoInfo.Dolby.Audio.BaseUrl,
+                    resp.VideoInfo.Dolby.Audio.BackupUrl.ToList(),
+                    resp.VideoInfo.Dolby.Audio.Bandwidth,
                     "E-AC-3"
                 ));
             }
@@ -130,7 +132,7 @@ namespace BBDown.Core
                 "0",
                 1,
                 new DashData(
-                    resp.videoInfo.Timelength,
+                    resp.VideoInfo.Timelength,
                     new DashInfo(
                         videos,
                         audios
@@ -141,23 +143,23 @@ namespace BBDown.Core
             return JsonSerializer.Serialize(json, JsonContext.Default.DashJson);
         }
 
-        private static byte[] GetPayload(long aid, long cid, long qn, PlayViewReq.CodeType codec)
+        private static byte[] GetPayload(long aid, long cid, long qn, PlayViewReq.Types.CodeType codec)
         {
             var obj = new PlayViewReq
             {
-                epId = aid,
+                EpId = aid,
                 Cid = cid,
                 //obj.Qn = qn;
                 Qn = 126,
                 Fnval = 976,
                 Spmid = "main.ugc-video-detail.0.0",
-                fromSpmid = "main.my-history.0.0",
-                preferCodecType = codec,
+                FromSpmid = "main.my-history.0.0",
+                PreferCodecType = codec,
                 Download = 0, //0:播放 1:flv下载 2:dash下载
-                forceHost = 2 //0:允许使用ip 1:使用http 2:使用https
+                ForceHost = 2 //0:允许使用ip 1:使用http 2:使用https
             };
             LogDebug("PayLoadPlain: {0}", JsonSerializer.Serialize(obj, JsonContext.Default.PlayViewReq));
-            return PackMessage(ObjectToBytes(obj));
+            return PackMessage(obj.ToByteArray());
         }
 
 
@@ -188,54 +190,54 @@ namespace BBDown.Core
         {
             var obj = new Locale
             {
-                cLocale = new Locale.LocaleIds
+                CLocale = new Locale.Types.LocaleIds
                 {
                     Language = language,
                     Region = region
                 }
             };
-            return SerializeToBase64(obj);
+            return Convert.ToBase64String(obj.ToByteArray());
         }
 
         private static string GenerateNetworkBin()
         {
             var obj = new Network
             {
-                type = networkType,
+                Type = networkType,
                 Oid = networkOid
             };
-            return SerializeToBase64(obj);
+            return Convert.ToBase64String(obj.ToByteArray());
         }
 
         private static string GenerateDeviceBin()
         {
             var obj = new Device
             {
-                appId = appId,
+                AppId = appId,
                 Build = build,
                 Buvid = buvid,
-                mobiApp = mobiApp,
+                MobiApp = mobiApp,
                 Platform = platform,
                 Channel = channel,
                 Brand = brand,
                 Model = model,
                 Osver = osVer
             };
-            return SerializeToBase64(obj);
+            return Convert.ToBase64String(obj.ToByteArray());
         }
 
         private static string GenerateMetadataBin(string appkey)
         {
             var obj = new Metadata
             {
-                accessKey = appkey,
-                mobiApp = mobiApp,
+                AccessKey = appkey,
+                MobiApp = mobiApp,
                 Build = build,
                 Channel = channel,
                 Buvid = buvid,
                 Platform = platform
             };
-            return SerializeToBase64(obj);
+            return Convert.ToBase64String(obj.ToByteArray());
         }
 
         private static string GenerateFawkesReqBin()
@@ -244,31 +246,9 @@ namespace BBDown.Core
             {
                 Appkey = appKey,
                 Env = env,
-                sessionId = sessionId
+                SessionId = sessionId
             };
-            return SerializeToBase64(obj);
-        }
-
-        /// <summary>
-        /// 对象转字节数组
-        /// </summary>
-        /// <param name="obj"></param>
-        /// <returns></returns>
-        private static byte[] ObjectToBytes<T>(T obj)
-        {
-            using var stream = new MemoryStream();
-            Serializer.Serialize(stream, obj);
-            return stream.ToArray();
-        }
-
-        /// <summary>
-        /// 序列化为字符串
-        /// </summary>
-        /// <param name="obj"></param>
-        /// <returns></returns>
-        private static string SerializeToBase64<T>(T obj)
-        {
-            return Convert.ToBase64String(ObjectToBytes(obj)).TrimEnd('=');
+            return Convert.ToBase64String(obj.ToByteArray());
         }
 
         #endregion
@@ -283,20 +263,7 @@ namespace BBDown.Core
             byte first;
             int size;
             (first, size) = ReadInfo(data);
-            return first == 1 ? GzipDecompress(data.Skip(5).ToArray()) : data.Skip(5).Take(size).ToArray();
-        }
-
-        /// <summary>
-        /// 读取gRPC响应流 通过前5字节信息 解析/解压后面的报文体
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="data"></param>
-        /// <returns>对应的protobuf</returns>
-        private static T ReadMessage<T>(byte[] data)
-        {
-            var msg = ReadMessage(data);
-            var obj = Serializer.Deserialize<T>(new MemoryStream(msg));
-            return obj;
+            return first == 1 ? GzipDecompress(data[5..]) : data[5..(5 + size)];
         }
 
         /// <summary>
@@ -306,12 +273,10 @@ namespace BBDown.Core
         /// <returns></returns>
         private static (byte first, int size) ReadInfo(byte[] data)
         {
-            using var stream = new MemoryStream(data.Take(5).ToArray());
-            using var reader = new BinaryReader(stream);
-            var value1 = reader.ReadByte();
-            var value2 = reader.ReadBytes(4);
+            var value1 = data[0];
+            var value2 = data[1..5];
 
-            return (value1, BitConverter.ToInt32(value2.Reverse().ToArray()));
+            return (value1, BinaryPrimitives.ReadInt32BigEndian(value2));
         }
 
         /// <summary>
@@ -325,8 +290,9 @@ namespace BBDown.Core
             using (var writer = new BinaryWriter(stream))
             {
                 var comp = GzipCompress(input);
-                var reverse = BitConverter.GetBytes(comp.Length).Reverse().ToArray();
+                var reverse = (stackalloc byte[4]);
                 writer.Write((byte)1);
+                BinaryPrimitives.WriteInt32BigEndian(reverse, comp.Length);
                 writer.Write(reverse);
                 writer.Write(comp);
             }
