@@ -1,0 +1,14 @@
+syntax = "proto2";
+option csharp_namespace = "BBDown.Core.Protobuf";
+
+message Restriction {
+    optional bool teenagersMode = 1;
+    optional bool lessonsMode = 2;
+    enum Mode {
+        NORMAL = 0;
+        TEENAGERS = 1;
+        LESSONS = 2;
+    }
+    optional Mode mode = 3;
+    optional bool review = 4;
+}

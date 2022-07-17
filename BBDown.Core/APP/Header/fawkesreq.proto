@@ -1,0 +1,8 @@
+syntax = "proto2";
+option csharp_namespace = "BBDown.Core.Protobuf";
+
+message FawkesReq {
+    optional string appkey = 1;
+    optional string env = 2;
+    optional string sessionId = 3;
+}

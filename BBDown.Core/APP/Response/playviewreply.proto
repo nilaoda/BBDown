@@ -1,0 +1,129 @@
+syntax = "proto2";
+option csharp_namespace = "BBDown.Core.Protobuf";
+
+message VideoInfo {
+    optional uint32 quality = 1;
+    optional string format = 2;
+    optional uint64 timelength = 3;
+    optional uint32 videoCodecid = 4;
+    repeated StreamItem streamList = 5;
+    repeated DashItem dashAudio = 6;
+    //∂≈±»∞È“Ù¡ÅE
+    optional DolbyItem dolby = 7;
+}
+
+//∂≈±»“Ù∆µ–≈œ¢
+message DolbyItem {
+	optional int32 type = 1;
+	//“Ù∆µ¡ÅE
+	optional DashItem audio = 2;
+}
+
+message PlayAbilityConf {
+    optional bool backgroundPlayDisable = 1;
+    optional bool flipDisable = 2;
+    optional bool castDisable = 3;
+    optional bool feedbackDisable = 4;
+    optional bool subtitleDisable = 5;
+    optional bool playbackRateDisable = 6;
+    optional bool timeUpDisable = 7;
+    optional bool playbackModeDisable = 8;
+    optional bool scaleModeDisable = 9;
+    optional bool likeDisable = 10;
+    optional bool dislikeDisable = 11;
+    optional bool coinDisable = 12;
+    optional bool elecDisable = 13;
+    optional bool shareDisable = 14;
+    optional bool screenShotDisable = 15;
+    optional bool lockScreenDisable = 16;
+    optional bool recommendDisable = 17;
+    optional bool playbackSpeedDisable = 18;
+    optional bool definitionDisable = 19;
+    optional bool selectionsDisable = 20;
+    optional bool nextDisable = 21;
+    optional bool editDmDisable = 22;
+    optional bool smallWindowDisable = 23;
+    optional bool shakeDisable = 24;
+}
+
+message BusinessInfo {
+    optional bool isPreview = 1;
+    optional bool bp = 2;
+    optional string marlinToken = 3;
+}
+
+message Event {
+    optional Shake shake = 1;
+}
+
+message Shake {
+    optional string file = 1;
+}
+
+message DashItem {
+    optional uint32 id = 1;
+    optional string baseUrl = 2;
+    repeated string backupUrl = 3;
+    optional uint32 bandwidth = 4;
+    optional uint32 codecid = 5;
+    optional string md5 = 6;
+    optional uint64 size = 7;
+}
+
+message StreamItem {
+    optional StreamInfo streamInfo = 1;
+    optional DashVideo  dashVideo = 2;
+    optional SegmentVideo segmentVideo = 3;
+}
+
+message StreamInfo {
+    optional uint32 quality = 1;
+    optional string format = 2;
+    optional string description = 3;
+    optional uint32 errCode = 4;
+    optional StreamLimit limit = 5;
+    optional bool needVip = 6;
+    optional bool needLogin = 7;
+    optional bool intact = 8;
+    optional bool noRexcode = 9;
+    optional uint64 attribute = 10;
+
+}
+
+message DashVideo {
+    optional string baseUrl = 1;
+    repeated string backupUrl = 2;
+    optional uint32 bandwidth = 3;
+    optional uint32 codecid = 4;
+    optional string md5 = 5;
+    optional uint64 size = 6;
+    optional uint32 audioId = 7;
+    optional bool noRexcode = 8;
+}
+
+message SegmentVideo {
+    repeated ResponseUrl segment = 1;
+}
+
+message StreamLimit {
+    optional string title = 1;
+    optional string uri = 2;
+    optional string msg = 3;
+
+}
+
+message ResponseUrl {
+    optional uint32 order = 1;
+    optional uint64 length = 2;
+    optional uint64 size = 3;
+    optional string url = 4;
+    repeated string backupUrl = 5;
+    optional string md5 = 6;
+}
+
+message PlayViewReply {
+    optional VideoInfo videoInfo = 1;
+    optional PlayAbilityConf playConf = 2;
+    optional BusinessInfo business = 3;
+    optional Event event = 4;
+}

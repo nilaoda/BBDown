@@ -1,0 +1,12 @@
+syntax = "proto2";
+option csharp_namespace = "BBDown.Core.Protobuf";
+
+message Locale {
+    message LocaleIds {
+        optional string language = 1;
+        optional string script = 2;
+        optional string region = 3;
+    }
+    optional LocaleIds cLocale = 1;
+    optional LocaleIds sLocale = 2;
+}

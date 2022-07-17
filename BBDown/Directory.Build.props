@@ -15,8 +15,4 @@
     <PackageReference Condition="'$(RuntimeIdentifier)'=='linux-arm64'" Include="runtime.linux-x64.Microsoft.DotNet.ILCompiler" Version="$(NativeAotCompilerVersion)" />
   </ItemGroup>
 
-  <ItemGroup>
-    <RdXmlFile Include="rd.xml" />
-  </ItemGroup>
-
 </Project>
