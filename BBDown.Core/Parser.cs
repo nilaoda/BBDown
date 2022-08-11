@@ -179,7 +179,8 @@ namespace BBDown.Core
                         {
                             if (hiRes.TryGetProperty("audio", out JsonElement db))
                             {
-                                audio.Add(db);
+                                if (db.ValueKind != JsonValueKind.Null)
+                                    audio.Add(db);
                             }
                         }
                     }
