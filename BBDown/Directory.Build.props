@@ -3,13 +3,11 @@
   <PropertyGroup>
     <IlcOptimizationPreference>Speed</IlcOptimizationPreference>
     <IlcFoldIdenticalMethodBodies>true</IlcFoldIdenticalMethodBodies>
-    <StaticallyLinked Condition="$(RuntimeIdentifier.StartsWith('win'))">true</StaticallyLinked>
     <TrimMode>full</TrimMode>
     <TrimmerDefaultAction>link</TrimmerDefaultAction>
     <IlcTrimMetadata>true</IlcTrimMetadata>
     <NativeAotCompilerVersion>7.0.0-*</NativeAotCompilerVersion>
     <InvariantGlobalization>true</InvariantGlobalization>
-    <IlcGenerateStackTraceData>false</IlcGenerateStackTraceData>
   </PropertyGroup>
 
   <ItemGroup>
