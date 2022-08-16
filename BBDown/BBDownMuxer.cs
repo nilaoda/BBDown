@@ -174,7 +174,7 @@ namespace BBDown
             }
         }
 
-        [RegexGenerator("-i \"")]
+        [GeneratedRegex("-i \"")]
         private static partial Regex InputRegex();
     }
 }

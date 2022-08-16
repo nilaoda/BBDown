@@ -5,7 +5,7 @@ VisualStudioVersion = 17.2.32210.308
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BBDown", "BBDown\BBDown.csproj", "{0D491417-BFEA-481B-AE1A-3BE69172D818}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BBDown.Core", "BBDown.Core\BBDown.Core.csproj", "{932F1279-4AD3-4226-97C6-B0997B1568AC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BBDown.Core", "BBDown.Core\BBDown.Core.csproj", "{932F1279-4AD3-4226-97C6-B0997B1568AC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

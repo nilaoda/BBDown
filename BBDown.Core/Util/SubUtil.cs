@@ -313,9 +313,9 @@ namespace BBDown.Core.Util
         public static async Task SaveSubtitleAsync(string url, string path)
         {
             if (path.EndsWith(".srt"))
-                await File.WriteAllTextAsync(path, ConvertSubFromJson(await GetWebSourceAsync(url)), new UTF8Encoding());
+                await File.WriteAllTextAsync(path, ConvertSubFromJson(await GetWebSourceAsync(url)), Encoding.UTF8);
             else
-                await File.WriteAllTextAsync(path, await GetWebSourceAsync(url), new UTF8Encoding());
+                await File.WriteAllTextAsync(path, await GetWebSourceAsync(url), Encoding.UTF8);
         }
 
         private static string ConvertSubFromJson(string jsonString)
@@ -354,9 +354,9 @@ namespace BBDown.Core.Util
             return str;
         }
 
-        [RegexGenerator("-[a-z]")]
+        [GeneratedRegex("-[a-z]")]
         private static partial Regex NonCapsRegex();
-        [RegexGenerator("(zh-Han[st]).*?(http.*?\\.json)")]
+        [GeneratedRegex("(zh-Han[st]).*?(http.*?\\.json)")]
         private static partial Regex CnJsonRegex();
     }
 }
