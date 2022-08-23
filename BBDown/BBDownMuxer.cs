@@ -46,11 +46,18 @@ namespace BBDown
         {
             StringBuilder inputArg = new();
             StringBuilder metaArg = new();
+            int nowId = 0;
             inputArg.Append(" -inter 500 -noprog ");
             if (!string.IsNullOrEmpty(videoPath))
+            {
                 inputArg.Append($" -add \"{videoPath}#trackID={(audioOnly && audioPath == "" ? "2" : "1")}:name=\" ");
+                nowId++;
+            }
             if (!string.IsNullOrEmpty(audioPath))
+            {
                 inputArg.Append($" -add \"{audioPath}:lang={(lang == "" ? "und" : lang)}\" ");
+                nowId++;
+            }
             if (points != null && points.Count > 0)
             {
                 var meta = GetMp4boxMetaString(points);
@@ -61,9 +68,9 @@ namespace BBDown
             if (!string.IsNullOrEmpty(pic))
                 metaArg.Append($":cover=\"{pic}\"");
             if (!string.IsNullOrEmpty(episodeId))
-                metaArg.Append($":album=\"{title}\":name=\"{episodeId}\"");
+                metaArg.Append($":album=\"{title}\":title=\"{episodeId}\"");
             else
-                metaArg.Append($":name=\"{title}\"");
+                metaArg.Append($":title=\"{title}\"");
             metaArg.Append($":comment=\"{desc}\"");
 
             if (subs != null)
@@ -72,13 +79,15 @@ namespace BBDown
                 {
                     if (File.Exists(subs[i].path) && File.ReadAllText(subs[i].path!) != "")
                     {
-                        inputArg.Append($" -add \"{subs[i].path}#trackID=1:name={GetSubtitleCode(subs[i].lan).Item2}:lang={GetSubtitleCode(subs[i].lan).Item1}\" ");
+                        nowId++;
+                        inputArg.Append($" -add \"{subs[i].path}#trackID=1:name=:lang={GetSubtitleCode(subs[i].lan).Item1}\" ");
+                        inputArg.Append($" -udta {nowId}:type=name:str=\"{GetSubtitleCode(subs[i].lan).Item2}\" ");
                     }
                 }
             }
 
             //----分析完毕
-            var arguments = inputArg.ToString() + (metaArg.ToString() == "" ? "" : " -itags tools=\"\"" + metaArg.ToString()) + $" \"{outPath}\"";
+            var arguments = inputArg.ToString() + (metaArg.ToString() == "" ? "" : " -itags tool=" + metaArg.ToString()) + $" -new \"{outPath}\"";
             LogDebug("mp4box命令：{0}", arguments);
             return RunExe(MP4BOX, arguments, MP4BOX != "mp4box");
         }
@@ -116,7 +125,7 @@ namespace BBDown
                     if(File.Exists(subs[i].path) && File.ReadAllText(subs[i].path!) != "")
                     {
                         inputArg.Append($" -i \"{subs[i].path}\" ");
-                        metaArg.Append($" -metadata:s:s:{i} handler_name=\"{GetSubtitleCode(subs[i].lan).Item2}\" -metadata:s:s:{i} language={GetSubtitleCode(subs[i].lan).Item1} ");
+                        metaArg.Append($" -metadata:s:s:{i} title=\"{GetSubtitleCode(subs[i].lan).Item2}\" -metadata:s:s:{i} language={GetSubtitleCode(subs[i].lan).Item1} ");
                     }
                 }
             }
