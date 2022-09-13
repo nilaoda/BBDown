@@ -434,6 +434,9 @@ namespace BBDown
 
                 foreach (Page p in pagesInfo)
                 {
+                    int vIndex = 0; //用户手动选择的视频序号
+                    int aIndex = 0; //用户手动选择的音频序号
+                    bool selected = false; //用户是否已经手动选择过了轨道
                     int retryCount = 0;
                 downloadPage:
                     try
@@ -542,9 +545,6 @@ namespace BBDown
                             if (audioOnly) videoTracks.Clear();
                             if (videoOnly) audioTracks.Clear();
 
-                            int vIndex = 0;
-                            int aIndex = 0;
-
                             if (!hideStreams)
                             {
                                 //展示所有的音视频流信息
@@ -572,7 +572,7 @@ namespace BBDown
                                 }
                             }
                             if (infoMode) continue;
-                            if (interactMode && !hideStreams)
+                            if (interactMode && !hideStreams && !selected)
                             {
                                 if (videoTracks.Count > 0)
                                 {
@@ -590,6 +590,7 @@ namespace BBDown
                                     if (aIndex > audioTracks.Count || aIndex < 0) aIndex = 0;
                                     Console.ResetColor();
                                 }
+                                selected = true;
                             }
 
                             Log($"已选择的流:");
@@ -734,13 +735,12 @@ namespace BBDown
                         else if (clips.Count > 0 && dfns.Count > 0)   //flv
                         {
                             bool flag = false;
-                            int vIndex = 0;
                         reParse:
                             //排序
                             //videoTracks.Sort((v1, v2) => Compare(v1, v2, encodingPriority, dfnPriority));
                             videoTracks = SortTracks(videoTracks, dfnPriority, encodingPriority);
 
-                            if (interactMode && !flag)
+                            if (interactMode && !flag && !selected)
                             {
                                 int i = 0;
                                 dfns.ForEach(key => LogColor($"{i++}.{Config.qualitys[key]}"));
@@ -753,6 +753,7 @@ namespace BBDown
                                 videoTracks.Clear();
                                 (webJsonStr, videoTracks, audioTracks, clips, dfns) = await ExtractTracksAsync(aidOri, p.aid, p.cid, p.epid, tvApi, intlApi, appApi, dfns[vIndex]);
                                 flag = true;
+                                selected = true;
                                 goto reParse;
                             }
 
