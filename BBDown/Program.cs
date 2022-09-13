@@ -914,13 +914,13 @@ namespace BBDown
                 var key = m.Groups[1].Value;
                 var v = key switch
                 {
-                    "videoTitle" => GetValidFileName(title, filterSlash: true),
+                    "videoTitle" => GetValidFileName(title, filterSlash: true).Trim().TrimEnd('.').Trim(),
                     "pageNumber" => p.index.ToString(),
                     "pageNumberWithZero" => p.index.ToString().PadLeft((int)Math.Log10(pagesCount) + 1, '0'),
-                    "pageTitle" => GetValidFileName(p.title, filterSlash: true),
+                    "pageTitle" => GetValidFileName(p.title, filterSlash: true).Trim().TrimEnd('.').Trim(),
                     "aid" => p.aid,
                     "cid" => p.cid,
-                    "ownerName" => p.ownerName == null ? "" : GetValidFileName(p.ownerName, filterSlash: true),
+                    "ownerName" => p.ownerName == null ? "" : GetValidFileName(p.ownerName, filterSlash: true).Trim().TrimEnd('.').Trim(),
                     "ownerMid" => p.ownerMid ?? "",
                     "dfn" => videoTrack == null ? "" : videoTrack.dfn,
                     "res" => videoTrack == null ? "" : videoTrack.res,
