@@ -41,192 +41,12 @@ namespace BBDown
         [JsonSerializable(typeof(MyOption))]
         partial class MyOptionJsonContext : JsonSerializerContext { }
 
-        private readonly static Argument<string> Url = new("url", description: "视频地址 或 av|bv|BV|ep|ss");
-        private readonly static Option<bool> UseTvApi = new(new string[] { "--use-tv-api", "-tv" }, "使用TV端解析模式");
-        private readonly static Option<bool> UseAppApi = new(new string[] { "--use-app-api", "-app" }, "使用APP端解析模式");
-        private readonly static Option<bool> UseIntlApi = new(new string[] { "--use-intl-api", "-intl" }, "使用国际版解析模式");
-        private readonly static Option<bool> UseMP4box = new(new string[] { "--use-mp4box" }, "使用MP4Box来混流");
-        private readonly static Option<string> EncodingPriority = new(new string[] { "--encoding-priority" }, "视频编码的选择优先级,用逗号分割 例:\"hevc,av1,avc\"");
-        private readonly static Option<string> DfnPriority = new(new string[] { "--dfn-priority" }, "画质优先级,用逗号分隔 例:\"8K 超高清, 1080P 高码率, HDR 真彩, 杜比视界\"");
-        private readonly static Option<bool> OnlyShowInfo = new(new string[] { "--only-show-info", "-info" }, "仅解析而不进行下载");
-        private readonly static Option<bool> HideStreams = new(new string[] { "--hide-streams", "-hs" }, "不要显示所有可用音视频流");
-        private readonly static Option<bool> Interactive = new(new string[] { "--interactive", "-ia" }, "交互式选择清晰度");
-        private readonly static Option<bool> ShowAll = new(new string[] { "--show-all" }, "展示所有分P标题");
-        private readonly static Option<bool> UseAria2c = new(new string[] { "--use-aria2c" }, "调用aria2c进行下载(你需要自行准备好二进制可执行文件)");
-        private readonly static Option<string> Aria2cProxy = new(new string[] { "--aria2c-proxy" }, "调用aria2c进行下载时的代理地址配置");
-        private readonly static Option<bool> MultiThread = new(new string[] { "--multi-thread", "-mt" }, "使用多线程下载(默认开启)");
-        private readonly static Option<string> SelectPage = new(new string[] { "--select-page", "-p" }, "选择指定分p或分p范围：(-p 8 或 -p 1,2 或 -p 3-5 或 -p ALL)");
-        private readonly static Option<bool> AudioOnly = new(new string[] { "--audio-only" }, "仅下载音频");
-        private readonly static Option<bool> VideoOnly = new(new string[] { "--video-only" }, "仅下载视频");
-        private readonly static Option<bool> SubOnly = new(new string[] { "--sub-only" }, "仅下载字幕");
-        private readonly static Option<bool> Debug = new(new string[] { "--debug" }, "输出调试日志");
-        private readonly static Option<bool> SkipMux = new(new string[] { "--skip-mux" }, "跳过混流步骤");
-        private readonly static Option<bool> SkipSubtitle = new(new string[] { "--skip-subtitle" }, "跳过字幕下载");
-        private readonly static Option<bool> SkipCover = new(new string[] { "--skip-cover" }, "跳过封面下载");
-        private readonly static Option<bool> ForceHttp = new(new string[] { "--force-http" }, "下载音视频时强制使用HTTP协议替换HTTPS(默认开启)");
-        private readonly static Option<bool> DownloadDanmaku = new(new string[] { "--download-danmaku", "-dd" }, "下载弹幕");
-        private readonly static Option<string> Language = new(new string[] { "--language" }, "设置混流的音频语言(代码)，如chi, jpn等");
-        private readonly static Option<string> Cookie = new(new string[] { "--cookie", "-c" }, "设置字符串cookie用以下载网页接口的会员内容");
-        private readonly static Option<string> AccessToken = new(new string[] { "--access-token", "-token" }, "设置access_token用以下载TV/APP接口的会员内容");
-        private readonly static Option<string> WorkDir = new(new string[] { "--work-dir" }, "设置程序的工作目录");
-        private readonly static Option<string> FFmpegPath = new(new string[] { "--ffmpeg-path" }, "设置ffmpeg的路径");
-        private readonly static Option<string> Mp4boxPath = new(new string[] { "--mp4box-path" }, "设置mp4box的路径");
-        private readonly static Option<string> Aria2cPath = new(new string[] { "--aria2c-path" }, "设置aria2c的路径");
-        private readonly static Option<string> DelayPerPage = new(new string[] { "--delay-per-page" }, "设置下载合集分P之间的下载间隔时间(单位: 秒, 默认无间隔)");
-        private readonly static Option<string> FilePattern = new(new string[] { "--file-pattern", "-F" }, $"使用内置变量自定义单P存储文件名:\r\n\r\n" + $"<videoTitle>: 视频主标题\r\n" + $"<pageNumber>: 视频分P序号\r\n" + $"<pageNumberWithZero>: 视频分P序号(前缀补零)\r\n" + $"<pageTitle>: 视频分P标题\r\n" + $"<aid>: 视频aid\r\n" + $"<cid>: 视频cid\r\n" + $"<dfn>: 视频清晰度\r\n" + $"<res>: 视频分辨率\r\n" + $"<fps>: 视频帧率\r\n" + $"<videoCodecs>: 视频编码\r\n" + $"<videoBandwidth>: 视频码率\r\n" + $"<audioCodecs>: 音频编码\r\n" + $"<audioBandwidth>: 音频码率\r\n" + $"<ownerName>: 上传者名称\r\n" + $"<ownerMid>: 上传者mid\r\n\r\n" + $"默认为: {SinglePageDefaultSavePath}\r\n");
-        private readonly static Option<string> MultiFilePattern = new(new string[] { "--multi-file-pattern", "-M" }, $"使用内置变量自定义多P存储文件名:\r\n\r\n" + $"默认为: {MultiPageDefaultSavePath}\r\n");
-        private readonly static Option<string> ConfigFile = new(new string[] { "--config-file" }, "读取指定的BBDown本地配置文件(默认为: BBDown.config)");//以下仅为兼容旧版本命令行，不建议使用
-        private readonly static Option<bool> OnlyHevc = new(new string[] { "--only-hevc", "-hevc" }, "只下载hevc编码") { IsHidden = true };
-        private readonly static Option<bool> OnlyAvc = new(new string[] { "--only-avc", "-avc" }, "只下载avc编码") { IsHidden = true };
-        private readonly static Option<bool> OnlyAv1 = new(new string[] { "--only-av1", "-av1" }, "只下载av1编码") { IsHidden = true };
-        private readonly static Option<bool> AddDfnSubfix = new(new string[] { "--add-dfn-subfix" }, "为文件加入清晰度后缀，如XXX[1080P 高码率]") { IsHidden = true };
-        private readonly static Option<bool> NoPaddingPageNum = new(new string[] { "--no-padding-page-num" }, "不给分P序号补零") { IsHidden = true };
-
-        class MyOption
-        {
-            public string Url { get; set; } = default!;
-            public bool UseTvApi { get; set; }
-            public bool UseAppApi { get; set; }
-            public bool UseIntlApi { get; set; }
-            public bool UseMP4box { get; set; }
-            public string? EncodingPriority { get; set; }
-            public string? DfnPriority { get; set; }
-            public bool OnlyShowInfo { get; set; }
-            public bool ShowAll { get; set; }
-            public bool UseAria2c { get; set; }
-            public bool Interactive { get; set; }
-            public bool HideStreams { get; set; }
-            public bool MultiThread { get; set; } = true;
-            public bool VideoOnly { get; set; }
-            public bool AudioOnly { get; set; }
-            public bool SubOnly { get; set; }
-            public bool Debug { get; set; }
-            public bool SkipMux { get; set; }
-            public bool SkipSubtitle { get; set; }
-            public bool SkipCover { get; set; }
-            public bool ForceHttp { get; set; } = true;
-            public bool DownloadDanmaku { get; set; } = false;
-            public string FilePattern { get; set; } = "";
-            public string MultiFilePattern { get; set; } = "";
-            public string SelectPage { get; set; } = "";
-            public string Language { get; set; } = "";
-            public string Cookie { get; set; } = "";
-            public string AccessToken { get; set; } = "";
-            public string Aria2cProxy { get; set; } = "";
-            public string WorkDir { get; set; } = "";
-            public string FFmpegPath { get; set; } = "";
-            public string Mp4boxPath { get; set; } = "";
-            public string Aria2cPath { get; set; } = "";
-            public string DelayPerPage { get; set; } = "0";
-            public string? ConfigFile { get; set; }
-            //以下仅为兼容旧版本命令行，不建议使用
-            public bool OnlyHevc { get; set; }
-            public bool OnlyAvc { get; set; }
-            public bool OnlyAv1 { get; set; }
-            public bool AddDfnSubfix { get; set; }
-            public bool NoPaddingPageNum { get; set; }
-        }
-
-        class MyOptionBinder : BinderBase<MyOption>
-        {
-            protected override MyOption GetBoundValue(BindingContext bindingContext)
-            {
-                var option = new MyOption
-                {
-                    Url = bindingContext.ParseResult.GetValueForArgument(Url)
-                };
-
-                if (bindingContext.ParseResult.HasOption(UseTvApi)) option.UseTvApi = bindingContext.ParseResult.GetValueForOption(UseTvApi)!;
-                if (bindingContext.ParseResult.HasOption(UseAppApi)) option.UseAppApi = bindingContext.ParseResult.GetValueForOption(UseAppApi)!;
-                if (bindingContext.ParseResult.HasOption(UseIntlApi)) option.UseIntlApi = bindingContext.ParseResult.GetValueForOption(UseIntlApi)!;
-                if (bindingContext.ParseResult.HasOption(UseMP4box)) option.UseMP4box = bindingContext.ParseResult.GetValueForOption(UseMP4box)!;
-                if (bindingContext.ParseResult.HasOption(EncodingPriority)) option.EncodingPriority = bindingContext.ParseResult.GetValueForOption(EncodingPriority)!;
-                if (bindingContext.ParseResult.HasOption(DfnPriority)) option.DfnPriority = bindingContext.ParseResult.GetValueForOption(DfnPriority)!;
-                if (bindingContext.ParseResult.HasOption(OnlyShowInfo)) option.OnlyShowInfo = bindingContext.ParseResult.GetValueForOption(OnlyShowInfo)!;
-                if (bindingContext.ParseResult.HasOption(ShowAll)) option.ShowAll = bindingContext.ParseResult.GetValueForOption(ShowAll)!;
-                if (bindingContext.ParseResult.HasOption(UseAria2c)) option.UseAria2c = bindingContext.ParseResult.GetValueForOption(UseAria2c)!;
-                if (bindingContext.ParseResult.HasOption(Interactive)) option.Interactive = bindingContext.ParseResult.GetValueForOption(Interactive)!;
-                if (bindingContext.ParseResult.HasOption(HideStreams)) option.HideStreams = bindingContext.ParseResult.GetValueForOption(HideStreams)!;
-                if (bindingContext.ParseResult.HasOption(MultiThread)) option.MultiThread = bindingContext.ParseResult.GetValueForOption(MultiThread)!;
-                if (bindingContext.ParseResult.HasOption(VideoOnly)) option.VideoOnly = bindingContext.ParseResult.GetValueForOption(VideoOnly)!;
-                if (bindingContext.ParseResult.HasOption(AudioOnly)) option.AudioOnly = bindingContext.ParseResult.GetValueForOption(AudioOnly)!;
-                if (bindingContext.ParseResult.HasOption(SubOnly)) option.SubOnly = bindingContext.ParseResult.GetValueForOption(SubOnly)!;
-                if (bindingContext.ParseResult.HasOption(Debug)) option.Debug = bindingContext.ParseResult.GetValueForOption(Debug)!;
-                if (bindingContext.ParseResult.HasOption(SkipMux)) option.SkipMux = bindingContext.ParseResult.GetValueForOption(SkipMux)!;
-                if (bindingContext.ParseResult.HasOption(SkipSubtitle)) option.SkipSubtitle = bindingContext.ParseResult.GetValueForOption(SkipSubtitle)!;
-                if (bindingContext.ParseResult.HasOption(SkipCover)) option.SkipCover = bindingContext.ParseResult.GetValueForOption(SkipCover)!;
-                if (bindingContext.ParseResult.HasOption(ForceHttp)) option.ForceHttp = bindingContext.ParseResult.GetValueForOption(ForceHttp)!;
-                if (bindingContext.ParseResult.HasOption(DownloadDanmaku)) option.DownloadDanmaku = bindingContext.ParseResult.GetValueForOption(DownloadDanmaku)!;
-                if (bindingContext.ParseResult.HasOption(FilePattern)) option.FilePattern = bindingContext.ParseResult.GetValueForOption(FilePattern)!;
-                if (bindingContext.ParseResult.HasOption(MultiFilePattern)) option.MultiFilePattern = bindingContext.ParseResult.GetValueForOption(MultiFilePattern)!;
-                if (bindingContext.ParseResult.HasOption(SelectPage)) option.SelectPage = bindingContext.ParseResult.GetValueForOption(SelectPage)!;
-                if (bindingContext.ParseResult.HasOption(Language)) option.Language = bindingContext.ParseResult.GetValueForOption(Language)!;
-                if (bindingContext.ParseResult.HasOption(Cookie)) option.Cookie = bindingContext.ParseResult.GetValueForOption(Cookie)!;
-                if (bindingContext.ParseResult.HasOption(AccessToken)) option.AccessToken = bindingContext.ParseResult.GetValueForOption(AccessToken)!;
-                if (bindingContext.ParseResult.HasOption(Aria2cProxy)) option.Aria2cProxy = bindingContext.ParseResult.GetValueForOption(Aria2cProxy)!;
-                if (bindingContext.ParseResult.HasOption(WorkDir)) option.WorkDir = bindingContext.ParseResult.GetValueForOption(WorkDir)!;
-                if (bindingContext.ParseResult.HasOption(FFmpegPath)) option.FFmpegPath = bindingContext.ParseResult.GetValueForOption(FFmpegPath)!;
-                if (bindingContext.ParseResult.HasOption(Mp4boxPath)) option.Mp4boxPath = bindingContext.ParseResult.GetValueForOption(Mp4boxPath)!;
-                if (bindingContext.ParseResult.HasOption(Aria2cPath)) option.Aria2cPath = bindingContext.ParseResult.GetValueForOption(Aria2cPath)!;
-                if (bindingContext.ParseResult.HasOption(DelayPerPage)) option.DelayPerPage = bindingContext.ParseResult.GetValueForOption(DelayPerPage)!;
-                if (bindingContext.ParseResult.HasOption(ConfigFile)) option.ConfigFile = bindingContext.ParseResult.GetValueForOption(ConfigFile)!;
-                if (bindingContext.ParseResult.HasOption(OnlyHevc)) option.OnlyHevc = bindingContext.ParseResult.GetValueForOption(OnlyHevc)!;
-                if (bindingContext.ParseResult.HasOption(OnlyAvc)) option.OnlyAvc = bindingContext.ParseResult.GetValueForOption(OnlyAvc)!;
-                if (bindingContext.ParseResult.HasOption(OnlyAv1)) option.OnlyAv1 = bindingContext.ParseResult.GetValueForOption(OnlyAv1)!;
-                if (bindingContext.ParseResult.HasOption(AddDfnSubfix)) option.AddDfnSubfix = bindingContext.ParseResult.GetValueForOption(AddDfnSubfix)!;
-                if (bindingContext.ParseResult.HasOption(NoPaddingPageNum)) option.NoPaddingPageNum = bindingContext.ParseResult.GetValueForOption(NoPaddingPageNum)!;
-                return option;
-            }
-        }
 
         public static async Task<int> Main(params string[] args)
         {
             ServicePointManager.DefaultConnectionLimit = 2048;
 
-            var rootCommand = new RootCommand
-            {
-                Url,
-                UseTvApi,
-                UseAppApi,
-                UseIntlApi,
-                UseMP4box,
-                EncodingPriority,
-                DfnPriority,
-                OnlyShowInfo,
-                ShowAll,
-                UseAria2c,
-                Interactive,
-                HideStreams,
-                MultiThread,
-                VideoOnly,
-                AudioOnly,
-                SubOnly,
-                Debug,
-                SkipMux,
-                SkipSubtitle,
-                SkipCover,
-                ForceHttp,
-                DownloadDanmaku,
-                FilePattern,
-                MultiFilePattern,
-                SelectPage,
-                Language,
-                Cookie,
-                AccessToken,
-                Aria2cProxy,
-                WorkDir,
-                FFmpegPath,
-                Mp4boxPath,
-                Aria2cPath,
-                DelayPerPage,
-                ConfigFile,
-                OnlyHevc,
-                OnlyAvc,
-                OnlyAv1,
-                AddDfnSubfix,
-                NoPaddingPageNum
-            };
-
+            var rootCommand = CommandLineInvoker.GetRootCommand(DoWorkAsync);
             Command loginCommand = new(
                 "login",
                 "通过APP扫描二维码以登录您的WEB账号");
@@ -244,8 +64,6 @@ namespace BBDown
             //TV登录
             loginTVCommand.SetHandler(LoginTV);
 
-            rootCommand.SetHandler(async (myOption) => await DoWorkAsync(myOption), new MyOptionBinder());
-
             Console.BackgroundColor = ConsoleColor.DarkBlue;
             Console.ForegroundColor = ConsoleColor.White;
             var ver = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version!;
@@ -257,7 +75,7 @@ namespace BBDown
 
             var newArgsList = new List<string>();
             var commandLineResult = rootCommand.Parse(args);
-            if (commandLineResult.CommandResult.Command.Name.ToLower() != "bbdown")
+            if (commandLineResult.CommandResult.Command.Name.ToLower() != Path.GetFileNameWithoutExtension(Environment.ProcessPath)!.ToLower()) 
             {
                 newArgsList.Add(commandLineResult.CommandResult.Command.Name);
                 return await rootCommand.InvokeAsync(newArgsList.ToArray());
@@ -278,53 +96,7 @@ namespace BBDown
             if (newArgsList.Contains("--debug")) Config.DEBUG_LOG = true;
 
             //处理配置文件
-            try
-            {
-                var configPath = newArgsList.Contains("--config-file")
-                    ? newArgsList.ElementAt(newArgsList.IndexOf("--config-file") + 1)
-                    : Path.Combine(APP_DIR, "BBDown.config");
-                if (File.Exists(configPath))
-                {
-                    Log($"加载配置文件: {configPath}");
-                    var configArgs = File
-                        .ReadAllLines(configPath)
-                        .Where(s => !string.IsNullOrEmpty(s) && !s.StartsWith("#"))
-                        .SelectMany(s =>
-                        {
-                            var trimLine = s.Trim();
-                            if (trimLine.IndexOf('-') == 0 && trimLine.IndexOf(' ') != -1)
-                            {
-                                var spaceIndex = trimLine.IndexOf(' ');
-                                var paramsGroup = new string[] { trimLine[..spaceIndex], trimLine[spaceIndex..] };
-                                return paramsGroup.Where(s => !string.IsNullOrEmpty(s)).Select(s => s.Trim(' ').Trim('\"'));
-                            }
-                            else
-                            {
-                                return new string[] { trimLine.Trim('\"') };
-                            }
-                        }
-                        );
-                    var configArgsResult = rootCommand.Parse(configArgs.ToArray());
-                    foreach (var item in configArgsResult.CommandResult.Children)
-                    {
-                        if (item is OptionResult o)
-                        {
-                            if (!newArgsList.Contains("--" + o.Option.Name))
-                            {
-                                newArgsList.Add("--" + o.Option.Name);
-                                newArgsList.AddRange(o.Tokens.Select(t => t.Value));
-                            }
-                        }
-                    }
-
-                    //命令行的优先级>配置文件优先级
-                    LogDebug("新的命令行参数: " + string.Join(" ", newArgsList));
-                }
-            }
-            catch (Exception)
-            {
-                LogError("配置文件读取异常，忽略");
-            }
+            BBDownConfigParser.HandleConfig(newArgsList, rootCommand);
 
             return await rootCommand.InvokeAsync(newArgsList.ToArray());
         }
@@ -670,7 +442,7 @@ namespace BBDown
                         if (pagesInfo.Count > 1 && delay > 0)
                         {
                             Log($"停顿{delay}秒...");
-                            Thread.Sleep(delay * 1000);
+                            await Task.Delay(delay * 1000);
                         }
 
                         Log($"开始解析P{p.index}...");
@@ -744,7 +516,8 @@ namespace BBDown
                         //调用解析
                         (webJsonStr, videoTracks, audioTracks, clips, dfns) = await ExtractTracksAsync(aidOri, p.aid, p.cid, p.epid, tvApi, intlApi, appApi);
 
-                        //File.WriteAllText($"debug.json", JObject.Parse(webJson).ToString());
+                        if (Config.DEBUG_LOG)
+                            File.WriteAllText($"debug.json", webJsonStr);
 
                         var savePath = "";
 
