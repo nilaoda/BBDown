@@ -42,7 +42,7 @@ namespace BBDown
             return string.IsNullOrEmpty(str) ? str : str.Replace("\"", "'");
         }
 
-        public static int MuxByMp4box(string videoPath, string audioPath, string outPath, string desc, string title, string episodeId, string pic, string lang, List<Subtitle>? subs, bool audioOnly, bool videoOnly, List<ViewPoint>? points)
+        public static int MuxByMp4box(string videoPath, string audioPath, string outPath, string desc, string title, string author, string episodeId, string pic, string lang, List<Subtitle>? subs, bool audioOnly, bool videoOnly, List<ViewPoint>? points)
         {
             StringBuilder inputArg = new();
             StringBuilder metaArg = new();
@@ -72,6 +72,7 @@ namespace BBDown
             else
                 metaArg.Append($":title=\"{title}\"");
             metaArg.Append($":comment=\"{desc}\"");
+            metaArg.Append($":artist=\"{author}\"");
 
             if (subs != null)
             {
@@ -92,7 +93,7 @@ namespace BBDown
             return RunExe(MP4BOX, arguments, MP4BOX != "mp4box");
         }
 
-        public static int MuxAV(bool useMp4box, string videoPath, string audioPath, string outPath, string desc = "", string title = "", string episodeId = "", string pic = "", string lang = "", List<Subtitle>? subs = null, bool audioOnly = false, bool videoOnly = false, List<ViewPoint>? points = null)
+        public static int MuxAV(bool useMp4box, string videoPath, string audioPath, string outPath, string desc = "", string title = "", string author = "", string episodeId = "", string pic = "", string lang = "", List<Subtitle>? subs = null, bool audioOnly = false, bool videoOnly = false, List<ViewPoint>? points = null)
         {
             if (audioOnly && audioPath != "") 
                 videoPath = "";
@@ -104,7 +105,7 @@ namespace BBDown
 
             if (useMp4box)
             {
-                return MuxByMp4box(videoPath, audioPath, outPath, desc, title, episodeId, pic, lang, subs, audioOnly, videoOnly, points);
+                return MuxByMp4box(videoPath, audioPath, outPath, desc, title, author, episodeId, pic, lang, subs, audioOnly, videoOnly, points);
             }
 
             if (outPath.Contains('/') && ! Directory.Exists(Path.GetDirectoryName(outPath)))
@@ -152,6 +153,7 @@ namespace BBDown
                  inputArg.ToString() + metaArg.ToString() + $" -metadata title=\"" + (episodeId == "" ? title : episodeId) + "\" " +
                  (lang == "" ? "" : $"-metadata:s:a:0 language={lang} ") +
                  $"-metadata description=\"{desc}\" " +
+                 $"-metadata artist=\"{author}\" " +
                  (episodeId == "" ? "" : $"-metadata album=\"{title}\" ") +
                  $"-c copy " + (audioOnly && audioPath == "" ? " -vn " : "") +
                  (subs != null ? " -c:s mov_text " : "") +
