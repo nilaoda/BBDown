@@ -503,7 +503,7 @@ namespace BBDown
                                             if (!Directory.Exists(_outSubPath.Split('/').First()))
                                                 Directory.CreateDirectory(_outSubPath.Split('/').First());
                                         }
-                                        _outSubPath = _outSubPath[.._outSubPath.LastIndexOf('.')] + ".srt";
+                                        _outSubPath = _outSubPath[.._outSubPath.LastIndexOf('.')] + $".{s.lan}.srt";
                                         File.Move(s.path, _outSubPath, true);
                                     }
                                 }
