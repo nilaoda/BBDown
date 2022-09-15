@@ -1046,9 +1046,9 @@ namespace BBDown
             catch (Exception e) { LogError(e.Message); }
         }
 
-        [RegexGenerator("://.*:\\d+/")]
+        [GeneratedRegex("://.*:\\d+/")]
         private static partial Regex PcdnRegex();
-        [RegexGenerator("<(\\w+?)>")]
+        [GeneratedRegex("<(\\w+?)>")]
         private static partial Regex InfoRegex();
     }
 }

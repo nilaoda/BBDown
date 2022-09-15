@@ -383,9 +383,9 @@ namespace BBDown.Core
             return sb.ToString();
         }
 
-        [RegexGenerator("window.__playinfo__=([\\s\\S]*?)<\\/script>")]
+        [GeneratedRegex("window.__playinfo__=([\\s\\S]*?)<\\/script>")]
         private static partial Regex PlayerJsonRegex();
-        [RegexGenerator("http.*:\\d+")]
+        [GeneratedRegex("http.*:\\d+")]
         private static partial Regex BaseUrlRegex();
     }
 }

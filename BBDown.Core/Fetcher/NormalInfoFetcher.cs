@@ -71,7 +71,7 @@ namespace BBDown.Core.Fetcher
             return info;
         }
 
-        [RegexGenerator("ep(\\d+)")]
+        [GeneratedRegex("ep(\\d+)")]
         private static partial Regex EpIdRegex();
     }
 }

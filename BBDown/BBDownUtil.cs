@@ -806,37 +806,37 @@ namespace BBDown
             }
         }
 
-        [RegexGenerator("av(\\d{1,})")]
+        [GeneratedRegex("av(\\d{1,})")]
         private static partial Regex AvRegex();
-        [RegexGenerator("BV(\\w+)")]
+        [GeneratedRegex("BV(\\w+)")]
         private static partial Regex BVRegex();
-        [RegexGenerator("bv(\\w+)")]
+        [GeneratedRegex("bv(\\w+)")]
         private static partial Regex BvRegex();
-        [RegexGenerator("/ep(\\d{1,})")]
+        [GeneratedRegex("/ep(\\d{1,})")]
         private static partial Regex EpRegex();
-        [RegexGenerator("/ss(\\d{1,})")]
+        [GeneratedRegex("/ss(\\d{1,})")]
         private static partial Regex SsRegex();
-        [RegexGenerator("space\\.bilibili\\.com/(\\d{1,})")]
+        [GeneratedRegex("space\\.bilibili\\.com/(\\d{1,})")]
         private static partial Regex UidRegex();
-        [RegexGenerator("global\\.bilibili\\.com/play/\\d+/(\\d+)")]
+        [GeneratedRegex("global\\.bilibili\\.com/play/\\d+/(\\d+)")]
         private static partial Regex GlobalEpRegex();
-        [RegexGenerator("bangumi/media/(md\\d+)")]
+        [GeneratedRegex("bangumi/media/(md\\d+)")]
         private static partial Regex BangumiMdRegex();
-        [RegexGenerator("window.__INITIAL_STATE__=([\\s\\S].*?);\\(function\\(\\)")]
+        [GeneratedRegex("window.__INITIAL_STATE__=([\\s\\S].*?);\\(function\\(\\)")]
         private static partial Regex StateRegex();
-        [RegexGenerator("ep(\\d{1,})")]
+        [GeneratedRegex("ep(\\d{1,})")]
         private static partial Regex EpRegex2();
-        [RegexGenerator("md(\\d{1,})")]
+        [GeneratedRegex("md(\\d{1,})")]
         private static partial Regex MdRegex();
-        [RegexGenerator("^\\d+$")]
+        [GeneratedRegex("^\\d+$")]
         private static partial Regex NumRegex();
-        [RegexGenerator("ep(\\d+)")]
+        [GeneratedRegex("ep(\\d+)")]
         private static partial Regex RedirectRegex();
-        [RegexGenerator("://.*mcdn\\.bilivideo\\.cn:\\d+")]
+        [GeneratedRegex("://.*mcdn\\.bilivideo\\.cn:\\d+")]
         private static partial Regex McdnRegex();
-        [RegexGenerator("(^|&)?(\\w+)=([^&]+)(&|$)?", RegexOptions.Compiled)]
+        [GeneratedRegex("(^|&)?(\\w+)=([^&]+)(&|$)?", RegexOptions.Compiled)]
         private static partial Regex QueryRegex();
-        [RegexGenerator("libavutil\\s+(\\d+)\\. (\\d+)\\.")]
+        [GeneratedRegex("libavutil\\s+(\\d+)\\. (\\d+)\\.")]
         private static partial Regex LibavutilRegex();
     }
 }

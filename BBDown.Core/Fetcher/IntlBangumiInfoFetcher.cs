@@ -118,7 +118,7 @@ namespace BBDown.Core.Fetcher
             return info;
         }
 
-        [RegexGenerator("window.__INITIAL_STATE__=([\\s\\S].*?);\\(function\\(\\)")]
+        [GeneratedRegex("window.__INITIAL_STATE__=([\\s\\S].*?);\\(function\\(\\)")]
         private static partial Regex StateRegex();
     }
 }
