@@ -106,7 +106,7 @@ jobs:
         uses: actions/upload-artifact@v1.0.0
         with:
           name: BBDown_osx-x64
-          path: artifact/BBDown
+          path: artifact-x64/BBDown
           
       - name: Upload Artifact[osx-arm64]
         uses: actions/upload-artifact@v1.0.0
