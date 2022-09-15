@@ -83,29 +83,8 @@ jobs:
         with:
           name: BBDown_linux-arm64
           path: artifact/BBDown
-
-  build-mac-x64:
-    
-    runs-on: macOS-latest
-    
-    steps:
-      
-      - uses: actions/checkout@v2
-      - name: Set up dotnet
-        uses: actions/setup-dotnet@v1
-        with:
-          dotnet-version: ${{ env.DOTNET_SDK_VERSION }}
-          include-prerelease: true
-      - run: dotnet publish BBDown -r osx-x64 -c Release -o artifact
-      - run: strip artifact/BBDown
-      
-      - name: Upload Artifact[osx-x64]
-        uses: actions/upload-artifact@v1.0.0
-        with:
-          name: BBDown_osx-x64
-          path: artifact/BBDown
           
-  build-mac-arm64:
+  build-mac-x64-arm64:
     
     runs-on: macOS-latest
     
@@ -120,8 +99,16 @@ jobs:
           dotnet-version: ${{ env.DOTNET_SDK_VERSION }}
           include-prerelease: true
       - run: dotnet publish BBDown -r osx-arm64 -c Release -o artifact-arm64 -p:PublishTrimmed=true -p:PublishReadyToRun=true -p:PublishSingleFile=true --self-contained true
+      - run: dotnet publish BBDown -r osx-x64 -c Release -o artifact-x64 -p:PublishTrimmed=true -p:PublishReadyToRun=true -p:PublishSingleFile=true --self-contained true
+
       
       - name: Upload Artifact[osx-x64]
+        uses: actions/upload-artifact@v1.0.0
+        with:
+          name: BBDown_osx-x64
+          path: artifact/BBDown
+          
+      - name: Upload Artifact[osx-arm64]
         uses: actions/upload-artifact@v1.0.0
         with:
           name: BBDown_osx-arm64
