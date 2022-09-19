@@ -54,7 +54,6 @@ jobs:
           include-prerelease: true
       - run: apt-get install -y libicu-dev libcurl4-openssl-dev zlib1g-dev libkrb5-dev
       - run: dotnet publish BBDown -r linux-x64 -c Release -o artifact
-      - run: strip artifact/BBDown
       
       - name: Upload Artifact[linux-x64]
         uses: actions/upload-artifact@v1.0.0
@@ -76,7 +75,6 @@ jobs:
           dotnet-version: ${{ env.DOTNET_SDK_VERSION }}
           include-prerelease: true
       - run: dotnet publish BBDown -r linux-arm64 -c Release -p:CppCompilerAndLinker=clang-9 -p:SysRoot=/crossrootfs/arm64 -o artifact
-      - run: aarch64-linux-gnu-strip artifact/BBDown
       
       - name: Upload Artifact[linux-arm64]
         uses: actions/upload-artifact@v1.0.0
