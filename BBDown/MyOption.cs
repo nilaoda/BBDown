@@ -49,6 +49,7 @@ namespace BBDown
         public string Area { get; set; } = "";
         public string? ConfigFile { get; set; }
         //以下仅为兼容旧版本命令行，不建议使用
+        public string Aria2cProxy { get; set; } = "";
         public bool OnlyHevc { get; set; }
         public bool OnlyAvc { get; set; }
         public bool OnlyAv1 { get; set; }

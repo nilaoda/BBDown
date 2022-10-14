@@ -118,6 +118,11 @@ namespace BBDown
                         LogWarn($"已切换至 -F \"{SinglePageDefaultSavePath}\" -M \"{MultiPageDefaultSavePath}\"");
                     }
                 }
+                if (myOption.Aria2cProxy != "")
+                {
+                    LogWarn("--aria2c-proxy 已被弃用，请使用 --aria2c-args 来设置aria2c代理，本次执行已添加该代理");
+                    myOption.Aria2cArgs += $" --all-proxy=\"{myOption.Aria2cProxy}\""
+                }
                 if (myOption.OnlyHevc)
                 {
                     LogWarn("--only-hevc/-hevc 已被弃用，请使用 --encoding-priority 来设置编码优先级，本次执行已将hevc设置为最高优先级");
