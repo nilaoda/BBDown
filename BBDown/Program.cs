@@ -497,7 +497,7 @@ namespace BBDown
                                 subtitleInfo = await SubUtil.GetSubtitlesAsync(p.aid, p.cid, p.epid, intlApi);
                                 foreach (Subtitle s in subtitleInfo)
                                 {
-                                    if (skipAi && s.lan == "ai-zh") {
+                                    if (skipAi && s.lan.StartsWith("ai-")) {
                                         Log($"跳过下载AI字幕 {s.lan} => {SubUtil.GetSubtitleCode(s.lan).Item2}");
                                         continue;
                                     }
