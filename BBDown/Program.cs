@@ -236,7 +236,7 @@ namespace BBDown
                     {
                         if (string.IsNullOrEmpty(BBDownMuxer.MP4BOX))
                         {
-                            var binPath = FindExecutable("mp4box");
+                            var binPath = FindExecutable("mp4box") ?? FindExecutable("MP4box");
                             if (string.IsNullOrEmpty(binPath))
                                 throw new Exception("找不到可执行的mp4box文件");
                             BBDownMuxer.MP4BOX = binPath;
