@@ -548,7 +548,7 @@ namespace BBDown
                             }
                             //排序
                             //videoTracks.Sort((v1, v2) => Compare(v1, v2, encodingPriority, dfnPriority));
-                            videoTracks = SortTracks(videoTracks, dfnPriority, encodingPriority);
+                            videoTracks = SortTracks(videoTracks, dfnPriority, encodingPriority, bandwithAscending);
                             audioTracks.Sort(Compare);
 
                             if (audioOnly) videoTracks.Clear();
@@ -748,7 +748,7 @@ namespace BBDown
                         reParse:
                             //排序
                             //videoTracks.Sort((v1, v2) => Compare(v1, v2, encodingPriority, dfnPriority));
-                            videoTracks = SortTracks(videoTracks, dfnPriority, encodingPriority);
+                            videoTracks = SortTracks(videoTracks, dfnPriority, encodingPriority, bandwithAscending);
 
                             if (interactMode && !flag && !selected)
                             {
@@ -896,7 +896,7 @@ namespace BBDown
             }
         }
 
-        private static List<Video> SortTracks(List<Video> videoTracks, Dictionary<string, int> dfnPriority, Dictionary<string, byte> encodingPriority)
+        private static List<Video> SortTracks(List<Video> videoTracks, Dictionary<string, int> dfnPriority, Dictionary<string, byte> encodingPriority, bool bandwithAscending)
         {
             //用户同时输入了自定义分辨率优先级和自定义编码优先级，则根据输入顺序依次进行排序
             return dfnPriority.Count > 0 && encodingPriority.Count > 0 && Environment.CommandLine.IndexOf("--encoding-priority") < Environment.CommandLine.IndexOf("--dfn-priority")
