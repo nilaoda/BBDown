@@ -75,7 +75,7 @@ namespace BBDown
 
             var newArgsList = new List<string>();
             var commandLineResult = rootCommand.Parse(args);
-            if (commandLineResult.CommandResult.Command.Name.ToLower() != Path.GetFileNameWithoutExtension(Environment.ProcessPath)!.ToLower()) 
+            if (commandLineResult.CommandResult.Command.Name.ToLower() != Path.GetFileNameWithoutExtension(Environment.ProcessPath)!.ToLower())
             {
                 newArgsList.Add(commandLineResult.CommandResult.Command.Name);
                 return await rootCommand.InvokeAsync(newArgsList.ToArray());
@@ -185,6 +185,8 @@ namespace BBDown
                 bool skipCover = myOption.SkipCover;
                 bool forceHttp = myOption.ForceHttp;
                 bool downloadDanmaku = myOption.DownloadDanmaku;
+                bool skipAi = myOption.SkipAi;
+                bool bandwithAscending = myOption.BandwithAscending;
                 bool showAll = myOption.ShowAll;
                 bool useAria2c = myOption.UseAria2c;
                 string aria2cProxy = myOption.Aria2cProxy;
@@ -195,6 +197,9 @@ namespace BBDown
                 string selectPage = myOption.SelectPage.ToUpper();
                 string aidOri = ""; //原始aid
                 int delay = Convert.ToInt32(myOption.DelayPerPage);
+                Config.HOST = myOption.Host;
+                Config.EPHOST = myOption.EpHost;
+                Config.AREA = myOption.Area;
                 Config.COOKIE = myOption.Cookie;
                 Config.TOKEN = myOption.AccessToken.Replace("access_token=", "");
 
@@ -303,7 +308,7 @@ namespace BBDown
                 }
 
                 // 检测是否登录了账号
-                if (!intlApi && !tvApi)
+                if (!intlApi && !tvApi && Config.AREA != "")
                 {
                     Log("检测账号登录...");
                     if (!await CheckLogin(Config.COOKIE))
@@ -492,6 +497,10 @@ namespace BBDown
                                 subtitleInfo = await SubUtil.GetSubtitlesAsync(p.aid, p.cid, p.epid, intlApi);
                                 foreach (Subtitle s in subtitleInfo)
                                 {
+                                    if (skipAi && s.lan.StartsWith("ai-")) {
+                                        Log($"跳过下载AI字幕 {s.lan} => {SubUtil.GetSubtitleCode(s.lan).Item2}");
+                                        continue;
+                                    }
                                     Log($"下载字幕 {s.lan} => {SubUtil.GetSubtitleCode(s.lan).Item2}...");
                                     LogDebug("下载：{0}", s.url);
                                     await SubUtil.SaveSubtitleAsync(s.url, s.path);
@@ -539,7 +548,7 @@ namespace BBDown
                             }
                             //排序
                             //videoTracks.Sort((v1, v2) => Compare(v1, v2, encodingPriority, dfnPriority));
-                            videoTracks = SortTracks(videoTracks, dfnPriority, encodingPriority);
+                            videoTracks = SortTracks(videoTracks, dfnPriority, encodingPriority, bandwithAscending);
                             audioTracks.Sort(Compare);
 
                             if (audioOnly) videoTracks.Clear();
@@ -739,7 +748,7 @@ namespace BBDown
                         reParse:
                             //排序
                             //videoTracks.Sort((v1, v2) => Compare(v1, v2, encodingPriority, dfnPriority));
-                            videoTracks = SortTracks(videoTracks, dfnPriority, encodingPriority);
+                            videoTracks = SortTracks(videoTracks, dfnPriority, encodingPriority, bandwithAscending);
 
                             if (interactMode && !flag && !selected)
                             {
@@ -887,7 +896,7 @@ namespace BBDown
             }
         }
 
-        private static List<Video> SortTracks(List<Video> videoTracks, Dictionary<string, int> dfnPriority, Dictionary<string, byte> encodingPriority)
+        private static List<Video> SortTracks(List<Video> videoTracks, Dictionary<string, int> dfnPriority, Dictionary<string, byte> encodingPriority, bool bandwithAscending)
         {
             //用户同时输入了自定义分辨率优先级和自定义编码优先级，则根据输入顺序依次进行排序
             return dfnPriority.Count > 0 && encodingPriority.Count > 0 && Environment.CommandLine.IndexOf("--encoding-priority") < Environment.CommandLine.IndexOf("--dfn-priority")
@@ -895,13 +904,13 @@ namespace BBDown
                     .OrderBy(v => encodingPriority.TryGetValue(v.codecs, out byte i) ? i : 100)
                     .ThenBy(v => dfnPriority.TryGetValue(v.dfn, out int i) ? i : 100)
                     .ThenByDescending(v => Convert.ToInt32(v.id))
-                    .ThenByDescending(v => v.bandwith)
+                    .ThenBy(v => bandwithAscending ? v.bandwith : -v.bandwith)
                     .ToList()
                 : videoTracks
                     .OrderBy(v => dfnPriority.TryGetValue(v.dfn, out int i) ? i : 100)
                     .ThenBy(v => encodingPriority.TryGetValue(v.codecs, out byte i) ? i : 100)
                     .ThenByDescending(v => Convert.ToInt32(v.id))
-                    .ThenByDescending(v => v.bandwith)
+                    .ThenBy(v => bandwithAscending ? v.bandwith : -v.bandwith)
                     .ToList();
         }
 

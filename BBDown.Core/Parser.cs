@@ -24,9 +24,10 @@ namespace BBDown.Core
             if (appApi) return await AppHelper.DoReqAsync(aid, cid, epId, qn, bangumi, onlyAvc, Config.TOKEN);
 
             string prefix = tvApi ? bangumi ? "api.snm0516.aisee.tv/pgc/player/api/playurltv" : "api.snm0516.aisee.tv/x/tv/ugc/playurl"
-                        : bangumi ? "api.bilibili.com/pgc/player/web/playurl" : "api.bilibili.com/x/player/playurl";
+                        : bangumi ? $"{Config.HOST}/pgc/player/web/playurl" : $"{Config.HOST}/x/player/playurl";
             string api = $"https://{prefix}?avid={aid}&cid={cid}&qn={qn}&type=&otype=json" + (tvApi ? "" : "&fourk=1") +
-                $"&fnver=0&fnval=4048" + (tvApi ? "&device=android&platform=android" +
+                $"&fnver=0&fnval=4048" + (Config.AREA != "" ? Config.TOKEN != "" ? $"&access_key={Config.TOKEN}&area={Config.AREA}" : $"&area={Config.AREA}" : "") +
+                (tvApi ? "&device=android&platform=android" +
                 "&mobi_app=android_tv_yst&npcybs=0&force_host=2&build=102801" +
                 (Config.TOKEN != "" ? $"&access_key={Config.TOKEN}" : "") : "") +
                 (bangumi ? $"&module=bangumi&ep_id={epId}&fourk=1" + "&session=" : "");

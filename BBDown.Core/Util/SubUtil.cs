@@ -137,7 +137,7 @@ namespace BBDown.Core.Util
                 "nv"                => ("nav", "Diné bizaad"),
                 "ne"                => ("nep", "नेपाली Nepālī"),
                 "no"                => ("nor", "norsk språk"),
-                "fa"                => ("per", "فارسی‎"),
+                "fa"                => ("per", "فارسی"),
                 "fa-AF"             => ("per", "فارسی"),
                 "fa-IR"             => ("per", "فارسی"),
                 "pl"                => ("pol", "Polski"),
@@ -266,47 +266,68 @@ namespace BBDown.Core.Util
             }
             catch (Exception)
             {
-                try
-                {
-                    //grpc调用接口 protobuf
-                    string api = "https://app.biliapi.net/bilibili.community.service.dm.v1.DM/DmView";
-                    int _aid = Convert.ToInt32(aid);
-                    int _cid = Convert.ToInt32(cid);
-                    int _type = 1;
-                    byte[] data = new byte[18];
-                    data[0] = 0x0; data[1] = 0x0; data[2] = 0x0; data[3] = 0x0; data[4] = 0xD; //先固定死了
-                    int i = 5;
-                    data[i++] = Convert.ToByte((1 << 3) | 0); // index=1
-                    while ((_aid & -128) != 0)
+                try {
+                    string api = $"https://api.bilibili.com/x/player/v2?cid={cid}&aid={aid}";
+                    string json = await GetWebSourceAsync(api);
+                    using var infoJson = JsonDocument.Parse(json);
+                    var subs = infoJson.RootElement.GetProperty("data").GetProperty("subtitle").GetProperty("subtitles").EnumerateArray();
+                    foreach (var sub in subs)
                     {
-                        data[i++] = Convert.ToByte((_aid & 127) | 128);
-                        _aid >>= 7;
-                    }
-                    data[i++] = Convert.ToByte(_aid);
-                    data[i++] = Convert.ToByte((2 << 3) | 0); // index=2
-                    while ((_cid & -128) != 0)
-                    {
-                        data[i++] = Convert.ToByte((_cid & 127) | 128);
-                        _cid >>= 7;
-                    }
-                    data[i++] = Convert.ToByte(_cid);
-                    data[i++] = Convert.ToByte((3 << 3) | 0); // index=3
-                    data[i++] = Convert.ToByte(_type);
-                    string t = await GetPostResponseAsync(api, data);
-                    Regex reg = CnJsonRegex();
-                    foreach (Match m in reg.Matches(t).Cast<Match>())
-                    {
+                        var lan = sub.GetProperty("lan").ToString();
                         Subtitle subtitle = new()
                         {
-                            url = m.Groups[2].Value,
-                            lan = m.Groups[1].Value,
-                            path = $"{aid}/{aid}.{cid}.{m.Groups[1].Value}.srt"
+                            url = "https://" + sub.GetProperty("subtitle_url").ToString(),
+                            lan = lan,
+                            path = $"{aid}/{aid}.{cid}.{lan}.srt"
                         };
                         subtitles.Add(subtitle);
                     }
                     return subtitles;
                 }
-                catch (Exception) { return subtitles; } //返回空列表
+                catch (Exception)
+                {
+                    try
+                    {
+                        //grpc调用接口 protobuf
+                        string api = "https://app.biliapi.net/bilibili.community.service.dm.v1.DM/DmView";
+                        int _aid = Convert.ToInt32(aid);
+                        int _cid = Convert.ToInt32(cid);
+                        int _type = 1;
+                        byte[] data = new byte[18];
+                        data[0] = 0x0; data[1] = 0x0; data[2] = 0x0; data[3] = 0x0; data[4] = 0xD; //先固定死了
+                        int i = 5;
+                        data[i++] = Convert.ToByte((1 << 3) | 0); // index=1
+                        while ((_aid & -128) != 0)
+                        {
+                            data[i++] = Convert.ToByte((_aid & 127) | 128);
+                            _aid >>= 7;
+                        }
+                        data[i++] = Convert.ToByte(_aid);
+                        data[i++] = Convert.ToByte((2 << 3) | 0); // index=2
+                        while ((_cid & -128) != 0)
+                        {
+                            data[i++] = Convert.ToByte((_cid & 127) | 128);
+                            _cid >>= 7;
+                        }
+                        data[i++] = Convert.ToByte(_cid);
+                        data[i++] = Convert.ToByte((3 << 3) | 0); // index=3
+                        data[i++] = Convert.ToByte(_type);
+                        string t = await GetPostResponseAsync(api, data);
+                        Regex reg = CnJsonRegex();
+                        foreach (Match m in reg.Matches(t).Cast<Match>())
+                        {
+                            Subtitle subtitle = new()
+                            {
+                                url = m.Groups[2].Value,
+                                lan = m.Groups[1].Value,
+                                path = $"{aid}/{aid}.{cid}.{m.Groups[1].Value}.srt"
+                            };
+                            subtitles.Add(subtitle);
+                        }
+                        return subtitles;
+                    }
+                    catch (Exception) { return subtitles; } //返回空列表
+                }
             }
         }
 
