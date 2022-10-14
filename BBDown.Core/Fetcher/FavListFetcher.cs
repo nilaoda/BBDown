@@ -53,6 +53,11 @@ namespace BBDown.Core.Fetcher
 
             foreach (var m in medias)
             {
+                //只处理视频类型
+                if (m.GetProperty("type").GetInt32() != 2) continue;
+                //只处理未失效视频
+                if (m.GetProperty("attr").GetInt32() != 0) continue;
+
                 var pageCount = m.GetProperty("page").GetInt32();
                 if (pageCount > 1)
                 {
