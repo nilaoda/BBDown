@@ -38,7 +38,7 @@ namespace BBDown
         public string Language { get; set; } = "";
         public string Cookie { get; set; } = "";
         public string AccessToken { get; set; } = "";
-        public string Aria2cProxy { get; set; } = "";
+        public string Aria2cArgs { get; set; } = "";
         public string WorkDir { get; set; } = "";
         public string FFmpegPath { get; set; } = "";
         public string Mp4boxPath { get; set; } = "";
