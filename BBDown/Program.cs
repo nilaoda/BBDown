@@ -121,7 +121,7 @@ namespace BBDown
                 if (myOption.Aria2cProxy != "")
                 {
                     LogWarn("--aria2c-proxy 已被弃用，请使用 --aria2c-args 来设置aria2c代理，本次执行已添加该代理");
-                    myOption.Aria2cArgs += $" --all-proxy=\"{myOption.Aria2cProxy}\""
+                    myOption.Aria2cArgs += $" --all-proxy=\"{myOption.Aria2cProxy}\"";
                 }
                 if (myOption.OnlyHevc)
                 {
