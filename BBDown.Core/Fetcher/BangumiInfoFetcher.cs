@@ -11,7 +11,7 @@ namespace BBDown.Core.Fetcher
         {
             id = id[3..];
             string index = "";
-            string api = $"https://api.bilibili.com/pgc/view/web/season?ep_id={id}";
+            string api = $"https://{Config.EPHOST}/pgc/view/web/season?ep_id={id}";
             string json = await GetWebSourceAsync(api);
             using var infoJson = JsonDocument.Parse(json);
             var result = infoJson.RootElement.GetProperty("result");
@@ -24,7 +24,7 @@ namespace BBDown.Core.Fetcher
             int i = 1;
 
             //episodes为空; 或者未包含对应epid，番外/花絮什么的
-            if (pages.Count == 0 || !result.GetProperty("episodes").ToString().Contains($"/ep{id}")) 
+            if (pages.Count == 0 || !result.GetProperty("episodes").ToString().Contains($"/ep{id}"))
             {
                 if (result.TryGetProperty("section", out JsonElement sections))
                 {

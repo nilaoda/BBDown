@@ -8,6 +8,12 @@
         public static string TOKEN { get; set; } = "";
         //日志级别
         public static bool DEBUG_LOG { get; set; } = false;
+        //BiliPlus Host
+        public static string HOST { get; set; } = "api.bilibili.com";
+        //BiliPlus EP Host
+        public static string EPHOST { get; set; } = "api.bilibili.com";
+        //BiliPlus Area
+        public static string AREA { get; set; } = "";
 
         public static readonly Dictionary<string, string> qualitys = new() {
             {"127","8K 超高清" }, {"126","杜比视界" }, {"125","HDR 真彩" }, {"120","4K 超清" }, {"116","1080P 高帧率" },
