@@ -38,7 +38,7 @@ namespace BBDown
         public string Language { get; set; } = "";
         public string Cookie { get; set; } = "";
         public string AccessToken { get; set; } = "";
-        public string Aria2cProxy { get; set; } = "";
+        public string Aria2cArgs { get; set; } = "";
         public string WorkDir { get; set; } = "";
         public string FFmpegPath { get; set; } = "";
         public string Mp4boxPath { get; set; } = "";
@@ -49,6 +49,7 @@ namespace BBDown
         public string Area { get; set; } = "";
         public string? ConfigFile { get; set; }
         //以下仅为兼容旧版本命令行，不建议使用
+        public string Aria2cProxy { get; set; } = "";
         public bool OnlyHevc { get; set; }
         public bool OnlyAvc { get; set; }
         public bool OnlyAv1 { get; set; }

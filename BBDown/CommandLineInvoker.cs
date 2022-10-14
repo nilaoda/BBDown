@@ -16,16 +16,16 @@ namespace BBDown
         private readonly static Option<bool> UseAppApi = new(new string[] { "--use-app-api", "-app" }, "使用APP端解析模式");
         private readonly static Option<bool> UseIntlApi = new(new string[] { "--use-intl-api", "-intl" }, "使用国际版解析模式");
         private readonly static Option<bool> UseMP4box = new(new string[] { "--use-mp4box" }, "使用MP4Box来混流");
-        private readonly static Option<string> EncodingPriority = new(new string[] { "--encoding-priority" }, "视频编码的选择优先级,用逗号分割 例:\"hevc,av1,avc\"");
-        private readonly static Option<string> DfnPriority = new(new string[] { "--dfn-priority" }, "画质优先级,用逗号分隔 例:\"8K 超高清, 1080P 高码率, HDR 真彩, 杜比视界\"");
+        private readonly static Option<string> EncodingPriority = new(new string[] { "--encoding-priority" }, "视频编码的选择优先级, 用逗号分割 例: \"hevc,av1,avc\"");
+        private readonly static Option<string> DfnPriority = new(new string[] { "--dfn-priority" }, "画质优先级,用逗号分隔 例: \"8K 超高清, 1080P 高码率, HDR 真彩, 杜比视界\"");
         private readonly static Option<bool> OnlyShowInfo = new(new string[] { "--only-show-info", "-info" }, "仅解析而不进行下载");
         private readonly static Option<bool> HideStreams = new(new string[] { "--hide-streams", "-hs" }, "不要显示所有可用音视频流");
         private readonly static Option<bool> Interactive = new(new string[] { "--interactive", "-ia" }, "交互式选择清晰度");
         private readonly static Option<bool> ShowAll = new(new string[] { "--show-all" }, "展示所有分P标题");
         private readonly static Option<bool> UseAria2c = new(new string[] { "--use-aria2c" }, "调用aria2c进行下载(你需要自行准备好二进制可执行文件)");
-        private readonly static Option<string> Aria2cProxy = new(new string[] { "--aria2c-proxy" }, "调用aria2c进行下载时的代理地址配置");
+        private readonly static Option<string> Aria2cArgs = new(new string[] { "--aria2c-args" }, "调用aria2c的附加参数(默认参数包含\"-x16 -s16 -j16 -k 5M\", 使用时注意字符串转义)");
         private readonly static Option<bool> MultiThread = new(new string[] { "--multi-thread", "-mt" }, "使用多线程下载(默认开启)");
-        private readonly static Option<string> SelectPage = new(new string[] { "--select-page", "-p" }, "选择指定分p或分p范围：(-p 8 或 -p 1,2 或 -p 3-5 或 -p ALL)");
+        private readonly static Option<string> SelectPage = new(new string[] { "--select-page", "-p" }, "选择指定分p或分p范围: (-p 8 或 -p 1,2 或 -p 3-5 或 -p ALL 或 -p LAST)");
         private readonly static Option<bool> AudioOnly = new(new string[] { "--audio-only" }, "仅下载音频");
         private readonly static Option<bool> VideoOnly = new(new string[] { "--video-only" }, "仅下载视频");
         private readonly static Option<bool> SubOnly = new(new string[] { "--sub-only" }, "仅下载字幕");
@@ -37,7 +37,7 @@ namespace BBDown
         private readonly static Option<bool> DownloadDanmaku = new(new string[] { "--download-danmaku", "-dd" }, "下载弹幕");
         private readonly static Option<bool> SkipAi = new(new string[] { "--skip-ai" }, "跳过AI字幕下载");
         private readonly static Option<bool> BandwithAscending = new(new string[] { "--bandwith-ascending" }, "比特率升序(最小体积优先)");
-        private readonly static Option<string> Language = new(new string[] { "--language" }, "设置混流的音频语言(代码)，如chi, jpn等");
+        private readonly static Option<string> Language = new(new string[] { "--language" }, "设置混流的音频语言(代码), 如chi, jpn等");
         private readonly static Option<string> Cookie = new(new string[] { "--cookie", "-c" }, "设置字符串cookie用以下载网页接口的会员内容");
         private readonly static Option<string> AccessToken = new(new string[] { "--access-token", "-token" }, "设置access_token用以下载TV/APP接口的会员内容");
         private readonly static Option<string> WorkDir = new(new string[] { "--work-dir" }, "设置程序的工作目录");
@@ -49,12 +49,13 @@ namespace BBDown
         private readonly static Option<string> MultiFilePattern = new(new string[] { "--multi-file-pattern", "-M" }, $"使用内置变量自定义多P存储文件名:\r\n\r\n" + $"默认为: {Program.MultiPageDefaultSavePath}\r\n");
         private readonly static Option<string> Host = new(new string[] { "--host" }, "指定BiliPlus host(解析服务器能够获取你账号的大部分权限!)");
         private readonly static Option<string> EpHost = new(new string[] { "--ep-host" }, "指定BiliPlus EP host");
-        private readonly static Option<string> Area = new(new string[] { "--area" }, "指定BiliPlus area");
-        private readonly static Option<string> ConfigFile = new(new string[] { "--config-file" }, "读取指定的BBDown本地配置文件(默认为: BBDown.config)");//以下仅为兼容旧版本命令行，不建议使用
+        private readonly static Option<string> Area = new(new string[] { "--area" }, "指定BiliPlus area 例: hk(使用BiliPlus需要access_token, 不需要cookie)");
+        private readonly static Option<string> ConfigFile = new(new string[] { "--config-file" }, "读取指定的BBDown本地配置文件(默认为: BBDown.config)");//以下仅为兼容旧版本命令行, 不建议使用
+        private readonly static Option<string> Aria2cProxy = new(new string[] { "--aria2c-proxy" }, "调用aria2c进行下载时的代理地址配置") { IsHidden = true };
         private readonly static Option<bool> OnlyHevc = new(new string[] { "--only-hevc", "-hevc" }, "只下载hevc编码") { IsHidden = true };
         private readonly static Option<bool> OnlyAvc = new(new string[] { "--only-avc", "-avc" }, "只下载avc编码") { IsHidden = true };
         private readonly static Option<bool> OnlyAv1 = new(new string[] { "--only-av1", "-av1" }, "只下载av1编码") { IsHidden = true };
-        private readonly static Option<bool> AddDfnSubfix = new(new string[] { "--add-dfn-subfix" }, "为文件加入清晰度后缀，如XXX[1080P 高码率]") { IsHidden = true };
+        private readonly static Option<bool> AddDfnSubfix = new(new string[] { "--add-dfn-subfix" }, "为文件加入清晰度后缀, 如XXX[1080P 高码率]") { IsHidden = true };
         private readonly static Option<bool> NoPaddingPageNum = new(new string[] { "--no-padding-page-num" }, "不给分P序号补零") { IsHidden = true };
 
 
@@ -96,7 +97,7 @@ namespace BBDown
                 if (bindingContext.ParseResult.HasOption(Language)) option.Language = bindingContext.ParseResult.GetValueForOption(Language)!;
                 if (bindingContext.ParseResult.HasOption(Cookie)) option.Cookie = bindingContext.ParseResult.GetValueForOption(Cookie)!;
                 if (bindingContext.ParseResult.HasOption(AccessToken)) option.AccessToken = bindingContext.ParseResult.GetValueForOption(AccessToken)!;
-                if (bindingContext.ParseResult.HasOption(Aria2cProxy)) option.Aria2cProxy = bindingContext.ParseResult.GetValueForOption(Aria2cProxy)!;
+                if (bindingContext.ParseResult.HasOption(Aria2cArgs)) option.Aria2cArgs = bindingContext.ParseResult.GetValueForOption(Aria2cArgs)!;
                 if (bindingContext.ParseResult.HasOption(WorkDir)) option.WorkDir = bindingContext.ParseResult.GetValueForOption(WorkDir)!;
                 if (bindingContext.ParseResult.HasOption(FFmpegPath)) option.FFmpegPath = bindingContext.ParseResult.GetValueForOption(FFmpegPath)!;
                 if (bindingContext.ParseResult.HasOption(Mp4boxPath)) option.Mp4boxPath = bindingContext.ParseResult.GetValueForOption(Mp4boxPath)!;
@@ -106,6 +107,7 @@ namespace BBDown
                 if (bindingContext.ParseResult.HasOption(EpHost)) option.EpHost = bindingContext.ParseResult.GetValueForOption(EpHost)!;
                 if (bindingContext.ParseResult.HasOption(Area)) option.Area = bindingContext.ParseResult.GetValueForOption(Area)!;
                 if (bindingContext.ParseResult.HasOption(ConfigFile)) option.ConfigFile = bindingContext.ParseResult.GetValueForOption(ConfigFile)!;
+                if (bindingContext.ParseResult.HasOption(Aria2cProxy)) option.Aria2cProxy = bindingContext.ParseResult.GetValueForOption(Aria2cProxy)!;
                 if (bindingContext.ParseResult.HasOption(OnlyHevc)) option.OnlyHevc = bindingContext.ParseResult.GetValueForOption(OnlyHevc)!;
                 if (bindingContext.ParseResult.HasOption(OnlyAvc)) option.OnlyAvc = bindingContext.ParseResult.GetValueForOption(OnlyAvc)!;
                 if (bindingContext.ParseResult.HasOption(OnlyAv1)) option.OnlyAv1 = bindingContext.ParseResult.GetValueForOption(OnlyAv1)!;
@@ -149,7 +151,7 @@ namespace BBDown
                 Language,
                 Cookie,
                 AccessToken,
-                Aria2cProxy,
+                Aria2cArgs,
                 WorkDir,
                 FFmpegPath,
                 Mp4boxPath,
@@ -159,6 +161,7 @@ namespace BBDown
                 EpHost,
                 Area,
                 ConfigFile,
+                Aria2cProxy,
                 OnlyHevc,
                 OnlyAvc,
                 OnlyAv1,
