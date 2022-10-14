@@ -23,7 +23,7 @@ namespace BBDown
         private readonly static Option<bool> Interactive = new(new string[] { "--interactive", "-ia" }, "交互式选择清晰度");
         private readonly static Option<bool> ShowAll = new(new string[] { "--show-all" }, "展示所有分P标题");
         private readonly static Option<bool> UseAria2c = new(new string[] { "--use-aria2c" }, "调用aria2c进行下载(你需要自行准备好二进制可执行文件)");
-        private readonly static Option<string> Aria2cArgs = new(new string[] { "--aria2c-args" }, "调用aria2c的附加参数");
+        private readonly static Option<string> Aria2cArgs = new(new string[] { "--aria2c-args" }, "调用aria2c的附加参数(默认参数包含\"-x16 -s16 -j16 -k 5M\", 使用时注意字符串转义)");
         private readonly static Option<bool> MultiThread = new(new string[] { "--multi-thread", "-mt" }, "使用多线程下载(默认开启)");
         private readonly static Option<string> SelectPage = new(new string[] { "--select-page", "-p" }, "选择指定分p或分p范围: (-p 8 或 -p 1,2 或 -p 3-5 或 -p ALL 或 -p LAST)");
         private readonly static Option<bool> AudioOnly = new(new string[] { "--audio-only" }, "仅下载音频");
