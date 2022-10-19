@@ -276,7 +276,7 @@ namespace BBDown.Core.Util
                         var lan = sub.GetProperty("lan").ToString();
                         Subtitle subtitle = new()
                         {
-                            url = "https://" + sub.GetProperty("subtitle_url").ToString(),
+                            url = "https:" + sub.GetProperty("subtitle_url").ToString(),
                             lan = lan,
                             path = $"{aid}/{aid}.{cid}.{lan}.srt"
                         };
