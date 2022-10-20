@@ -4,23 +4,23 @@
 一款命令行式哔哩哔哩下载器. Bilibili Downloader.
 
 # 注意
-本软件混流时需要外部程序：
+本软件混流时需要外部程序:
 
-* 普通视频：[ffmpeg](https://www.gyan.dev/ffmpeg/builds/) ，或 [mp4box](https://gpac.wp.imt.fr/downloads/)
-* 杜比视界：ffmpeg5.0以上或新版mp4box.
+* 普通视频: [ffmpeg](https://www.gyan.dev/ffmpeg/builds/), 或 [mp4box](https://gpac.wp.imt.fr/downloads/)
+* 杜比视界: ffmpeg5.0以上或新版mp4box.
 
 # 快速开始
-本软件已经以 [Dotnet Tool](https://www.nuget.org/packages/BBDown/) 形式发布  
+本软件已经以 [Dotnet Tool](https://www.nuget.org/packages/BBDown/) 形式发布
 
-如果你本地有dotnet环境，使用如下命令即可安装使用
+如果你本地有dotnet环境, 使用如下命令即可安装使用
 ```
 dotnet tool install --global BBDown
 ```
 
 # 下载
-Release版本：https://github.com/nilaoda/BBDown/releases
+Release版本: https://github.com/nilaoda/BBDown/releases
 
-自动构建的测试版本：https://github.com/nilaoda/BBDown/actions
+自动构建的测试版本: https://github.com/nilaoda/BBDown/actions
 
 # 开始使用
 目前命令行参数支持情况
@@ -128,19 +128,19 @@ Commands:
 # 使用教程
 
 <details>
-<summary>配置文件 (NEW)</summary> 
+<summary>配置文件 (NEW)</summary>
 
 ---
 
-在`1.4.9`或更高版本中，BBDown支持读取本地配置文件以简化命令行的手动输入。
+在`1.4.9`或更高版本中, BBDown支持读取本地配置文件以简化命令行的手动输入。
 
-如果用户没有指定`--config-file`，则默认读取程序同目录下的`BBDown.config`文件；若用户指定，则读取特定文件。
+如果用户没有指定`--config-file`, 则默认读取程序同目录下的`BBDown.config`文件；若用户指定, 则读取特定文件。
 
 一个典型的配置文件:
 ```config
 #本文件是BBDown程序的配置文件
 #以#开头的都会被程序忽略
-#然后剩余非空白内容程序逐行读取，对于一个选项，其参数应当在下一行出现
+#然后剩余非空白内容程序逐行读取, 对于一个选项, 其参数应当在下一行出现
 
 #例如下面将设置输出文件名格式
 --file-pattern
@@ -149,7 +149,7 @@ Commands:
 --multi-file-pattern
 <videoTitle>/[P<pageNumberWithZero>]<pageTitle>[<dfn>]
 
-#下面设置下载多个分P时，每个分P的下载间隔为2秒
+#下面设置下载多个分P时, 每个分P的下载间隔为2秒
 --delay-per-page
 2
 
@@ -160,11 +160,11 @@ Commands:
 </details>
 
 <details>
-<summary>自定义输出文件名格式 (NEW)</summary> 
+<summary>自定义输出文件名格式 (NEW)</summary>
 
 ---
 
-在`1.4.9`或更高版本中，BBDown支持用户自定义合并时的文件名组成。
+在`1.4.9`或更高版本中, BBDown支持用户自定义合并时的文件名组成。
 |  代码   | 含义  |
 |  ----  | ----  |
 `<videoTitle>`|视频主标题
@@ -180,35 +180,35 @@ Commands:
 `<videoBandwidth>`|视频码率
 `<audioCodecs>`|音频编码
 `<audioBandwidth>`|音频码率
-`<ownerName>`|上传者名称(下载番剧时，该值为"")
-`<ownerMid>`|上传者mid(下载番剧时，该值为"")
+`<ownerName>`|上传者名称(下载番剧时, 该值为"")
+`<ownerMid>`|上传者mid(下载番剧时, 该值为"")
 
 </details>
 
 <details>
-<summary>WEB/TV鉴权</summary>  
+<summary>WEB/TV鉴权</summary>
 
 ---
-  
-扫码登录网页账号：
+
+扫码登录网页账号:
 ```
 BBDown login
 ```
 然后按照提示操作
 
-扫码登录云视听小电视账号：
+扫码登录云视听小电视账号:
 ```
 BBDown logintv
 ```
 然后按照提示操作
- 
-*PS: 如果登录报错`The type initializer for 'Gdip' threw an exception`，请参考 [#37](https://github.com/nilaoda/BBDown/issues/37) 解决*
 
-手动加载网页cookie：
+*PS: 如果登录报错`The type initializer for 'Gdip' threw an exception`, 请参考 [#37](https://github.com/nilaoda/BBDown/issues/37) 解决*
+
+手动加载网页cookie:
 ```
 BBDown -c "SESSDATA=******" "https://www.bilibili.com/video/BV1qt4y1X7TW"
 ```
-手动加载云视听小电视token：
+手动加载云视听小电视token:
 ```
 BBDown -tv -token "******" "https://www.bilibili.com/video/BV1qt4y1X7TW"
 ```
@@ -216,18 +216,18 @@ BBDown -tv -token "******" "https://www.bilibili.com/video/BV1qt4y1X7TW"
 </details>
 
 <details>
-<summary>APP鉴权</summary>  
+<summary>APP鉴权</summary>
 
 ---
 
-> 根据 [#123](https://github.com/nilaoda/BBDown/issues/123#issuecomment-877583825) ，可以填写TV登录产生的`access_token`来给APP接口使用。可复制`BBDownTV.data`到`BBDownApp.data`使程序自动读取.
+> 根据 [#123](https://github.com/nilaoda/BBDown/issues/123#issuecomment-877583825) , 可以填写TV登录产生的`access_token`来给APP接口使用。可复制`BBDownTV.data`到`BBDownApp.data`使程序自动读取.
 
-目前程序无法自动获取鉴权信息，推荐通过**抓包**来获取.
+目前程序无法自动获取鉴权信息, 推荐通过**抓包**来获取.
 
-在请求Header中寻找键为`authorization`的项，其值形为`identify_v1 5227************1`，其中的`5227************1`就是token(access_key)
+在请求Header中寻找键为`authorization`的项, 其值形为`identify_v1 5227************1`, 其中的`5227************1`就是token(access_key)
 
 获取后手动通过`-token`命令加载, 或写入`BBDownApp.data`使程序自动读取.
-  
+
 ```
 BBDown -app -token "******" "https://www.bilibili.com/video/BV1qt4y1X7TW"
 ```
@@ -235,37 +235,37 @@ BBDown -app -token "******" "https://www.bilibili.com/video/BV1qt4y1X7TW"
 </details>
 
 <details>
-<summary>常用命令</summary>  
+<summary>常用命令</summary>
 
 ---
 
-下载普通视频：
+下载普通视频:
 ```
 BBDown "https://www.bilibili.com/video/BV1qt4y1X7TW"
 ```
-使用TV接口下载(粉丝量大的UP主基本上是无水印片源)：
+使用TV接口下载(粉丝量大的UP主基本上是无水印片源):
 ```
 BBDown -tv "https://www.bilibili.com/video/BV1qt4y1X7TW"
 ```
-当分P过多时，默认会隐藏展示全部的分P信息，你可以使用如下命令来显示所有每一个分P。
+当分P过多时, 默认会隐藏展示全部的分P信息, 你可以使用如下命令来显示所有每一个分P。
 ```
 BBDown --show-all "https://www.bilibili.com/video/BV1At41167aj"
 ```
-选择下载某些分P的三种情况：
-* 单个分P：10
+选择下载某些分P的三种情况:
+* 单个分P: 10
 ```
 BBDown "https://www.bilibili.com/video/BV1At41167aj?p=10"
 BBDown -p 10 "https://www.bilibili.com/video/BV1At41167aj"
 ```
-* 多个分P：1,2,10
+* 多个分P: 1,2,10
 ```
 BBDown -p 1,2,10 "https://www.bilibili.com/video/BV1At41167aj"
 ```
-* 范围分P：1-10
+* 范围分P: 1-10
 ```
 BBDown -p 1-10 "https://www.bilibili.com/video/BV1At41167aj"
 ```
-下载番剧全集：
+下载番剧全集:
 ```
 BBDown -p ALL "https://www.bilibili.com/bangumi/play/ss33073"
 ```
@@ -275,7 +275,7 @@ BBDown -p ALL "https://www.bilibili.com/bangumi/play/ss33073"
 # 演示
 ![1](https://user-images.githubusercontent.com/20772925/88686407-a2001480-d129-11ea-8aac-97a0c71af115.gif)
 
-下载完毕后在当前目录查看MP4文件：
+下载完毕后在当前目录查看MP4文件:
 
 ![2](https://user-images.githubusercontent.com/20772925/88478901-5e1cdc00-cf7e-11ea-97c1-154b9226564e.png)
 

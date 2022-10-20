@@ -164,7 +164,7 @@ namespace BBDown.Core.Util
                 "uk"                => ("ukr", "Українська"),
                 "ur"                => ("urd", "Urdu"),
                 "vi"                => ("vie", "Tiếng Việt"),
-                //太多了，我蚌埠住了，后面懒得查
+                //太多了, 我蚌埠住了, 后面懒得查
                 //"ie"                => ("", ""),
                 //"oc"                => ("",   ""),
                 //"or"                => ("",   ""),
@@ -257,7 +257,7 @@ namespace BBDown.Core.Util
                     };
                     subtitles.Add(subtitle);
                 }
-                //无字幕片源 但是字幕没上导致的空列表，尝试从国际接口获取
+                //无字幕片源 但是字幕没上导致的空列表, 尝试从国际接口获取
                 //if (subtitles.Count == 0 && !string.IsNullOrEmpty(epId))
                 //{
                 //    return await GetSubtitlesAsync(aid, cid, epId, true);

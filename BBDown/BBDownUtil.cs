@@ -32,7 +32,7 @@ namespace BBDown
                 string latestVer = redirctUrl.Replace("https://github.com/nilaoda/BBDown/releases/tag/", "");
                 if (nowVer != latestVer && !latestVer.StartsWith("https"))
                 {
-                    Console.Title = $"发现新版本：{latestVer}";
+                    Console.Title = $"发现新版本: {latestVer}";
                 }
             }
             catch (Exception)
@@ -209,7 +209,7 @@ namespace BBDown
         }
 
         /// <summary>
-        /// 通过avid检测是否为版权内容，如果是的话返回ep:xx格式
+        /// 通过avid检测是否为版权内容, 如果是的话返回ep:xx格式
         /// </summary>
         /// <param name="avid"></param>
         /// <returns></returns>
@@ -372,7 +372,7 @@ namespace BBDown
                 return;
             }
             long fileSize = await GetFileSizeAsync(url);
-            LogDebug("文件大小：{0} bytes", fileSize);
+            LogDebug("文件大小: {0} bytes", fileSize);
             //已下载过, 跳过下载
             if (File.Exists(path) && new FileInfo(path).Length == fileSize)
             {
@@ -381,7 +381,7 @@ namespace BBDown
             }
             List<Clip> allClips = GetAllClips(url, fileSize);
             int total = allClips.Count;
-            LogDebug("分段数量：{0}", total);
+            LogDebug("分段数量: {0}", total);
             ConcurrentDictionary<int, long> clipProgress = new();
             foreach (var i in allClips) clipProgress[i.index] = 0;
 
@@ -402,7 +402,7 @@ namespace BBDown
                 }
                 catch (NotSupportedException)
                 {
-                    if (++retry == 3) throw new Exception($"服务器可能并不支持多线程下载，请使用 --multi-thread false 关闭多线程");
+                    if (++retry == 3) throw new Exception($"服务器可能并不支持多线程下载, 请使用 --multi-thread false 关闭多线程");
                     goto reDown;
                 }
                 catch (Exception)
@@ -448,7 +448,7 @@ namespace BBDown
         }
 
         /// <summary>
-        /// 输入一堆已存在的文件，合并到新文件
+        /// 输入一堆已存在的文件, 合并到新文件
         /// </summary>
         /// <param name="files"></param>
         /// <param name="outputFilePath"></param>
@@ -564,7 +564,7 @@ namespace BBDown
 
 
         /// <summary>
-        /// 获取url字符串参数，返回参数值字符串
+        /// 获取url字符串参数, 返回参数值字符串
         /// </summary>
         /// <param name="name">参数名称</param>
         /// <param name="url">url字符串</param>
@@ -750,7 +750,7 @@ namespace BBDown
         }
 
         /// <summary>
-        /// 生成metadata文件，用于ffmpeg混流章节信息
+        /// 生成metadata文件, 用于ffmpeg混流章节信息
         /// </summary>
         /// <param name="points"></param>
         /// <returns></returns>
@@ -772,7 +772,7 @@ namespace BBDown
         }
 
         /// <summary>
-        /// 生成metadata文件，用于mp4box混流章节信息
+        /// 生成metadata文件, 用于mp4box混流章节信息
         /// </summary>
         /// <param name="points"></param>
         /// <returns></returns>

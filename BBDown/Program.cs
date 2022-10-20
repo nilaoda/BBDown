@@ -69,7 +69,7 @@ namespace BBDown
             var ver = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version!;
             Console.Write($"BBDown version {ver.Major}.{ver.Minor}.{ver.Build}, Bilibili Downloader.\r\n");
             Console.ResetColor();
-            Console.Write("欢迎到讨论区交流：\r\n" +
+            Console.Write("欢迎到讨论区交流: \r\n" +
                 "https://github.com/nilaoda/BBDown/discussions\r\n");
             Console.WriteLine();
 
@@ -110,7 +110,7 @@ namespace BBDown
                 //兼容旧版本命令行参数并给出警告
                 if (myOption.AddDfnSubfix)
                 {
-                    LogWarn("--add-dfn-subfix 已被弃用，建议使用 --file-pattern/-F 或 --multi-file-pattern/-M 来自定义输出文件名格式");
+                    LogWarn("--add-dfn-subfix 已被弃用, 建议使用 --file-pattern/-F 或 --multi-file-pattern/-M 来自定义输出文件名格式");
                     if (string.IsNullOrEmpty(myOption.FilePattern) && string.IsNullOrEmpty(myOption.MultiFilePattern))
                     {
                         SinglePageDefaultSavePath += "[<dfn>]";
@@ -120,27 +120,27 @@ namespace BBDown
                 }
                 if (myOption.Aria2cProxy != "")
                 {
-                    LogWarn("--aria2c-proxy 已被弃用，请使用 --aria2c-args 来设置aria2c代理，本次执行已添加该代理");
+                    LogWarn("--aria2c-proxy 已被弃用, 请使用 --aria2c-args 来设置aria2c代理, 本次执行已添加该代理");
                     myOption.Aria2cArgs += $" --all-proxy=\"{myOption.Aria2cProxy}\"";
                 }
                 if (myOption.OnlyHevc)
                 {
-                    LogWarn("--only-hevc/-hevc 已被弃用，请使用 --encoding-priority 来设置编码优先级，本次执行已将hevc设置为最高优先级");
+                    LogWarn("--only-hevc/-hevc 已被弃用, 请使用 --encoding-priority 来设置编码优先级, 本次执行已将hevc设置为最高优先级");
                     myOption.EncodingPriority = "hevc";
                 }
                 if (myOption.OnlyAvc)
                 {
-                    LogWarn("--only-avc/-avc 已被弃用，请使用 --encoding-priority 来设置编码优先级，本次执行已将avc设置为最高优先级");
+                    LogWarn("--only-avc/-avc 已被弃用, 请使用 --encoding-priority 来设置编码优先级, 本次执行已将avc设置为最高优先级");
                     myOption.EncodingPriority = "avc";
                 }
                 if (myOption.OnlyAv1)
                 {
-                    LogWarn("--only-av1/-av1 已被弃用，请使用 --encoding-priority 来设置编码优先级，本次执行已将av1设置为最高优先级");
+                    LogWarn("--only-av1/-av1 已被弃用, 请使用 --encoding-priority 来设置编码优先级, 本次执行已将av1设置为最高优先级");
                     myOption.EncodingPriority = "av1";
                 }
                 if (myOption.NoPaddingPageNum)
                 {
-                    LogWarn("--no-padding-page-num 已被弃用，建议使用 --file-pattern/-F 或 --multi-file-pattern/-M 来自定义输出文件名格式");
+                    LogWarn("--no-padding-page-num 已被弃用, 建议使用 --file-pattern/-F 或 --multi-file-pattern/-M 来自定义输出文件名格式");
                     if (string.IsNullOrEmpty(myOption.FilePattern) && string.IsNullOrEmpty(myOption.MultiFilePattern))
                     {
                         MultiPageDefaultSavePath = MultiPageDefaultSavePath.Replace("<pageNumberWithZero>", "<pageNumber>");
@@ -217,7 +217,7 @@ namespace BBDown
                     }
                     //设置工作目录
                     Environment.CurrentDirectory = dir;
-                    LogDebug("切换工作目录至：{0}", dir);
+                    LogDebug("切换工作目录至: {0}", dir);
                 }
 
                 if (!string.IsNullOrEmpty(myOption.FFmpegPath) && File.Exists(myOption.FFmpegPath))
@@ -290,24 +290,24 @@ namespace BBDown
                 }
 
                 LogDebug("AppDirectory: {0}", APP_DIR);
-                LogDebug("运行参数：{0}", JsonSerializer.Serialize(myOption, MyOptionJsonContext.Default.MyOption));
+                LogDebug("运行参数: {0}", JsonSerializer.Serialize(myOption, MyOptionJsonContext.Default.MyOption));
                 if (string.IsNullOrEmpty(Config.COOKIE) && File.Exists(Path.Combine(APP_DIR, "BBDown.data")))
                 {
                     Log("加载本地cookie...");
-                    LogDebug("文件路径：{0}", Path.Combine(APP_DIR, "BBDown.data"));
+                    LogDebug("文件路径: {0}", Path.Combine(APP_DIR, "BBDown.data"));
                     Config.COOKIE = File.ReadAllText(Path.Combine(APP_DIR, "BBDown.data"));
                 }
                 if (string.IsNullOrEmpty(Config.TOKEN) && File.Exists(Path.Combine(APP_DIR, "BBDownTV.data")) && tvApi)
                 {
                     Log("加载本地token...");
-                    LogDebug("文件路径：{0}", Path.Combine(APP_DIR, "BBDownTV.data"));
+                    LogDebug("文件路径: {0}", Path.Combine(APP_DIR, "BBDownTV.data"));
                     Config.TOKEN = File.ReadAllText(Path.Combine(APP_DIR, "BBDownTV.data"));
                     Config.TOKEN = Config.TOKEN.Replace("access_token=", "");
                 }
                 if (string.IsNullOrEmpty(Config.TOKEN) && File.Exists(Path.Combine(APP_DIR, "BBDownApp.data")) && appApi)
                 {
                     Log("加载本地token...");
-                    LogDebug("文件路径：{0}", Path.Combine(APP_DIR, "BBDownApp.data"));
+                    LogDebug("文件路径: {0}", Path.Combine(APP_DIR, "BBDownApp.data"));
                     Config.TOKEN = File.ReadAllText(Path.Combine(APP_DIR, "BBDownApp.data"));
                     Config.TOKEN = Config.TOKEN.Replace("access_token=", "");
                 }
@@ -325,7 +325,7 @@ namespace BBDown
                 Log("获取aid...");
                 aidOri = await GetAvIdAsync(input);
                 Log("获取aid结束: " + aidOri);
-                //-p的优先级大于URL中的自带p参数，所以先清空selectedPages
+                //-p的优先级大于URL中的自带p参数, 所以先清空selectedPages
                 if (!string.IsNullOrEmpty(selectPage) && selectPage != "ALL")
                 {
                     selectedPages = new List<string>();
@@ -420,14 +420,14 @@ namespace BBDown
                     catch { LogError("解析分P参数时失败了~"); selectedPages = null; };
                 }
 
-                //如果用户没有选择分P，根据epid来确定某一集
+                //如果用户没有选择分P, 根据epid来确定某一集
                 if (selectedPages == null && selectPage != "ALL" && !string.IsNullOrEmpty(vInfo.Index))
                 {
                     selectedPages = new List<string> { vInfo.Index };
-                    Log("程序已自动选择你输入的集数，如果要下载其他集数请自行指定分P(如可使用-p ALL代表全部)");
+                    Log("程序已自动选择你输入的集数, 如果要下载其他集数请自行指定分P(如可使用-p ALL代表全部)");
                 }
 
-                Log($"共计 {pagesInfo.Count} 个分P, 已选择：" + (selectedPages == null ? "ALL" : string.Join(",", selectedPages)));
+                Log($"共计 {pagesInfo.Count} 个分P, 已选择: " + (selectedPages == null ? "ALL" : string.Join(",", selectedPages)));
                 var pagesCount = pagesInfo.Count;
 
                 //过滤不需要的分P
@@ -436,7 +436,7 @@ namespace BBDown
 
                 // 根据p数选择存储路径
                 savePathFormat = string.IsNullOrEmpty(myOption.FilePattern) ? SinglePageDefaultSavePath : myOption.FilePattern;
-                // 1. 多P; 2. 只有1P，但是是番剧，尚未完结时 按照多P处理
+                // 1. 多P; 2. 只有1P, 但是是番剧, 尚未完结时 按照多P处理
                 if (pagesCount > 1 || (bangumi && !vInfo.IsBangumiEnd))
                 {
                     savePathFormat = string.IsNullOrEmpty(myOption.MultiFilePattern) ? MultiPageDefaultSavePath : myOption.MultiFilePattern;
@@ -489,7 +489,7 @@ namespace BBDown
                                 var cover = pic == "" ? p.cover : pic;
                                 if (cover != null)
                                 {
-                                    LogDebug("下载：{0}", cover);
+                                    LogDebug("下载: {0}", cover);
                                     await using var response = await HTTPUtil.AppHttpClient.GetStreamAsync(cover);
                                     await using var fs = new FileStream(coverPath, FileMode.Create);
                                     await response.CopyToAsync(fs);
@@ -507,7 +507,7 @@ namespace BBDown
                                         continue;
                                     }
                                     Log($"下载字幕 {s.lan} => {SubUtil.GetSubtitleCode(s.lan).Item2}...");
-                                    LogDebug("下载：{0}", s.url);
+                                    LogDebug("下载: {0}", s.url);
                                     await SubUtil.SaveSubtitleAsync(s.url, s.path);
                                     if (subOnly && File.Exists(s.path) && File.ReadAllText(s.path) != "")
                                     {
@@ -538,7 +538,7 @@ namespace BBDown
 
                         var savePath = "";
 
-                        //此处代码简直灾难，后续优化吧
+                        //此处代码简直灾难, 后续优化吧
                         if ((videoTracks.Count != 0 || audioTracks.Count != 0) && clips.Count == 0)   //dash
                         {
                             if (webJsonStr.Contains("\"video\":[") && videoTracks.Count == 0)
@@ -617,13 +617,13 @@ namespace BBDown
                             var pcdnReg = PcdnRegex();
                             if (videoTracks.Count > 0 && pcdnReg.IsMatch(videoTracks[vIndex].baseUrl))
                             {
-                                LogWarn($"检测到视频流为PCDN，尝试强制替换为{BACKUP_HOST}……");
+                                LogWarn($"检测到视频流为PCDN, 尝试强制替换为{BACKUP_HOST}……");
                                 videoTracks[vIndex].baseUrl = pcdnReg.Replace(videoTracks[vIndex].baseUrl, $"://{BACKUP_HOST}/");
                             }
 
                             if (audioTracks.Count > 0 && pcdnReg.IsMatch(audioTracks[aIndex].baseUrl))
                             {
-                                LogWarn($"检测到音频流为PCDN，尝试强制替换为{BACKUP_HOST}……");
+                                LogWarn($"检测到音频流为PCDN, 尝试强制替换为{BACKUP_HOST}……");
                                 audioTracks[aIndex].baseUrl = pcdnReg.Replace(audioTracks[aIndex].baseUrl, $"://{BACKUP_HOST}/");
                             }
 
@@ -665,7 +665,7 @@ namespace BBDown
                                     continue;
                                 }
 
-                                //杜比视界，若ffmpeg版本小于5.0，使用mp4box封装
+                                //杜比视界, 若ffmpeg版本小于5.0, 使用mp4box封装
                                 if (videoTracks[vIndex].dfn == Config.qualitys["126"] && !useMp4box && !CheckFFmpegDOVI())
                                 {
                                     LogWarn($"检测到杜比视界清晰度且您的ffmpeg版本小于5.0,将使用mp4box混流...");
@@ -860,11 +860,11 @@ namespace BBDown
                         {
                             if (webJsonStr.Contains("平台不可观看"))
                             {
-                                throw new Exception("当前(WEB)平台不可观看，请尝试使用TV API解析。");
+                                throw new Exception("当前(WEB)平台不可观看, 请尝试使用TV API解析。");
                             }
                             else if (webJsonStr.Contains("地区不可观看") || webJsonStr.Contains("地区不支持"))
                             {
-                                throw new Exception("当前地区不可观看，尝试设置系统代理后解析。");
+                                throw new Exception("当前地区不可观看, 尝试设置系统代理后解析。");
                             }
                             else if (webJsonStr.Contains("购买后才能观看"))
                             {
@@ -903,7 +903,7 @@ namespace BBDown
 
         private static List<Video> SortTracks(List<Video> videoTracks, Dictionary<string, int> dfnPriority, Dictionary<string, byte> encodingPriority, bool bandwithAscending)
         {
-            //用户同时输入了自定义分辨率优先级和自定义编码优先级，则根据输入顺序依次进行排序
+            //用户同时输入了自定义分辨率优先级和自定义编码优先级, 则根据输入顺序依次进行排序
             return dfnPriority.Count > 0 && encodingPriority.Count > 0 && Environment.CommandLine.IndexOf("--encoding-priority") < Environment.CommandLine.IndexOf("--dfn-priority")
                 ? videoTracks
                     .OrderBy(v => encodingPriority.TryGetValue(v.codecs, out byte i) ? i : 100)
@@ -967,7 +967,7 @@ namespace BBDown
                 QRCodeData qrCodeData = qrGenerator.CreateQrCode(url, QRCodeGenerator.ECCLevel.Q);
                 PngByteQRCode pngByteCode = new(qrCodeData);
                 File.WriteAllBytes("qrcode.png", pngByteCode.GetGraphic(7));
-                Log("生成二维码成功：qrcode.png, 请打开并扫描, 或扫描打印的二维码");
+                Log("生成二维码成功: qrcode.png, 请打开并扫描, 或扫描打印的二维码");
                 var consoleQRCode = new ConsoleQRCode(qrCodeData);
                 consoleQRCode.GetGraphic();
 
@@ -1024,7 +1024,7 @@ namespace BBDown
                 QRCodeData qrCodeData = qrGenerator.CreateQrCode(url, QRCodeGenerator.ECCLevel.Q);
                 PngByteQRCode pngByteCode = new(qrCodeData);
                 File.WriteAllBytes("qrcode.png", pngByteCode.GetGraphic(7));
-                Log("生成二维码成功：qrcode.png, 请打开并扫描, 或扫描打印的二维码");
+                Log("生成二维码成功: qrcode.png, 请打开并扫描, 或扫描打印的二维码");
                 var consoleQRCode = new ConsoleQRCode(qrCodeData);
                 consoleQRCode.GetGraphic();
                 parms.Set("auth_code", authCode);

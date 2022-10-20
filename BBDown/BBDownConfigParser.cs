@@ -59,7 +59,7 @@ namespace BBDown
             }
             catch (Exception)
             {
-                LogError("配置文件读取异常，忽略");
+                LogError("配置文件读取异常, 忽略");
             }
         }
     }

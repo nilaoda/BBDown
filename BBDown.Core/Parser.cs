@@ -51,7 +51,7 @@ namespace BBDown.Core
             //以下情况从网页源代码尝试解析
             if (webJson.Contains("\"大会员专享限制\""))
             {
-                Log("此视频需要大会员，您大概率需要登录一个有大会员的账号才可以下载，尝试从网页源码解析");
+                Log("此视频需要大会员, 您大概率需要登录一个有大会员的账号才可以下载, 尝试从网页源码解析");
                 string webUrl = "https://www.bilibili.com/bangumi/play/ep" + epId;
                 string webSource = await GetWebSourceAsync(webUrl);
                 webJson = PlayerJsonRegex().Match(webSource).Groups[1].Value;
@@ -216,7 +216,7 @@ namespace BBDown.Core
                     }
                 }
 
-                //此处处理免二压视频，需要单独再请求一次
+                //此处处理免二压视频, 需要单独再请求一次
                 if (!reParse && !appApi)
                 {
                     reParse = true;
@@ -295,7 +295,7 @@ namespace BBDown.Core
                 }
                 else
                 {
-                    //如果获取数据失败，尝试从根路径获取数据
+                    //如果获取数据失败, 尝试从根路径获取数据
                     string nodeinfo = respJson.RootElement.ToString();
                     var nodeJson = JsonDocument.Parse(nodeinfo).RootElement;
                     quality = nodeJson.GetProperty("quality").ToString();

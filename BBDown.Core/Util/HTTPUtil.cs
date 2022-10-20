@@ -27,7 +27,7 @@ namespace BBDown.Core.Util
             webRequest.Headers.CacheControl = CacheControlHeaderValue.Parse("no-cache");
             webRequest.Headers.Connection.Clear();
 
-            LogDebug("获取网页内容：Url: {0}, Headers: {1}", url, webRequest.Headers);
+            LogDebug("获取网页内容: Url: {0}, Headers: {1}", url, webRequest.Headers);
             var webResponse = (await AppHttpClient.SendAsync(webRequest, HttpCompletionOption.ResponseHeadersRead)).EnsureSuccessStatusCode();
 
             string htmlCode = await webResponse.Content.ReadAsStringAsync();

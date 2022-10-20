@@ -93,7 +93,7 @@ namespace BBDown.Core
             sb.AppendLine($"Style: BBDOWN_Style, 黑体, {FONT_SIZE}, &H00FFFFFF, &H00FFFFFF, &H00000000, &H00000000, 0, 0, 0, 0, 100, 100, 0.00, 0.00, 1, 2, 0, 7, 0, 0, 0, 0");
             sb.AppendLine("[Events]");
             sb.AppendLine("Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text");
-            
+
             PositionController controller = new();   // 弹幕位置控制器
             Array.Sort(danmakus, comparer);
             foreach (DanmakuItem danmaku in danmakus)
@@ -120,7 +120,7 @@ namespace BBDown.Core
         protected class PositionController
         {
             readonly int maxLine = MONITOR_HEIGHT * PROTECT_LENGTH / FONT_SIZE / 100;    //总行数
-                                                                                        // 三个位置的弹幕队列，记录弹幕结束时间
+                                                                                        // 三个位置的弹幕队列, 记录弹幕结束时间
 
             readonly List<double> moveQueue = new();
             readonly List<double> topQueue = new();
@@ -157,7 +157,7 @@ namespace BBDown.Core
                 for (int i = 0; i < maxLine; i++)
                 {
                     if (time >= vs[i])
-                    {   // 此条弹幕已结束，更新该位置信息
+                    {   // 此条弹幕已结束, 更新该位置信息
                         vs[i] = time + displayTime;
                         return i * FONT_SIZE;
                     }

@@ -89,7 +89,7 @@ namespace BBDown
 
             //----分析完毕
             var arguments = inputArg.ToString() + (metaArg.ToString() == "" ? "" : " -itags tool=" + metaArg.ToString()) + $" -new \"{outPath}\"";
-            LogDebug("mp4box命令：{0}", arguments);
+            LogDebug("mp4box命令: {0}", arguments);
             return RunExe(MP4BOX, arguments, MP4BOX != "mp4box");
         }
 
@@ -159,7 +159,7 @@ namespace BBDown
                  (subs != null ? " -c:s mov_text " : "") +
                  "-movflags faststart -strict unofficial -strict -2 " +
                  $"\"{outPath}\"";
-            LogDebug("ffmpeg命令：{0}", arguments);
+            LogDebug("ffmpeg命令: {0}", arguments);
             return RunExe(FFMPEG, arguments, FFMPEG != "ffmpeg");
         }
 
@@ -175,7 +175,7 @@ namespace BBDown
                 {
                     var tmpFile = Path.Combine(Path.GetDirectoryName(file)!, Path.GetFileNameWithoutExtension(file) + ".ts");
                     var arguments = $"-loglevel warning -y -i \"{file}\" -map 0 -c copy -f mpegts -bsf:v h264_mp4toannexb \"{tmpFile}\"";
-                    LogDebug("ffmpeg命令：{0}", arguments);
+                    LogDebug("ffmpeg命令: {0}", arguments);
                     RunExe("ffmpeg", arguments);
                     File.Delete(file);
                 }

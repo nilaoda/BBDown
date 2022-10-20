@@ -23,7 +23,7 @@ namespace BBDown.Core.Fetcher
             List<Page> pagesInfo = new();
             int i = 1;
 
-            //episodes为空; 或者未包含对应epid，番外/花絮什么的
+            //episodes为空; 或者未包含对应epid, 番外/花絮什么的
             if (pages.Count == 0 || !result.GetProperty("episodes").ToString().Contains($"/ep{id}"))
             {
                 if (result.TryGetProperty("section", out JsonElement sections))
