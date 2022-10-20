@@ -95,7 +95,7 @@ namespace BBDown
 
         public static int MuxAV(bool useMp4box, string videoPath, string audioPath, string outPath, string desc = "", string title = "", string author = "", string episodeId = "", string pic = "", string lang = "", List<Subtitle>? subs = null, bool audioOnly = false, bool videoOnly = false, List<ViewPoint>? points = null)
         {
-            if (audioOnly && audioPath != "") 
+            if (audioOnly && audioPath != "")
                 videoPath = "";
             if (videoOnly)
                 audioPath = "";
@@ -157,7 +157,7 @@ namespace BBDown
                  (episodeId == "" ? "" : $"-metadata album=\"{title}\" ") +
                  $"-c copy " + (audioOnly && audioPath == "" ? " -vn " : "") +
                  (subs != null ? " -c:s mov_text " : "") +
-                 "-movflags faststart -strict unofficial -strict -2 -f mp4 " +
+                 "-movflags faststart -strict unofficial -strict -2 " +
                  $"\"{outPath}\"";
             LogDebug("ffmpeg命令：{0}", arguments);
             return RunExe(FFMPEG, arguments, FFMPEG != "ffmpeg");
@@ -167,7 +167,7 @@ namespace BBDown
         {
             if (files.Length == 1)
             {
-                File.Move(files[0], outPath); 
+                File.Move(files[0], outPath);
             }
             else
             {
