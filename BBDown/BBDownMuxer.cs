@@ -81,7 +81,7 @@ namespace BBDown
                     if (File.Exists(subs[i].path) && File.ReadAllText(subs[i].path!) != "")
                     {
                         nowId++;
-                        inputArg.Append($" -add \"{subs[i].path}#trackID=1:name=:lang={GetSubtitleCode(subs[i].lan).Item1}\" ");
+                        inputArg.Append($" -add \"{subs[i].path}#trackID=1:name=:hdlr=sbtl:lang={GetSubtitleCode(subs[i].lan).Item1}\" ");
                         inputArg.Append($" -udta {nowId}:type=name:str=\"{GetSubtitleCode(subs[i].lan).Item2}\" ");
                     }
                 }
