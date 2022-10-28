@@ -693,7 +693,7 @@ namespace BBDown
                 {
                     StartInfo = new ProcessStartInfo
                     {
-                        FileName = "ffmpeg",
+                        FileName = BBDownMuxer.FFMPEG,
                         Arguments = "-version",
                         UseShellExecute = false,
                         RedirectStandardError = true,
