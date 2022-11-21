@@ -40,7 +40,7 @@ namespace BBDown.Core
                     $"&mid=0&mobi_app=android_tv_yst" +
                     $"&module=bangumi&npcybs=0&otype=json&platform=android" +
                     $"&qn={qn}&ts={GetTimeStamp(true)}";
-                api = $"https://{prefix}?" + api + (bangumi ? $"&sign={GetSign(api)}" : "");
+                api = $"https://{prefix}?" + api + (bangumi ? $"&sign={GetSign(api, false)}" : "");
             }
 
             //课程接口
@@ -61,8 +61,20 @@ namespace BBDown.Core
 
         private static async Task<string> GetPlayJsonAsync(string aid, string cid, string epId, string qn, string code = "0")
         {
-            string api = $"https://api.biliintl.com/intl/gateway/v2/ogv/playurl?" +
-                $"aid={aid}&cid={cid}&ep_id={epId}&platform=android&s_locale=zh_SG&prefer_code_type={code}&qn={qn}" + (Config.TOKEN != "" ? $"&access_key={Config.TOKEN}" : "");
+
+            string api = "";
+            if (Config.HOST == "api.bilibili.com")
+            {
+                api = "https://api.biliintl.com/intl/gateway/v2/ogv/playurl" +
+                    $"?aid={aid}&cid={cid}&ep_id={epId}&platform=android&s_locale=zh_SG&prefer_code_type={code}&qn={qn}" +
+                    (Config.TOKEN != "" ? $"&access_key={Config.TOKEN}" : "");
+            }
+            else
+            {
+                string param = (Config.TOKEN != "" ? $"access_key={Config.TOKEN}&" : "") +
+                    $"aid={aid}&appkey=7d089525d3611b1c&area={Config.AREA}&cid={cid}&ep_id={epId}&platform=android&prefer_code_type={code}&qn={qn}&s_locale=zh_SG&ts={GetTimeStamp(true)}";
+                api = $"https://{Config.HOST}/intl/gateway/v2/ogv/playurl?" + param + $"&sign={GetSign(param, true)}";
+            }
             string webJson = await GetWebSourceAsync(api);
             return webJson;
         }
@@ -365,23 +377,14 @@ namespace BBDown.Core
 
         private static string GetTimeStamp(bool bflag)
         {
-            TimeSpan ts = DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, 0);
-            string ret = bflag ? Convert.ToInt64(ts.TotalSeconds).ToString() : Convert.ToInt64(ts.TotalMilliseconds).ToString();
-
-            return ret;
+            DateTimeOffset ts = DateTimeOffset.Now;
+            return bflag ? ts.ToUnixTimeSeconds().ToString() : ts.ToUnixTimeMilliseconds().ToString();
         }
 
-        private static string GetSign(string parms)
+        private static string GetSign(string parms, bool isBiliPlus)
         {
-            string toEncode = parms + "59b43e04ad6965f34319062b478f83dd";
-            byte[] bs = Encoding.UTF8.GetBytes(toEncode);
-            byte[] hs = MD5.HashData(bs);
-            StringBuilder sb = new();
-            foreach (byte b in hs)
-            {
-                sb.Append(b.ToString("x2"));
-            }
-            return sb.ToString();
+            string toEncode = parms + (isBiliPlus ? "acd495b248ec528c2eed1e862d393126" : "59b43e04ad6965f34319062b478f83dd");
+            return string.Join("", MD5.HashData(Encoding.UTF8.GetBytes(toEncode)).Select(i => i.ToString("x2")).ToArray());
         }
 
         [GeneratedRegex("window.__playinfo__=([\\s\\S]*?)<\\/script>")]

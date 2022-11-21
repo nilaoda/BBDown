@@ -627,6 +627,19 @@ namespace BBDown
                                 audioTracks[aIndex].baseUrl = pcdnReg.Replace(audioTracks[aIndex].baseUrl, $"://{BACKUP_HOST}/");
                             }
 
+                            var akamReg = AkamRegex();
+                            if (videoTracks.Count > 0 && Config.AREA != "" && videoTracks[vIndex].baseUrl.Contains("akamaized.net"))
+                            {
+                                LogWarn($"检测到视频流为外国源，尝试强制替换为{BACKUP_HOST}……");
+                                videoTracks[vIndex].baseUrl = akamReg.Replace(videoTracks[vIndex].baseUrl, $"://{BACKUP_HOST}/");
+                            }
+
+                            if (audioTracks.Count > 0 && Config.AREA != "" && audioTracks[aIndex].baseUrl.Contains("akamaized.net"))
+                            {
+                                LogWarn($"检测到音频流为外国源，尝试强制替换为{BACKUP_HOST}……");
+                                audioTracks[aIndex].baseUrl = akamReg.Replace(audioTracks[aIndex].baseUrl, $"://{BACKUP_HOST}/");
+                            }
+
                             LogDebug("Format Before: " + savePathFormat);
                             savePath = FormatSavePath(savePathFormat, title, videoTracks.ElementAtOrDefault(vIndex), audioTracks.ElementAtOrDefault(aIndex), p, pagesCount);
                             LogDebug("Format After: " + savePath);
@@ -1062,6 +1075,8 @@ namespace BBDown
 
         [GeneratedRegex("://.*:\\d+/")]
         private static partial Regex PcdnRegex();
+        [GeneratedRegex("://.*akamaized\\.net/")]
+        private static partial Regex AkamRegex();
         [GeneratedRegex("<(\\w+?)>")]
         private static partial Regex InfoRegex();
     }
