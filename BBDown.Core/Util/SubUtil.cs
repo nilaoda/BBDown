@@ -212,14 +212,14 @@ namespace BBDown.Core.Util
             };
         }
 
-        public static async Task<List<Subtitle>> GetSubtitlesAsync(string aid, string cid, string epId, bool intl)
+        public static async Task<List<Subtitle>> GetSubtitlesAsync(string aid, string cid, string epId, int index, bool intl)
         {
             List<Subtitle> subtitles = new();
             if (intl)
             {
                 try
                 {
-                    string api = $"https://api.biliintl.com/intl/gateway/web/v2/subtitle?&episode_id={epId}";
+                    string api = "https://" + (Config.EPHOST == "api.bilibili.com" ? "api.biliintl.com" : Config.EPHOST) + $"/intl/gateway/web/v2/subtitle?episode_id={epId}";
                     string json = await GetWebSourceAsync(api);
                     using var infoJson = JsonDocument.Parse(json);
                     var subs = infoJson.RootElement.GetProperty("data").GetProperty("subtitles").EnumerateArray();
@@ -237,7 +237,32 @@ namespace BBDown.Core.Util
                     }
                     return subtitles;
                 }
-                catch (Exception) { return subtitles; } //返回空列表
+                catch (Exception)
+                {
+                    try
+                    {
+                        string api = "https://" + (Config.HOST == "api.bilibili.com" ? "api.bilibili.tv" : Config.HOST) +
+                            $"/intl/gateway/v2/ogv/view/app/season?ep_id={epId}&platform=android&s_locale=zh_SG" + (Config.TOKEN != "" ? $"&access_key={Config.TOKEN}" : "");
+                        string json = await GetWebSourceAsync(api);
+                        using var infoJson = JsonDocument.Parse(json);
+                        var subs = infoJson.RootElement.GetProperty("result").GetProperty("modules")[0].GetProperty("data")
+                            .GetProperty("episodes")[index-1].GetProperty("subtitles").EnumerateArray();
+                        foreach (var sub in subs)
+                        {
+                            var lan = sub.GetProperty("key").ToString();
+                            var url = sub.GetProperty("url").ToString().Replace("\\\\/", "/");
+                            Subtitle subtitle = new()
+                            {
+                                url = url,
+                                lan = lan,
+                                path = $"{aid}/{aid}.{cid}.{lan}{(url.Contains(".json") ? ".srt" : ".ass")}"
+                            };
+                            subtitles.Add(subtitle);
+                        }
+                        return subtitles;
+                    }
+                    catch (Exception) { return subtitles; } //返回空列表
+                }
             }
 
             try
@@ -266,7 +291,8 @@ namespace BBDown.Core.Util
             }
             catch (Exception)
             {
-                try {
+                try
+                {
                     string api = $"https://api.bilibili.com/x/player/v2?cid={cid}&aid={aid}";
                     string json = await GetWebSourceAsync(api);
                     using var infoJson = JsonDocument.Parse(json);
