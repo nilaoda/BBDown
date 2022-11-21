@@ -13,8 +13,9 @@ namespace BBDown.Core.Fetcher
             id = id[3..];
             string index = "";
             //string api = $"https://api.global.bilibili.com/intl/gateway/ogv/m/view?ep_id={id}&s_locale=ja_JP";
-            string api = $"https://api.bilibili.tv/intl/gateway/v2/ogv/view/app/season?ep_id={id}&platform=android&s_locale=zh_SG&mobi_app=bstar_a" + (Config.TOKEN != "" ? $"&access_key={Config.TOKEN}" : "");
-            string json = await GetWebSourceAsync(api);
+            string api = "https://" + (Config.EPHOST == "api.bilibili.com" ? "api.bilibili.tv" : Config.EPHOST) +
+            $"/intl/gateway/v2/ogv/view/app/season?ep_id={id}&platform=android&s_locale=zh_SG&mobi_app=bstar_a" + (Config.TOKEN != "" ? $"&access_key={Config.TOKEN}" : "");
+            string json = (await GetWebSourceAsync(api)).Replace("\\/", "/");
             using var infoJson = JsonDocument.Parse(json);
             var result = infoJson.RootElement.GetProperty("result");
             string seasonId = result.GetProperty("season_id").ToString();
@@ -61,7 +62,7 @@ namespace BBDown.Core.Fetcher
 
             /*if (pages.Count == 0)
             {
-                if (web != "") 
+                if (web != "")
                 {
                     string epApi = $"https://api.bilibili.com/pgc/web/season/section?season_id={seasonId}";
                     var _web = GetWebSource(epApi);
