@@ -499,7 +499,7 @@ namespace BBDown
                             if (!skipSubtitle)
                             {
                                 LogDebug("获取字幕...");
-                                subtitleInfo = await SubUtil.GetSubtitlesAsync(p.aid, p.cid, p.epid, intlApi);
+                                subtitleInfo = await SubUtil.GetSubtitlesAsync(p.aid, p.cid, p.epid, p.index, intlApi);
                                 foreach (Subtitle s in subtitleInfo)
                                 {
                                     if (skipAi && s.lan.StartsWith("ai-")) {
