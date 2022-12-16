@@ -110,7 +110,7 @@ namespace BBDown
                 //兼容旧版本命令行参数并给出警告
                 if (myOption.AddDfnSubfix)
                 {
-                    LogWarn("--add-dfn-subfix 已被弃用，建议使用 --file-pattern/-F 或 --multi-file-pattern/-M 来自定义输出文件名格式");
+                    LogWarn("--add-dfn-subfix 已被弃用, 建议使用 --file-pattern/-F 或 --multi-file-pattern/-M 来自定义输出文件名格式");
                     if (string.IsNullOrEmpty(myOption.FilePattern) && string.IsNullOrEmpty(myOption.MultiFilePattern))
                     {
                         SinglePageDefaultSavePath += "[<dfn>]";
@@ -120,27 +120,27 @@ namespace BBDown
                 }
                 if (myOption.Aria2cProxy != "")
                 {
-                    LogWarn("--aria2c-proxy 已被弃用，请使用 --aria2c-args 来设置aria2c代理，本次执行已添加该代理");
+                    LogWarn("--aria2c-proxy 已被弃用, 请使用 --aria2c-args 来设置aria2c代理, 本次执行已添加该代理");
                     myOption.Aria2cArgs += $" --all-proxy=\"{myOption.Aria2cProxy}\"";
                 }
                 if (myOption.OnlyHevc)
                 {
-                    LogWarn("--only-hevc/-hevc 已被弃用，请使用 --encoding-priority 来设置编码优先级，本次执行已将hevc设置为最高优先级");
+                    LogWarn("--only-hevc/-hevc 已被弃用, 请使用 --encoding-priority 来设置编码优先级, 本次执行已将hevc设置为最高优先级");
                     myOption.EncodingPriority = "hevc";
                 }
                 if (myOption.OnlyAvc)
                 {
-                    LogWarn("--only-avc/-avc 已被弃用，请使用 --encoding-priority 来设置编码优先级，本次执行已将avc设置为最高优先级");
+                    LogWarn("--only-avc/-avc 已被弃用, 请使用 --encoding-priority 来设置编码优先级, 本次执行已将avc设置为最高优先级");
                     myOption.EncodingPriority = "avc";
                 }
                 if (myOption.OnlyAv1)
                 {
-                    LogWarn("--only-av1/-av1 已被弃用，请使用 --encoding-priority 来设置编码优先级，本次执行已将av1设置为最高优先级");
+                    LogWarn("--only-av1/-av1 已被弃用, 请使用 --encoding-priority 来设置编码优先级, 本次执行已将av1设置为最高优先级");
                     myOption.EncodingPriority = "av1";
                 }
                 if (myOption.NoPaddingPageNum)
                 {
-                    LogWarn("--no-padding-page-num 已被弃用，建议使用 --file-pattern/-F 或 --multi-file-pattern/-M 来自定义输出文件名格式");
+                    LogWarn("--no-padding-page-num 已被弃用, 建议使用 --file-pattern/-F 或 --multi-file-pattern/-M 来自定义输出文件名格式");
                     if (string.IsNullOrEmpty(myOption.FilePattern) && string.IsNullOrEmpty(myOption.MultiFilePattern))
                     {
                         MultiPageDefaultSavePath = MultiPageDefaultSavePath.Replace("<pageNumberWithZero>", "<pageNumber>");
@@ -200,6 +200,7 @@ namespace BBDown
                 string savePathFormat = myOption.FilePattern;
                 string lang = myOption.Language;
                 string selectPage = myOption.SelectPage.ToUpper();
+                string uposHost = myOption.UposHost;
                 string aidOri = ""; //原始aid
                 int delay = Convert.ToInt32(myOption.DelayPerPage);
                 Config.HOST = myOption.Host;
@@ -325,7 +326,7 @@ namespace BBDown
                 Log("获取aid...");
                 aidOri = await GetAvIdAsync(input);
                 Log("获取aid结束: " + aidOri);
-                //-p的优先级大于URL中的自带p参数，所以先清空selectedPages
+                //-p的优先级大于URL中的自带p参数, 所以先清空selectedPages
                 if (!string.IsNullOrEmpty(selectPage) && selectPage != "ALL")
                 {
                     selectedPages = new List<string>();
@@ -420,11 +421,11 @@ namespace BBDown
                     catch { LogError("解析分P参数时失败了~"); selectedPages = null; };
                 }
 
-                //如果用户没有选择分P，根据epid来确定某一集
+                //如果用户没有选择分P, 根据epid来确定某一集
                 if (selectedPages == null && selectPage != "ALL" && !string.IsNullOrEmpty(vInfo.Index))
                 {
                     selectedPages = new List<string> { vInfo.Index };
-                    Log("程序已自动选择你输入的集数，如果要下载其他集数请自行指定分P(如可使用-p ALL代表全部)");
+                    Log("程序已自动选择你输入的集数, 如果要下载其他集数请自行指定分P(如可使用-p ALL代表全部)");
                 }
 
                 Log($"共计 {pagesInfo.Count} 个分P, 已选择：" + (selectedPages == null ? "ALL" : string.Join(",", selectedPages)));
@@ -436,7 +437,7 @@ namespace BBDown
 
                 // 根据p数选择存储路径
                 savePathFormat = string.IsNullOrEmpty(myOption.FilePattern) ? SinglePageDefaultSavePath : myOption.FilePattern;
-                // 1. 多P; 2. 只有1P，但是是番剧，尚未完结时 按照多P处理
+                // 1. 多P; 2. 只有1P, 但是是番剧, 尚未完结时 按照多P处理
                 if (pagesCount > 1 || (bangumi && !vInfo.IsBangumiEnd))
                 {
                     savePathFormat = string.IsNullOrEmpty(myOption.MultiFilePattern) ? MultiPageDefaultSavePath : myOption.MultiFilePattern;
@@ -538,7 +539,7 @@ namespace BBDown
 
                         var savePath = "";
 
-                        //此处代码简直灾难，后续优化吧
+                        //此处代码简直灾难, 后续优化吧
                         if ((videoTracks.Count != 0 || audioTracks.Count != 0) && clips.Count == 0)   //dash
                         {
                             if (webJsonStr.Contains("\"video\":[") && videoTracks.Count == 0)
@@ -613,31 +614,46 @@ namespace BBDown
                             if (audioTracks.Count > 0)
                                 LogColor($"[音频] [{audioTracks[aIndex].codecs}] [{audioTracks[aIndex].bandwith} kbps] [~{FormatFileSize(audioTracks[aIndex].dur * audioTracks[aIndex].bandwith * 1024 / 8)}]", false);
 
-                            //处理PCDN
-                            var pcdnReg = PcdnRegex();
-                            if (videoTracks.Count > 0 && pcdnReg.IsMatch(videoTracks[vIndex].baseUrl))
+                            if (uposHost == "")
                             {
-                                LogWarn($"检测到视频流为PCDN，尝试强制替换为{BACKUP_HOST}……");
-                                videoTracks[vIndex].baseUrl = pcdnReg.Replace(videoTracks[vIndex].baseUrl, $"://{BACKUP_HOST}/");
-                            }
+                                //处理PCDN
+                                var pcdnReg = PcdnRegex();
+                                if (videoTracks.Count > 0 && pcdnReg.IsMatch(videoTracks[vIndex].baseUrl))
+                                {
+                                    LogWarn($"检测到视频流为PCDN, 尝试强制替换为{BACKUP_HOST}……");
+                                    videoTracks[vIndex].baseUrl = pcdnReg.Replace(videoTracks[vIndex].baseUrl, $"://{BACKUP_HOST}/");
+                                }
+                                if (audioTracks.Count > 0 && pcdnReg.IsMatch(audioTracks[aIndex].baseUrl))
+                                {
+                                    LogWarn($"检测到音频流为PCDN, 尝试强制替换为{BACKUP_HOST}……");
+                                    audioTracks[aIndex].baseUrl = pcdnReg.Replace(audioTracks[aIndex].baseUrl, $"://{BACKUP_HOST}/");
+                                }
 
-                            if (audioTracks.Count > 0 && pcdnReg.IsMatch(audioTracks[aIndex].baseUrl))
-                            {
-                                LogWarn($"检测到音频流为PCDN，尝试强制替换为{BACKUP_HOST}……");
-                                audioTracks[aIndex].baseUrl = pcdnReg.Replace(audioTracks[aIndex].baseUrl, $"://{BACKUP_HOST}/");
+                                var akamReg = AkamRegex();
+                                if (videoTracks.Count > 0 && Config.AREA != "" && videoTracks[vIndex].baseUrl.Contains("akamaized.net"))
+                                {
+                                    LogWarn($"检测到视频流为外国源, 尝试强制替换为{BACKUP_HOST}……");
+                                    videoTracks[vIndex].baseUrl = akamReg.Replace(videoTracks[vIndex].baseUrl, $"://{BACKUP_HOST}/");
+                                }
+                                if (audioTracks.Count > 0 && Config.AREA != "" && audioTracks[aIndex].baseUrl.Contains("akamaized.net"))
+                                {
+                                    LogWarn($"检测到音频流为外国源, 尝试强制替换为{BACKUP_HOST}……");
+                                    audioTracks[aIndex].baseUrl = akamReg.Replace(audioTracks[aIndex].baseUrl, $"://{BACKUP_HOST}/");
+                                }
                             }
-
-                            var akamReg = AkamRegex();
-                            if (videoTracks.Count > 0 && Config.AREA != "" && videoTracks[vIndex].baseUrl.Contains("akamaized.net"))
+                            else
                             {
-                                LogWarn($"检测到视频流为外国源，尝试强制替换为{BACKUP_HOST}……");
-                                videoTracks[vIndex].baseUrl = akamReg.Replace(videoTracks[vIndex].baseUrl, $"://{BACKUP_HOST}/");
-                            }
-
-                            if (audioTracks.Count > 0 && Config.AREA != "" && audioTracks[aIndex].baseUrl.Contains("akamaized.net"))
-                            {
-                                LogWarn($"检测到音频流为外国源，尝试强制替换为{BACKUP_HOST}……");
-                                audioTracks[aIndex].baseUrl = akamReg.Replace(audioTracks[aIndex].baseUrl, $"://{BACKUP_HOST}/");
+                                var uposReg = UposRegex();
+                                if (videoTracks.Count > 0)
+                                {
+                                    Log($"尝试将视频流强制替换为{uposHost}……");
+                                    videoTracks[vIndex].baseUrl = uposReg.Replace(videoTracks[vIndex].baseUrl, $"://{uposHost}/");
+                                }
+                                if (audioTracks.Count > 0)
+                                {
+                                    Log($"尝试将音频流强制替换为{uposHost}……");
+                                    audioTracks[aIndex].baseUrl = uposReg.Replace(audioTracks[aIndex].baseUrl, $"://{uposHost}/");
+                                }
                             }
 
                             LogDebug("Format Before: " + savePathFormat);
@@ -678,7 +694,7 @@ namespace BBDown
                                     continue;
                                 }
 
-                                //杜比视界，若ffmpeg版本小于5.0，使用mp4box封装
+                                //杜比视界, 若ffmpeg版本小于5.0, 使用mp4box封装
                                 if (videoTracks[vIndex].dfn == Config.qualitys["126"] && !useMp4box && !CheckFFmpegDOVI())
                                 {
                                     LogWarn($"检测到杜比视界清晰度且您的ffmpeg版本小于5.0,将使用mp4box混流...");
@@ -873,11 +889,11 @@ namespace BBDown
                         {
                             if (webJsonStr.Contains("平台不可观看"))
                             {
-                                throw new Exception("当前(WEB)平台不可观看，请尝试使用TV API解析。");
+                                throw new Exception("当前(WEB)平台不可观看, 请尝试使用TV API解析。");
                             }
                             else if (webJsonStr.Contains("地区不可观看") || webJsonStr.Contains("地区不支持"))
                             {
-                                throw new Exception("当前地区不可观看，尝试设置系统代理后解析。");
+                                throw new Exception("当前地区不可观看, 尝试设置系统代理后解析。");
                             }
                             else if (webJsonStr.Contains("购买后才能观看"))
                             {
@@ -916,7 +932,7 @@ namespace BBDown
 
         private static List<Video> SortTracks(List<Video> videoTracks, Dictionary<string, int> dfnPriority, Dictionary<string, byte> encodingPriority, bool bandwithAscending)
         {
-            //用户同时输入了自定义分辨率优先级和自定义编码优先级，则根据输入顺序依次进行排序
+            //用户同时输入了自定义分辨率优先级和自定义编码优先级, 则根据输入顺序依次进行排序
             return dfnPriority.Count > 0 && encodingPriority.Count > 0 && Environment.CommandLine.IndexOf("--encoding-priority") < Environment.CommandLine.IndexOf("--dfn-priority")
                 ? videoTracks
                     .OrderBy(v => encodingPriority.TryGetValue(v.codecs, out byte i) ? i : 100)
@@ -1077,6 +1093,8 @@ namespace BBDown
         private static partial Regex PcdnRegex();
         [GeneratedRegex("://.*akamaized\\.net/")]
         private static partial Regex AkamRegex();
+        [GeneratedRegex("://[^/]+/")]
+        private static partial Regex UposRegex();
         [GeneratedRegex("<(\\w+?)>")]
         private static partial Regex InfoRegex();
     }
