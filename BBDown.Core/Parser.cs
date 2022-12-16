@@ -384,7 +384,7 @@ namespace BBDown.Core
         private static string GetSign(string parms, bool isBiliPlus)
         {
             string toEncode = parms + (isBiliPlus ? "acd495b248ec528c2eed1e862d393126" : "59b43e04ad6965f34319062b478f83dd");
-            return string.Join("", MD5.HashData(Encoding.UTF8.GetBytes(toEncode)).Select(i => i.ToString("x2")).ToArray());
+            return string.Concat(MD5.HashData(Encoding.UTF8.GetBytes(toEncode)).Select(i => i.ToString("x2")).ToArray());
         }
 
         [GeneratedRegex("window.__playinfo__=([\\s\\S]*?)<\\/script>")]

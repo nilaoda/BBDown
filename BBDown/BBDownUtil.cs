@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Specialized;
@@ -53,13 +53,9 @@ namespace BBDown
                 {
                     avid = AvRegex().Match(input).Groups[1].Value;
                 }
-                else if (input.Contains("video/BV"))
+                else if (input.ToLower().Contains("video/bv"))
                 {
                     avid = await GetAidByBVAsync(BVRegex().Match(input).Groups[1].Value);
-                }
-                else if (input.Contains("video/bv"))
-                {
-                    avid = await GetAidByBVAsync(BvRegex().Match(input).Groups[1].Value);
                 }
                 else if (input.Contains("/cheese/"))
                 {
@@ -77,6 +73,11 @@ namespace BBDown
                 else if (input.Contains("/ep"))
                 {
                     string epId = EpRegex().Match(input).Groups[1].Value;
+                    avid = $"ep:{epId}";
+                }
+                else if (input.Contains("/ss"))
+                {
+                    string epId = await GetEpIdByBangumiSSIdAsync(SsRegex().Match(input).Groups[1].Value);
                     avid = $"ep:{epId}";
                 }
                 else if (input.Contains("/medialist/") && input.Contains("business_id=") && input.Contains("business=space_collection")) //列表类型是合集
@@ -135,11 +136,7 @@ namespace BBDown
                     avid = $"ep:{epId}";
                 }
             }
-            else if (input.StartsWith("BV"))
-            {
-                avid = await GetAidByBVAsync(input[2..]);
-            }
-            else if (input.StartsWith("bv"))
+            else if (input.ToLower().StartsWith("bv"))
             {
                 avid = await GetAidByBVAsync(input[2..]);
             }
@@ -154,31 +151,14 @@ namespace BBDown
             }
             else if (input.StartsWith("ss"))
             {
-                string web = await GetWebSourceAsync("https://www.bilibili.com/bangumi/play/" + input);
-                Regex regex = StateRegex();
-                string json = regex.Match(web).Groups[1].Value;
-                try
-                {
-                    using var jDoc = JsonDocument.Parse(json);
-                    string epId = jDoc.RootElement.GetProperty("epList").EnumerateArray().First().GetProperty("id").ToString();
-                    avid = $"ep:{epId}";
-                }
-                catch (JsonException)
-                {
-                    throw new Exception("输入有误");
-                }
+                string epId = await GetEpIdByBangumiSSIdAsync(input[2..]);
+                avid = $"ep:{epId}";
             }
             else if (input.StartsWith("md"))
             {
                 string mdId = MdRegex().Match(input).Groups[1].Value;
-                try
-                {
-                    avid = await GetAvIdAsync(await GetSSIdByMDAsync(mdId));
-                }
-                catch (JsonException)
-                {
-                    throw new Exception("输入有误");
-                }
+                string epId = await GetEpIdByMDAsync(mdId);
+                avid = $"ep:{epId}";
             }
             else
             {
@@ -209,7 +189,7 @@ namespace BBDown
         }
 
         /// <summary>
-        /// 通过avid检测是否为版权内容，如果是的话返回ep:xx格式
+        /// 通过avid检测是否为版权内容, 如果是的话返回ep:xx格式
         /// </summary>
         /// <param name="avid"></param>
         /// <returns></returns>
@@ -238,11 +218,31 @@ namespace BBDown
 
         public static async Task<string> GetAidByBVAsync(string bv)
         {
-            string api = $"https://api.bilibili.com/x/web-interface/archive/stat?bvid={bv}";
-            string json = await GetWebSourceAsync(api);
-            using var jDoc = JsonDocument.Parse(json);
-            string aid = jDoc.RootElement.GetProperty("data").GetProperty("aid").ToString();
-            return aid;
+            if (bv.Length == 10)
+            {
+                // 能在本地就在本地
+                string TABLE = "fZodR9XQDSUm21yCkr6zBqiveYah8bt4xsWpHnJE7jL5VG3guMTKNPAwcF";
+                var BVChange = new Dictionary<char, byte>();
+                byte[] S = { 9, 8, 1, 6, 2, 4 };
+                long XOR = 177451812;
+                long ADD = 8728348608;
+                for (byte i = 0; i < 58; i++) BVChange.Add(TABLE[i], i);
+
+                long T = 0;
+                for (byte i = 0; i < 6; i++)
+                {
+                    T += (long)Math.Pow(58, i) * BVChange[bv[S[i]]];
+                }
+                return ((T - ADD) ^ XOR).ToString();
+            }
+            else
+            {
+                string api = $"https://api.bilibili.com/x/web-interface/archive/stat?bvid={bv}";
+                string json = await GetWebSourceAsync(api);
+                using var jDoc = JsonDocument.Parse(json);
+                string aid = jDoc.RootElement.GetProperty("data").GetProperty("aid").ToString();
+                return aid;
+            }
         }
 
         public static async Task<string> GetEpidBySSIdAsync(string ssid)
@@ -254,13 +254,22 @@ namespace BBDown
             return epId;
         }
 
-        public static async Task<string> GetSSIdByMDAsync(string mdId)
+        public static async Task<string> GetEpIdByBangumiSSIdAsync(string ssId)
 		{
-            var api = $"https://api.bilibili.com/pgc/review/user?media_id={mdId}";
-            var json = await GetWebSourceAsync(api);
+            string api = $"https://{Core.Config.EPHOST}/pgc/view/web/season?season_id={ssId}";
+            string json = await GetWebSourceAsync(api);
             using var jDoc = JsonDocument.Parse(json);
-            var ssId = "ss" + jDoc.RootElement.GetProperty("result").GetProperty("media").GetProperty("season_id").ToString();
-            return ssId;
+            string epId = jDoc.RootElement.GetProperty("result").GetProperty("episodes").EnumerateArray().First().GetProperty("id").ToString();
+            return epId;
+        }
+
+        public static async Task<string> GetEpIdByMDAsync(string mdId)
+		{
+            string api = $"https://api.bilibili.com/pgc/review/user?media_id={mdId}";
+            string json = await GetWebSourceAsync(api);
+            using var jDoc = JsonDocument.Parse(json);
+            string epId = jDoc.RootElement.GetProperty("result").GetProperty("media").GetProperty("new_ep").GetProperty("id").ToString();
+            return epId;
         }
 
         private static async Task RangeDownloadToTmpAsync(int id, string url, string tmpName, long fromPosition, long? toPosition, Action<int, long, long> onProgress, bool failOnRangeNotSupported = false)
@@ -402,7 +411,7 @@ namespace BBDown
                 }
                 catch (NotSupportedException)
                 {
-                    if (++retry == 3) throw new Exception($"服务器可能并不支持多线程下载，请使用 --multi-thread false 关闭多线程");
+                    if (++retry == 3) throw new Exception($"服务器可能并不支持多线程下载, 请使用 --multi-thread false 关闭多线程");
                     goto reDown;
                 }
                 catch (Exception)
@@ -448,7 +457,7 @@ namespace BBDown
         }
 
         /// <summary>
-        /// 输入一堆已存在的文件，合并到新文件
+        /// 输入一堆已存在的文件, 合并到新文件
         /// </summary>
         /// <param name="files"></param>
         /// <param name="outputFilePath"></param>
@@ -564,7 +573,7 @@ namespace BBDown
 
 
         /// <summary>
-        /// 获取url字符串参数，返回参数值字符串
+        /// 获取url字符串参数, 返回参数值字符串
         /// </summary>
         /// <param name="name">参数名称</param>
         /// <param name="url">url字符串</param>
@@ -605,22 +614,13 @@ namespace BBDown
         public static string GetSign(string parms)
         {
             string toEncode = parms + "59b43e04ad6965f34319062b478f83dd";
-            byte[] bs = Encoding.UTF8.GetBytes(toEncode);
-            byte[] hs = MD5.HashData(bs);
-            StringBuilder sb = new();
-            foreach (byte b in hs)
-            {
-                sb.Append(b.ToString("x2"));
-            }
-            return sb.ToString();
+            return string.Concat(MD5.HashData(Encoding.UTF8.GetBytes(toEncode)).Select(i => i.ToString("x2")).ToArray());
         }
 
         public static string GetTimeStamp(bool bflag)
         {
-            TimeSpan ts = DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, 0);
-            string ret = bflag ? Convert.ToInt64(ts.TotalSeconds).ToString() : Convert.ToInt64(ts.TotalMilliseconds).ToString();
-
-            return ret;
+            DateTimeOffset ts = DateTimeOffset.Now;
+            return bflag ? ts.ToUnixTimeSeconds().ToString() : ts.ToUnixTimeMilliseconds().ToString();
         }
 
         //https://stackoverflow.com/questions/1344221/how-can-i-generate-random-alphanumeric-strings
@@ -750,7 +750,7 @@ namespace BBDown
         }
 
         /// <summary>
-        /// 生成metadata文件，用于ffmpeg混流章节信息
+        /// 生成metadata文件, 用于ffmpeg混流章节信息
         /// </summary>
         /// <param name="points"></param>
         /// <returns></returns>
@@ -772,7 +772,7 @@ namespace BBDown
         }
 
         /// <summary>
-        /// 生成metadata文件，用于mp4box混流章节信息
+        /// 生成metadata文件, 用于mp4box混流章节信息
         /// </summary>
         /// <param name="points"></param>
         /// <returns></returns>
@@ -810,17 +810,15 @@ namespace BBDown
             }
         }
 
-        [GeneratedRegex("av(\\d{1,})")]
+        [GeneratedRegex("av(\\d+)")]
         private static partial Regex AvRegex();
-        [GeneratedRegex("BV(\\w+)")]
+        [GeneratedRegex("[Bb][Vv](\\w+)")]
         private static partial Regex BVRegex();
-        [GeneratedRegex("bv(\\w+)")]
-        private static partial Regex BvRegex();
-        [GeneratedRegex("/ep(\\d{1,})")]
+        [GeneratedRegex("/ep(\\d+)")]
         private static partial Regex EpRegex();
-        [GeneratedRegex("/ss(\\d{1,})")]
+        [GeneratedRegex("/ss(\\d+)")]
         private static partial Regex SsRegex();
-        [GeneratedRegex("space\\.bilibili\\.com/(\\d{1,})")]
+        [GeneratedRegex("space\\.bilibili\\.com/(\\d+)")]
         private static partial Regex UidRegex();
         [GeneratedRegex("global\\.bilibili\\.com/play/\\d+/(\\d+)")]
         private static partial Regex GlobalEpRegex();
@@ -828,9 +826,9 @@ namespace BBDown
         private static partial Regex BangumiMdRegex();
         [GeneratedRegex("window.__INITIAL_STATE__=([\\s\\S].*?);\\(function\\(\\)")]
         private static partial Regex StateRegex();
-        [GeneratedRegex("ep(\\d{1,})")]
+        [GeneratedRegex("ep(\\d+)")]
         private static partial Regex EpRegex2();
-        [GeneratedRegex("md(\\d{1,})")]
+        [GeneratedRegex("md(\\d+)")]
         private static partial Regex MdRegex();
         [GeneratedRegex("^\\d+$")]
         private static partial Regex NumRegex();
