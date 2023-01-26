@@ -180,6 +180,7 @@ namespace BBDown
                     }
                 }
 
+                bool useFlac = myOption.UseFlac;
                 bool hideStreams = myOption.HideStreams;
                 bool multiThread = myOption.MultiThread;
                 bool audioOnly = myOption.AudioOnly;
@@ -753,7 +754,7 @@ namespace BBDown
                             if (skipMux) continue;
                             Log("开始合并音视频" + (subtitleInfo.Count > 0 ? "和字幕" : "") + "...");
                             if (audioOnly)
-                                savePath = string.Join("", savePath.Take(savePath.Length - 4)) + ".m4a";
+                                savePath = string.Join("", savePath.Take(savePath.Length - 4)) + (useFlac ? ".flac" : ".m4a");
                             int code = MuxAV(useMp4box, videoPath, audioPath, savePath,
                                 desc,
                                 title,
@@ -761,7 +762,7 @@ namespace BBDown
                                 (pagesCount > 1 || (bangumi && !vInfo.IsBangumiEnd)) ? p.title : "",
                                 File.Exists(coverPath) ? coverPath : "",
                                 lang,
-                                subtitleInfo, audioOnly, videoOnly, p.points);
+                                subtitleInfo, audioOnly, videoOnly, useFlac, p.points);
                             if (code != 0 || !File.Exists(savePath) || new FileInfo(savePath).Length == 0)
                             {
                                 LogError("合并失败"); continue;
@@ -871,7 +872,7 @@ namespace BBDown
                                 (pagesCount > 1 || (bangumi && !vInfo.IsBangumiEnd)) ? p.title : "",
                                 File.Exists(coverPath) ? coverPath : "",
                                 lang,
-                                subtitleInfo, audioOnly, videoOnly, p.points);
+                                subtitleInfo, audioOnly, videoOnly, useFlac, p.points);
                             if (code != 0 || !File.Exists(savePath) || new FileInfo(savePath).Length == 0)
                             {
                                 LogError("合并失败"); continue;

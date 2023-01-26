@@ -13,6 +13,7 @@ namespace BBDown
         public bool UseAppApi { get; set; }
         public bool UseIntlApi { get; set; }
         public bool UseMP4box { get; set; }
+        public bool UseFlac { get; set; }
         public string? EncodingPriority { get; set; }
         public string? DfnPriority { get; set; }
         public bool OnlyShowInfo { get; set; }
