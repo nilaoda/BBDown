@@ -16,7 +16,7 @@ namespace BBDown
         private readonly static Option<bool> UseAppApi = new(new string[] { "--use-app-api", "-app" }, "使用APP端解析模式");
         private readonly static Option<bool> UseIntlApi = new(new string[] { "--use-intl-api", "-intl" }, "使用国际版(东南亚视频)解析模式");
         private readonly static Option<bool> UseMP4box = new(new string[] { "--use-mp4box" }, "使用MP4Box来混流");
-        private readonly static Option<bool> UseFlac = new(new string[] { "--use-flac", "-flac" }, "音频使用Flac封装");
+        private readonly static Option<bool> UseFlac = new(new string[] { "--use-flac", "-flac" }, "仅下载音频时，指定音频使用Flac封装");
         private readonly static Option<string> EncodingPriority = new(new string[] { "--encoding-priority" }, "视频编码的选择优先级, 用逗号分割 例: \"hevc,av1,avc\"");
         private readonly static Option<string> DfnPriority = new(new string[] { "--dfn-priority" }, "画质优先级,用逗号分隔 例: \"8K 超高清, 1080P 高码率, HDR 真彩, 杜比视界\"");
         private readonly static Option<bool> OnlyShowInfo = new(new string[] { "--only-show-info", "-info" }, "仅解析而不进行下载");
