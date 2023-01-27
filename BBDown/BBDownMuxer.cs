@@ -155,21 +155,14 @@ namespace BBDown
                  $"-metadata description=\"{desc}\" " +
                  $"-metadata artist=\"{author}\" " +
                  (episodeId == "" ? "" : $"-metadata album=\"{title}\" ") +
-                 $"-c copy " + (audioOnly && audioPath == "" ? " -vn " : "") +
-                 (subs != null ? " -c:s mov_text " : "") +
-                 "-movflags faststart -strict unofficial -strict -2 -f mp4 " +
-                 $"\"{outPath}\"";
-            if (useFlac)
+                 $"-c copy ";
+            if (!(audioOnly && useFlac))
             {
-                arguments = $"-loglevel warning -y " +
-                 inputArg.ToString() + metaArg.ToString() + $" -metadata title=\"" + (episodeId == "" ? title : episodeId) + "\" " +
-                 (lang == "" ? "" : $"-metadata:s:a:0 language={lang} ") +
-                 $"-metadata description=\"{desc}\" " +
-                 $"-metadata artist=\"{author}\" " +
-                 (episodeId == "" ? "" : $"-metadata album=\"{title}\" ") +
-                 $"-c copy " +
-                 $"\"{outPath}\"";
+                arguments += (audioOnly && audioPath == "" ? " -vn " : "") +
+                   (subs != null ? " -c:s mov_text " : "") +
+                   "-movflags faststart -strict unofficial -strict -2 -f mp4 ";
             }
+            arguments += $"\"{outPath}\"";
             LogDebug("ffmpeg命令：{0}", arguments);
             return RunExe(FFMPEG, arguments, FFMPEG != "ffmpeg");
         }
