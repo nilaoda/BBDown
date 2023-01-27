@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Binding;
@@ -16,7 +16,7 @@ namespace BBDown
         private readonly static Option<bool> UseAppApi = new(new string[] { "--use-app-api", "-app" }, "使用APP端解析模式");
         private readonly static Option<bool> UseIntlApi = new(new string[] { "--use-intl-api", "-intl" }, "使用国际版(东南亚视频)解析模式");
         private readonly static Option<bool> UseMP4box = new(new string[] { "--use-mp4box" }, "使用MP4Box来混流");
-        private readonly static Option<bool> UseFlac = new(new string[] { "--use-flac", "-flac" }, "仅下载音频时，指定音频使用Flac封装");
+        private readonly static Option<bool> UseFlac = new(new string[] { "--use-flac" }, "仅下载音频时可用于指定音频使用Flac封装");
         private readonly static Option<string> EncodingPriority = new(new string[] { "--encoding-priority" }, "视频编码的选择优先级, 用逗号分割 例: \"hevc,av1,avc\"");
         private readonly static Option<string> DfnPriority = new(new string[] { "--dfn-priority" }, "画质优先级,用逗号分隔 例: \"8K 超高清, 1080P 高码率, HDR 真彩, 杜比视界\"");
         private readonly static Option<bool> OnlyShowInfo = new(new string[] { "--only-show-info", "-info" }, "仅解析而不进行下载");
@@ -74,6 +74,7 @@ namespace BBDown
                 if (bindingContext.ParseResult.HasOption(UseAppApi)) option.UseAppApi = bindingContext.ParseResult.GetValueForOption(UseAppApi)!;
                 if (bindingContext.ParseResult.HasOption(UseIntlApi)) option.UseIntlApi = bindingContext.ParseResult.GetValueForOption(UseIntlApi)!;
                 if (bindingContext.ParseResult.HasOption(UseMP4box)) option.UseMP4box = bindingContext.ParseResult.GetValueForOption(UseMP4box)!;
+                if (bindingContext.ParseResult.HasOption(UseFlac)) option.UseFlac = bindingContext.ParseResult.GetValueForOption(UseFlac)!;
                 if (bindingContext.ParseResult.HasOption(EncodingPriority)) option.EncodingPriority = bindingContext.ParseResult.GetValueForOption(EncodingPriority)!;
                 if (bindingContext.ParseResult.HasOption(DfnPriority)) option.DfnPriority = bindingContext.ParseResult.GetValueForOption(DfnPriority)!;
                 if (bindingContext.ParseResult.HasOption(OnlyShowInfo)) option.OnlyShowInfo = bindingContext.ParseResult.GetValueForOption(OnlyShowInfo)!;
@@ -129,6 +130,7 @@ namespace BBDown
                 UseAppApi,
                 UseIntlApi,
                 UseMP4box,
+                UseFlac,
                 EncodingPriority,
                 DfnPriority,
                 OnlyShowInfo,
