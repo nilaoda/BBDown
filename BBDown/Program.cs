@@ -1,4 +1,4 @@
-using QRCoder;
+﻿using QRCoder;
 using System;
 using System.Collections.Generic;
 using System.CommandLine;
@@ -21,7 +21,6 @@ using BBDown.Core;
 using BBDown.Core.Util;
 using BBDown.Core.Fetcher;
 using System.Text.Json.Serialization;
-using System.CommandLine.Binding;
 
 namespace BBDown
 {
@@ -513,7 +512,7 @@ namespace BBDown
                                     await SubUtil.SaveSubtitleAsync(s.url, s.path);
                                     if (subOnly && File.Exists(s.path) && File.ReadAllText(s.path) != "")
                                     {
-                                        var _outSubPath = FormatSavePath(savePathFormat, title, null, null, p, pagesCount);
+                                        var _outSubPath = FormatSavePath(savePathFormat, title, null, null, p, pagesCount, pubTime);
                                         if (_outSubPath.Contains('/'))
                                         {
                                             if (!Directory.Exists(_outSubPath.Split('/').First()))
@@ -658,7 +657,7 @@ namespace BBDown
                             }
 
                             LogDebug("Format Before: " + savePathFormat);
-                            savePath = FormatSavePath(savePathFormat, title, videoTracks.ElementAtOrDefault(vIndex), audioTracks.ElementAtOrDefault(aIndex), p, pagesCount);
+                            savePath = FormatSavePath(savePathFormat, title, videoTracks.ElementAtOrDefault(vIndex), audioTracks.ElementAtOrDefault(aIndex), p, pagesCount, pubTime);
                             LogDebug("Format After: " + savePath);
 
                             if (downloadDanmaku)
@@ -813,7 +812,7 @@ namespace BBDown
                                 }
                             }
                             if (infoMode) continue;
-                            savePath = FormatSavePath(savePathFormat, title, videoTracks.ElementAtOrDefault(vIndex), null, p, pagesCount);
+                            savePath = FormatSavePath(savePathFormat, title, videoTracks.ElementAtOrDefault(vIndex), null, p, pagesCount, pubTime);
                             if (File.Exists(savePath) && new FileInfo(savePath).Length != 0)
                             {
                                 Log($"{savePath}已存在, 跳过下载...");
@@ -949,7 +948,7 @@ namespace BBDown
                     .ToList();
         }
 
-        private static string FormatSavePath(string savePathFormat, string title, Video? videoTrack, Audio? audioTrack, Page p, int pagesCount)
+        private static string FormatSavePath(string savePathFormat, string title, Video? videoTrack, Audio? audioTrack, Page p, int pagesCount, string pubTime)
         {
             var result = savePathFormat.Replace('\\', '/');
             var regex = InfoRegex();
@@ -973,6 +972,7 @@ namespace BBDown
                     "videoBandwidth" => videoTrack == null ? "" : videoTrack.bandwith.ToString(),
                     "audioCodecs" => audioTrack == null ? "" : audioTrack.codecs,
                     "audioBandwidth" => audioTrack == null ? "" : audioTrack.bandwith.ToString(),
+                    "publishTime" => pubTime,
                     _ => key
                 };
                 result = result.Replace(m.Value, v);
