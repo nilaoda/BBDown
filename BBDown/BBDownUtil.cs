@@ -838,7 +838,7 @@ namespace BBDown
         private static partial Regex McdnRegex();
         [GeneratedRegex("(^|&)?(\\w+)=([^&]+)(&|$)?", RegexOptions.Compiled)]
         private static partial Regex QueryRegex();
-        [GeneratedRegex("libavutil\\s+(\\d+)\\. (\\d+)\\.")]
+        [GeneratedRegex("libavutil\\s+(\\d+)\\. +(\\d+)\\.")]
         private static partial Regex LibavutilRegex();
     }
 }
