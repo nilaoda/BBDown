@@ -21,7 +21,6 @@ using BBDown.Core;
 using BBDown.Core.Util;
 using BBDown.Core.Fetcher;
 using System.Text.Json.Serialization;
-using System.CommandLine.Binding;
 
 namespace BBDown
 {
@@ -180,6 +179,7 @@ namespace BBDown
                     }
                 }
 
+                bool useFlac = myOption.UseFlac;
                 bool hideStreams = myOption.HideStreams;
                 bool multiThread = myOption.MultiThread;
                 bool audioOnly = myOption.AudioOnly;
@@ -512,7 +512,7 @@ namespace BBDown
                                     await SubUtil.SaveSubtitleAsync(s.url, s.path);
                                     if (subOnly && File.Exists(s.path) && File.ReadAllText(s.path) != "")
                                     {
-                                        var _outSubPath = FormatSavePath(savePathFormat, title, null, null, p, pagesCount);
+                                        var _outSubPath = FormatSavePath(savePathFormat, title, null, null, p, pagesCount, pubTime);
                                         if (_outSubPath.Contains('/'))
                                         {
                                             if (!Directory.Exists(_outSubPath.Split('/').First()))
@@ -657,7 +657,7 @@ namespace BBDown
                             }
 
                             LogDebug("Format Before: " + savePathFormat);
-                            savePath = FormatSavePath(savePathFormat, title, videoTracks.ElementAtOrDefault(vIndex), audioTracks.ElementAtOrDefault(aIndex), p, pagesCount);
+                            savePath = FormatSavePath(savePathFormat, title, videoTracks.ElementAtOrDefault(vIndex), audioTracks.ElementAtOrDefault(aIndex), p, pagesCount, pubTime);
                             LogDebug("Format After: " + savePath);
 
                             if (downloadDanmaku)
@@ -753,7 +753,7 @@ namespace BBDown
                             if (skipMux) continue;
                             Log("开始合并音视频" + (subtitleInfo.Count > 0 ? "和字幕" : "") + "...");
                             if (audioOnly)
-                                savePath = string.Join("", savePath.Take(savePath.Length - 4)) + ".m4a";
+                                savePath = string.Join("", savePath.Take(savePath.Length - 4)) + (useFlac && audioTracks[aIndex].codecs.Equals("FLAC") ? ".flac" : ".m4a");
                             int code = MuxAV(useMp4box, videoPath, audioPath, savePath,
                                 desc,
                                 title,
@@ -761,7 +761,7 @@ namespace BBDown
                                 (pagesCount > 1 || (bangumi && !vInfo.IsBangumiEnd)) ? p.title : "",
                                 File.Exists(coverPath) ? coverPath : "",
                                 lang,
-                                subtitleInfo, audioOnly, videoOnly, p.points);
+                                subtitleInfo, audioOnly, videoOnly, (useFlac && audioTracks[aIndex].codecs.Equals("FLAC")), p.points);
                             if (code != 0 || !File.Exists(savePath) || new FileInfo(savePath).Length == 0)
                             {
                                 LogError("合并失败"); continue;
@@ -812,7 +812,7 @@ namespace BBDown
                                 }
                             }
                             if (infoMode) continue;
-                            savePath = FormatSavePath(savePathFormat, title, videoTracks.ElementAtOrDefault(vIndex), null, p, pagesCount);
+                            savePath = FormatSavePath(savePathFormat, title, videoTracks.ElementAtOrDefault(vIndex), null, p, pagesCount, pubTime);
                             if (File.Exists(savePath) && new FileInfo(savePath).Length != 0)
                             {
                                 Log($"{savePath}已存在, 跳过下载...");
@@ -871,7 +871,7 @@ namespace BBDown
                                 (pagesCount > 1 || (bangumi && !vInfo.IsBangumiEnd)) ? p.title : "",
                                 File.Exists(coverPath) ? coverPath : "",
                                 lang,
-                                subtitleInfo, audioOnly, videoOnly, p.points);
+                                subtitleInfo, audioOnly, videoOnly, useFlac, p.points);
                             if (code != 0 || !File.Exists(savePath) || new FileInfo(savePath).Length == 0)
                             {
                                 LogError("合并失败"); continue;
@@ -948,7 +948,7 @@ namespace BBDown
                     .ToList();
         }
 
-        private static string FormatSavePath(string savePathFormat, string title, Video? videoTrack, Audio? audioTrack, Page p, int pagesCount)
+        private static string FormatSavePath(string savePathFormat, string title, Video? videoTrack, Audio? audioTrack, Page p, int pagesCount, string pubTime)
         {
             var result = savePathFormat.Replace('\\', '/');
             var regex = InfoRegex();
@@ -972,6 +972,7 @@ namespace BBDown
                     "videoBandwidth" => videoTrack == null ? "" : videoTrack.bandwith.ToString(),
                     "audioCodecs" => audioTrack == null ? "" : audioTrack.codecs,
                     "audioBandwidth" => audioTrack == null ? "" : audioTrack.bandwith.ToString(),
+                    "publishTime" => pubTime,
                     _ => key
                 };
                 result = result.Replace(m.Value, v);

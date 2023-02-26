@@ -21,7 +21,7 @@ namespace BBDown.Core.Fetcher
             string ownerMid = owner.GetProperty("mid").ToString();
             string ownerName = owner.GetProperty("name").ToString();
             string pubTime = data.GetProperty("pubdate").ToString();
-            pubTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc).AddSeconds(Convert.ToDouble(pubTime)).ToLocalTime().ToString();
+            pubTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc).AddSeconds(Convert.ToDouble(pubTime)).ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss");
             bool bangumi = false;
 
             var pages = data.GetProperty("pages").EnumerateArray().ToList();
