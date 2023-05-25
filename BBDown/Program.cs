@@ -1,4 +1,4 @@
-﻿using QRCoder;
+using QRCoder;
 using System;
 using System.Collections.Generic;
 using System.CommandLine;
@@ -314,10 +314,11 @@ namespace BBDown
                 }
 
                 // 检测是否登录了账号
+                (bool is_login, string wbi) = await CheckLogin(Config.COOKIE);
                 if (!intlApi && !tvApi && Config.AREA == "")
                 {
                     Log("检测账号登录...");
-                    if (!await CheckLogin(Config.COOKIE))
+                    if (!is_login)
                     {
                         LogWarn("你尚未登录B站账号, 解析可能受到限制");
                     }
@@ -370,6 +371,7 @@ namespace BBDown
                 else if (aidOri.StartsWith("mid"))
                 {
                     fetcher = new SpaceVideoFetcher();
+                    aidOri += $"|{wbi}";
                 }
                 else if (aidOri.StartsWith("listBizId"))
                 {
