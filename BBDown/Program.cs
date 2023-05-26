@@ -572,7 +572,8 @@ namespace BBDown
                                     foreach (var v in videoTracks)
                                     {
                                         int pDur = p.dur == 0 ? v.dur : p.dur;
-                                        LogColor($"{index++}. [{v.dfn}] [{v.res}] [{v.codecs}] [{v.fps}] [{v.bandwith} kbps] [~{FormatFileSize(pDur * v.bandwith * 1024 / 8)}]".Replace("[] ", ""), false);
+                                        var size = v.size > 0 ? v.size : pDur * v.bandwith * 1024 / 8;
+                                        LogColor($"{index++}. [{v.dfn}] [{v.res}] [{v.codecs}] [{v.fps}] [{v.bandwith} kbps] [~{FormatFileSize(size)}]".Replace("[] ", ""), false);
                                         if (infoMode) Console.WriteLine(v.baseUrl);
                                     }
                                 }
@@ -612,7 +613,10 @@ namespace BBDown
 
                             Log($"已选择的流:");
                             if (videoTracks.Count > 0)
-                                LogColor($"[视频] [{videoTracks[vIndex].dfn}] [{videoTracks[vIndex].res}] [{videoTracks[vIndex].codecs}] [{videoTracks[vIndex].fps}] [{videoTracks[vIndex].bandwith} kbps] [~{FormatFileSize(videoTracks[vIndex].dur * videoTracks[vIndex].bandwith * 1024 / 8)}]".Replace("[] ", ""), false);
+                            {
+                                var size = videoTracks[vIndex].size > 0 ? videoTracks[vIndex].size : videoTracks[vIndex].dur * videoTracks[vIndex].bandwith * 1024 / 8;
+                                LogColor($"[视频] [{videoTracks[vIndex].dfn}] [{videoTracks[vIndex].res}] [{videoTracks[vIndex].codecs}] [{videoTracks[vIndex].fps}] [{videoTracks[vIndex].bandwith} kbps] [~{FormatFileSize(size)}]".Replace("[] ", ""), false);
+                            }
                             if (audioTracks.Count > 0)
                                 LogColor($"[音频] [{audioTracks[aIndex].codecs}] [{audioTracks[aIndex].bandwith} kbps] [~{FormatFileSize(audioTracks[aIndex].dur * audioTracks[aIndex].bandwith * 1024 / 8)}]", false);
 

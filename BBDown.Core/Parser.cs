@@ -113,7 +113,8 @@ namespace BBDown.Core
                                 dfn = Config.qualitys[videoId],
                                 bandwith = Convert.ToInt64(dashVideo.GetProperty("bandwidth").ToString()) / 1000,
                                 baseUrl = dashVideo.GetProperty("base_url").ToString(),
-                                codecs = GetVideoCodec(dashVideo.GetProperty("codecid").ToString())
+                                codecs = GetVideoCodec(dashVideo.GetProperty("codecid").ToString()),
+                                size = dashVideo.TryGetProperty("size", out var sizeNode) ? Convert.ToDouble(sizeNode.ToString()) : 0
                             };
                             if (!videoTracks.Contains(v)) videoTracks.Add(v);
                         }
@@ -217,7 +218,8 @@ namespace BBDown.Core
                             dfn = Config.qualitys[videoId],
                             bandwith = Convert.ToInt64(node.GetProperty("bandwidth").ToString()) / 1000,
                             baseUrl = urlList.FirstOrDefault(i => !BaseUrlRegex().IsMatch(i), urlList.First()),
-                            codecs = GetVideoCodec(node.GetProperty("codecid").ToString())
+                            codecs = GetVideoCodec(node.GetProperty("codecid").ToString()),
+                            size = node.TryGetProperty("size", out var sizeNode) ? Convert.ToDouble(sizeNode.ToString()) : 0
                         };
                         if (!tvApi && !appApi)
                         {
