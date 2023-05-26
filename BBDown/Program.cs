@@ -989,7 +989,7 @@ namespace BBDown
                     "audioCodecs" => audioTrack == null ? "" : audioTrack.codecs,
                     "audioBandwidth" => audioTrack == null ? "" : audioTrack.bandwith.ToString(),
                     "apiType" => tvApi ? "TV" : (appApi ? "APP" : (intlApi ? "INTL" : "WEB")),
-                    _ => key
+                    _ => $"<{key}>"
                 };
                 result = result.Replace(m.Value, v);
             }
