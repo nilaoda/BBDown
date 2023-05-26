@@ -41,9 +41,23 @@ namespace BBDown
         [JsonSerializable(typeof(MyOption))]
         partial class MyOptionJsonContext : JsonSerializerContext { }
 
+        private static void Console_CancelKeyPress(object? sender, ConsoleCancelEventArgs e)
+        {
+            LogWarn("Force Exit...");
+            try
+            {
+                Console.ResetColor();
+                Console.CursorVisible = true;
+                if (!OperatingSystem.IsWindows())
+                    System.Diagnostics.Process.Start("stty", "echo");
+            }
+            catch { }
+            Environment.Exit(0);
+        }
 
         public static async Task<int> Main(params string[] args)
         {
+            Console.CancelKeyPress += Console_CancelKeyPress;
             ServicePointManager.DefaultConnectionLimit = 2048;
 
             var rootCommand = CommandLineInvoker.GetRootCommand(DoWorkAsync);
@@ -210,6 +224,8 @@ namespace BBDown
                 Config.AREA = myOption.Area;
                 Config.COOKIE = myOption.Cookie;
                 Config.TOKEN = myOption.AccessToken.Replace("access_token=", "");
+
+                if (interactMode) hideStreams = false; //手动选择时不能隐藏流
 
                 if (!string.IsNullOrEmpty(myOption.WorkDir))
                 {
