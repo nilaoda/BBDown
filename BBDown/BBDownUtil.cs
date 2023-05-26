@@ -795,18 +795,44 @@ namespace BBDown
             return searchPath.Concat(envPath).Select(p => Path.Combine(p, name + fileExt)).FirstOrDefault(File.Exists);
         }
 
-        public static async Task<bool> CheckLogin(string cookie)
+        public static string RSubString(string sub)
+        {
+            sub = sub[(sub.LastIndexOf("/") + 1)..];
+            return sub[..sub.LastIndexOf(".")];
+        }
+
+        public static string GetMixinKey(string orig)
+        {
+            byte[] mixinKeyEncTab = new byte[]
+            {
+                46, 47, 18, 2, 53, 8, 23, 32, 15, 50, 10, 31, 58, 3, 45, 35,
+                27, 43, 5, 49, 33, 9, 42, 19, 29, 28, 14, 39, 12, 38, 41, 13
+            };
+
+            var tmp = new StringBuilder();
+            foreach (var index in mixinKeyEncTab)
+            {
+                tmp.Append(orig[index]);
+            }
+            return tmp.ToString();
+        }
+
+        public static async Task<(bool, string)> CheckLogin(string cookie)
         {
             try
             {
                 var api = "https://api.bilibili.com/x/web-interface/nav";
                 var source = await GetWebSourceAsync(api);
                 var json = JsonDocument.Parse(source).RootElement;
-                return json.GetProperty("data").GetProperty("isLogin").GetBoolean();
+                var is_login = json.GetProperty("data").GetProperty("isLogin").GetBoolean();
+                var wbi_img = json.GetProperty("data").GetProperty("wbi_img");
+                var wbi = GetMixinKey(RSubString(wbi_img.GetProperty("img_url").GetString()) + RSubString(wbi_img.GetProperty("sub_url").GetString()));
+                LogDebug($"wbi: {wbi}");
+                return (is_login, wbi);
             }
             catch (Exception)
             {
-                return false;
+                return (false, "");
             }
         }
 
