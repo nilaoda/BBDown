@@ -480,6 +480,8 @@ namespace BBDown
 
                         //处理文件夹以.结尾导致的异常情况
                         if (title.EndsWith(".")) title += "_fix";
+                        //处理文件夹以.开头导致的异常情况
+                        if (title.StartsWith(".")) title = "_" + title;
 
                         //处理封面&&字幕
                         if (!infoMode)
