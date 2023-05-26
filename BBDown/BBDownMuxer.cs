@@ -7,6 +7,7 @@ using static BBDown.BBDownUtil;
 using static BBDown.Core.Util.SubUtil;
 using static BBDown.Core.Logger;
 using System.IO;
+using BBDown.Core;
 
 namespace BBDown
 {
@@ -88,7 +89,7 @@ namespace BBDown
             }
 
             //----分析完毕
-            var arguments = inputArg.ToString() + (metaArg.ToString() == "" ? "" : " -itags tool=" + metaArg.ToString()) + $" -new -- \"{outPath}\"";
+            var arguments = (Config.DEBUG_LOG ? " -verbose " : "") + inputArg.ToString() + (metaArg.ToString() == "" ? "" : " -itags tool=" + metaArg.ToString()) + $" -new -- \"{outPath}\"";
             LogDebug("mp4box命令：{0}", arguments);
             return RunExe(MP4BOX, arguments, MP4BOX != "mp4box");
         }
@@ -149,7 +150,7 @@ namespace BBDown
             }
 
             //----分析完毕
-            var arguments = $"-loglevel warning -y " +
+            var arguments = $"-loglevel {(Config.DEBUG_LOG ? "verbose" : "warning")} -y " +
                  inputArg.ToString() + metaArg.ToString() + $" -metadata title=\"" + (episodeId == "" ? title : episodeId) + "\" " +
                  (lang == "" ? "" : $"-metadata:s:a:0 language={lang} ") +
                  $"-metadata description=\"{desc}\" " +
