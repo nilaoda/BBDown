@@ -37,7 +37,7 @@ Arguments:
 Options:
   -tv, --use-tv-api                              使用TV端解析模式
   -app, --use-app-api                            使用APP端解析模式
-  -intl, --use-intl-api                          使用国际版解析模式
+  -intl, --use-intl-api                          使用国际版(东南亚视频)解析模式
   --use-mp4box                                   使用MP4Box来混流
   --encoding-priority <encoding-priority>        视频编码的选择优先级, 用逗号分割 例: "hevc,av1,avc"
   --dfn-priority <dfn-priority>                  画质优先级,用逗号分隔 例: "8K 超高清, 1080P 高码率, HDR 真彩, 杜比视界"
@@ -49,7 +49,9 @@ Options:
   -mt, --multi-thread                            使用多线程下载(默认开启)
   --video-only                                   仅下载视频
   --audio-only                                   仅下载音频
+  --danmaku-only                                 仅下载弹幕
   --sub-only                                     仅下载字幕
+  --cover-only                                   仅下载封面
   --debug                                        输出调试日志
   --skip-mux                                     跳过混流步骤
   --skip-subtitle                                跳过字幕下载
@@ -75,6 +77,7 @@ Options:
                                                  <audioBandwidth>: 音频码率
                                                  <ownerName>: 上传者名称
                                                  <ownerMid>: 上传者mid
+                                                 <apiType>: API类型(TV/APP/INTL/WEB)
 
                                                  默认为: <videoTitle>
   -M, --multi-file-pattern <multi-file-pattern>  使用内置变量自定义多P存储文件名:
@@ -89,10 +92,13 @@ Options:
   --ffmpeg-path <ffmpeg-path>                    设置ffmpeg的路径
   --mp4box-path <mp4box-path>                    设置mp4box的路径
   --aria2c-path <aria2c-path>                    设置aria2c的路径
+  --upos-host <upos-host>                        自定义upos服务器
   --delay-per-page <delay-per-page>              设置下载合集分P之间的下载间隔时间(单位: 秒, 默认无间隔)
-  --host <host>                                  指定BiliPlus host(解析服务器能够获取你账号的大部分权限!)
-  --ep-host <ep-host>                            指定BiliPlus EP host
-  --area <area>                                  指定BiliPlus area 例: hk(使用BiliPlus需要access_token, 不需要cookie)
+  --host <host>                                  指定BiliPlus host(使用BiliPlus需要access_token, 不需要cookie,
+                                                 解析服务器能够获取你账号的大部分权限!)
+  --ep-host <ep-host>                            指定BiliPlus EP host(用于代理api.bilibili.com/pgc/view/web/season,
+                                                 大部分解析服务器不支持代理该接口)
+  --area <area>                                  (hk|tw|th) 使用BiliPlus时必选, 指定BiliPlus area
   --config-file <config-file>                    读取指定的BBDown本地配置文件(默认为: BBDown.config)
   --version                                      Show version information
   -?, -h, --help                                 Show help and usage information
