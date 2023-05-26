@@ -104,7 +104,7 @@ namespace BBDown
         private static async Task DoWorkAsync(MyOption myOption)
         {
             //检测更新
-            new Thread(async () => await CheckUpdateAsync()).Start();
+            CheckUpdateAsync();
             try
             {
                 //兼容旧版本命令行参数并给出警告
