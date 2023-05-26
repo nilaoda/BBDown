@@ -184,12 +184,13 @@ namespace BBDown
                 bool multiThread = myOption.MultiThread;
                 bool audioOnly = myOption.AudioOnly;
                 bool videoOnly = myOption.VideoOnly;
+                bool danmakuOnly = myOption.DanmakuOnly;
                 bool subOnly = myOption.SubOnly;
                 bool skipMux = myOption.SkipMux;
                 bool skipSubtitle = myOption.SkipSubtitle;
                 bool skipCover = myOption.SkipCover;
                 bool forceHttp = myOption.ForceHttp;
-                bool downloadDanmaku = myOption.DownloadDanmaku;
+                bool downloadDanmaku = myOption.DownloadDanmaku || danmakuOnly;
                 bool skipAi = myOption.SkipAi;
                 bool bandwithAscending = myOption.BandwithAscending;
                 bool showAll = myOption.ShowAll;
@@ -486,7 +487,7 @@ namespace BBDown
                             {
                                 Directory.CreateDirectory(p.aid);
                             }
-                            if (!skipCover && !subOnly && !File.Exists(coverPath))
+                            if (!skipCover && !subOnly && !File.Exists(coverPath) && !danmakuOnly)
                             {
                                 Log("下载封面...");
                                 var cover = pic == "" ? p.cover : pic;
@@ -499,7 +500,7 @@ namespace BBDown
                                 }
                             }
 
-                            if (!skipSubtitle)
+                            if (!skipSubtitle && !danmakuOnly)
                             {
                                 LogDebug("获取字幕...");
                                 subtitleInfo = await SubUtil.GetSubtitlesAsync(p.aid, p.cid, p.epid, p.index, intlApi);
@@ -590,6 +591,39 @@ namespace BBDown
                                 }
                             }
                             if (infoMode) continue;
+
+                            LogDebug("Format Before: " + savePathFormat);
+                            savePath = FormatSavePath(savePathFormat, title, videoTracks.ElementAtOrDefault(vIndex), audioTracks.ElementAtOrDefault(aIndex), p, pagesCount, tvApi, appApi, intlApi);
+                            LogDebug("Format After: " + savePath);
+
+                            if (downloadDanmaku)
+                            {
+                                var danmakuXmlPath = savePath[..savePath.LastIndexOf('.')] + ".xml";
+                                var danmakuAssPath = savePath[..savePath.LastIndexOf('.')] + ".ass";
+                                Log("正在下载弹幕Xml文件");
+                                string danmakuUrl = "https://comment.bilibili.com/" + p.cid + ".xml";
+                                await DownloadFile(danmakuUrl, danmakuXmlPath, false, aria2cArgs);
+                                var danmakus = DanmakuUtil.ParseXml(danmakuXmlPath);
+                                if (danmakus != null)
+                                {
+                                    Log("正在保存弹幕Ass文件...");
+                                    await DanmakuUtil.SaveAsAssAsync(danmakus, danmakuAssPath);
+                                }
+                                else
+                                {
+                                    Log("弹幕Xml解析失败, 删除Xml...");
+                                    File.Delete(danmakuXmlPath);
+                                }
+                                if (danmakuOnly)
+                                {
+                                    if (Directory.Exists(p.aid))
+                                    {
+                                        Directory.Delete(p.aid);
+                                    }
+                                    continue;
+                                }
+                            }
+
                             if (interactMode && !hideStreams && !selected)
                             {
                                 if (videoTracks.Count > 0)
@@ -659,30 +693,6 @@ namespace BBDown
                                 {
                                     Log($"尝试将音频流强制替换为{uposHost}……");
                                     audioTracks[aIndex].baseUrl = uposReg.Replace(audioTracks[aIndex].baseUrl, $"://{uposHost}/");
-                                }
-                            }
-
-                            LogDebug("Format Before: " + savePathFormat);
-                            savePath = FormatSavePath(savePathFormat, title, videoTracks.ElementAtOrDefault(vIndex), audioTracks.ElementAtOrDefault(aIndex), p, pagesCount, tvApi, appApi, intlApi);
-                            LogDebug("Format After: " + savePath);
-
-                            if (downloadDanmaku)
-                            {
-                                var danmakuXmlPath = savePath[..savePath.LastIndexOf('.')] + ".xml";
-                                var danmakuAssPath = savePath[..savePath.LastIndexOf('.')] + ".ass";
-                                Log("正在下载弹幕Xml文件");
-                                string danmakuUrl = "https://comment.bilibili.com/" + p.cid + ".xml";
-                                await DownloadFile(danmakuUrl, danmakuXmlPath, false, aria2cArgs);
-                                var danmakus = DanmakuUtil.ParseXml(danmakuXmlPath);
-                                if (danmakus != null)
-                                {
-                                    Log("正在保存弹幕Ass文件...");
-                                    await DanmakuUtil.SaveAsAssAsync(danmakus, danmakuAssPath);
-                                }
-                                else
-                                {
-                                    Log("弹幕Xml解析失败, 删除Xml...");
-                                    File.Delete(danmakuXmlPath);
                                 }
                             }
 

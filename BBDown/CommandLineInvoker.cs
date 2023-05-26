@@ -28,6 +28,7 @@ namespace BBDown
         private readonly static Option<string> SelectPage = new(new string[] { "--select-page", "-p" }, "选择指定分p或分p范围: (-p 8 或 -p 1,2 或 -p 3-5 或 -p ALL 或 -p LAST)");
         private readonly static Option<bool> AudioOnly = new(new string[] { "--audio-only" }, "仅下载音频");
         private readonly static Option<bool> VideoOnly = new(new string[] { "--video-only" }, "仅下载视频");
+        private readonly static Option<bool> DanmakuOnly = new(new string[] { "--danmaku-only" }, "仅下载弹幕");
         private readonly static Option<bool> SubOnly = new(new string[] { "--sub-only" }, "仅下载字幕");
         private readonly static Option<bool> Debug = new(new string[] { "--debug" }, "输出调试日志");
         private readonly static Option<bool> SkipMux = new(new string[] { "--skip-mux" }, "跳过混流步骤");
@@ -83,6 +84,7 @@ namespace BBDown
                 if (bindingContext.ParseResult.HasOption(MultiThread)) option.MultiThread = bindingContext.ParseResult.GetValueForOption(MultiThread)!;
                 if (bindingContext.ParseResult.HasOption(VideoOnly)) option.VideoOnly = bindingContext.ParseResult.GetValueForOption(VideoOnly)!;
                 if (bindingContext.ParseResult.HasOption(AudioOnly)) option.AudioOnly = bindingContext.ParseResult.GetValueForOption(AudioOnly)!;
+                if (bindingContext.ParseResult.HasOption(DanmakuOnly)) option.DanmakuOnly = bindingContext.ParseResult.GetValueForOption(DanmakuOnly)!;
                 if (bindingContext.ParseResult.HasOption(SubOnly)) option.SubOnly = bindingContext.ParseResult.GetValueForOption(SubOnly)!;
                 if (bindingContext.ParseResult.HasOption(Debug)) option.Debug = bindingContext.ParseResult.GetValueForOption(Debug)!;
                 if (bindingContext.ParseResult.HasOption(SkipMux)) option.SkipMux = bindingContext.ParseResult.GetValueForOption(SkipMux)!;
@@ -138,6 +140,7 @@ namespace BBDown
                 MultiThread,
                 VideoOnly,
                 AudioOnly,
+                DanmakuOnly,
                 SubOnly,
                 Debug,
                 SkipMux,
