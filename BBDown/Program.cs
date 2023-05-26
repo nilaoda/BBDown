@@ -22,6 +22,7 @@ using BBDown.Core.Util;
 using BBDown.Core.Fetcher;
 using System.Text.Json.Serialization;
 using System.CommandLine.Binding;
+using System.CommandLine.Builder;
 
 namespace BBDown
 {
@@ -87,12 +88,30 @@ namespace BBDown
                 "https://github.com/nilaoda/BBDown/discussions\r\n");
             Console.WriteLine();
 
+            var parser = new CommandLineBuilder(rootCommand)
+                .UseDefaults()
+                .UseExceptionHandler((ex, context) =>
+                {
+                    LogError(ex.Message);
+                    try { Console.CursorVisible = true; } catch { }
+                    Thread.Sleep(3000);
+                }, 1)
+                .Build();
+
             var newArgsList = new List<string>();
             var commandLineResult = rootCommand.Parse(args);
+
+            //显式抛出异常
+            if (commandLineResult.Errors.Count > 0)
+            {
+                LogError(commandLineResult.Errors.First().Message);
+                return 1;
+            }
+
             if (commandLineResult.CommandResult.Command.Name.ToLower() != Path.GetFileNameWithoutExtension(Environment.ProcessPath)!.ToLower())
             {
                 newArgsList.Add(commandLineResult.CommandResult.Command.Name);
-                return await rootCommand.InvokeAsync(newArgsList.ToArray());
+                return await parser.InvokeAsync(newArgsList.ToArray());
             }
 
             foreach (var item in commandLineResult.CommandResult.Children)
@@ -112,7 +131,7 @@ namespace BBDown
             //处理配置文件
             BBDownConfigParser.HandleConfig(newArgsList, rootCommand);
 
-            return await rootCommand.InvokeAsync(newArgsList.ToArray());
+            return await parser.InvokeAsync(newArgsList.ToArray());
         }
 
         private static async Task DoWorkAsync(MyOption myOption)
