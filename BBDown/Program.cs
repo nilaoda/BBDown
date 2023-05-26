@@ -213,6 +213,8 @@ namespace BBDown
 
                 if (!string.IsNullOrEmpty(myOption.WorkDir))
                 {
+                    //解释环境变量
+                    myOption.WorkDir = Environment.ExpandEnvironmentVariables(myOption.WorkDir);
                     var dir = Path.GetFullPath(myOption.WorkDir);
                     if (!Directory.Exists(dir))
                     {
