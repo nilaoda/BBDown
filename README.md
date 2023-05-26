@@ -182,6 +182,7 @@ Commands:
 `<audioBandwidth>`|音频码率
 `<ownerName>`|上传者名称(下载番剧时，该值为"")
 `<ownerMid>`|上传者mid(下载番剧时，该值为"")
+`<apiType>`|API类型（TV/APP/INTL/WEB）
 
 </details>
 
