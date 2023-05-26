@@ -185,6 +185,7 @@ namespace BBDown
                 bool audioOnly = myOption.AudioOnly;
                 bool videoOnly = myOption.VideoOnly;
                 bool danmakuOnly = myOption.DanmakuOnly;
+                bool coverOnly = myOption.CoverOnly;
                 bool subOnly = myOption.SubOnly;
                 bool skipMux = myOption.SkipMux;
                 bool skipSubtitle = myOption.SkipSubtitle;
@@ -487,20 +488,12 @@ namespace BBDown
                             {
                                 Directory.CreateDirectory(p.aid);
                             }
-                            if (!skipCover && !subOnly && !File.Exists(coverPath) && !danmakuOnly)
+                            if (!skipCover && !subOnly && !File.Exists(coverPath) && !danmakuOnly && !coverOnly)
                             {
-                                Log("下载封面...");
-                                var cover = pic == "" ? p.cover : pic;
-                                if (cover != null)
-                                {
-                                    LogDebug("下载：{0}", cover);
-                                    await using var response = await HTTPUtil.AppHttpClient.GetStreamAsync(cover);
-                                    await using var fs = new FileStream(coverPath, FileMode.Create);
-                                    await response.CopyToAsync(fs);
-                                }
+                                await DownloadCoverAsync(pic, p, coverPath);
                             }
 
-                            if (!skipSubtitle && !danmakuOnly)
+                            if (!skipSubtitle && !danmakuOnly && !coverOnly)
                             {
                                 LogDebug("获取字幕...");
                                 subtitleInfo = await SubUtil.GetSubtitlesAsync(p.aid, p.cid, p.epid, p.index, intlApi);
@@ -622,6 +615,13 @@ namespace BBDown
                                     }
                                     continue;
                                 }
+                            }
+
+                            if (coverOnly)
+                            {
+                                var newCoverPath = savePath[..savePath.LastIndexOf('.')] + Path.GetExtension(pic);
+                                await DownloadCoverAsync(pic, p, newCoverPath);
+                                continue;
                             }
 
                             if (interactMode && !hideStreams && !selected)
@@ -943,6 +943,19 @@ namespace BBDown
                 Console.WriteLine();
                 Thread.Sleep(1);
                 Environment.Exit(1);
+            }
+        }
+
+        private static async Task DownloadCoverAsync(string pic, Page p, string coverPath)
+        {
+            Log("下载封面...");
+            var cover = pic == "" ? p.cover : pic;
+            if (cover != null)
+            {
+                LogDebug("下载：{0}", cover);
+                await using var response = await HTTPUtil.AppHttpClient.GetStreamAsync(cover);
+                await using var fs = new FileStream(coverPath, FileMode.Create);
+                await response.CopyToAsync(fs);
             }
         }
 

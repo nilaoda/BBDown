@@ -23,6 +23,8 @@ namespace BBDown
         public bool MultiThread { get; set; } = true;
         public bool VideoOnly { get; set; }
         public bool AudioOnly { get; set; }
+        public bool DanmakuOnly { get; set; }
+        public bool CoverOnly { get; set; }
         public bool SubOnly { get; set; }
         public bool Debug { get; set; }
         public bool SkipMux { get; set; }
