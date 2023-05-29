@@ -90,6 +90,7 @@ namespace BBDown
 
             var parser = new CommandLineBuilder(rootCommand)
                 .UseDefaults()
+                .EnablePosixBundling(false)
                 .UseExceptionHandler((ex, context) =>
                 {
                     LogError(ex.Message);

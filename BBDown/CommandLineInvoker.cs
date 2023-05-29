@@ -16,8 +16,8 @@ namespace BBDown
         private readonly static Option<bool> UseAppApi = new(new string[] { "--use-app-api", "-app" }, "使用APP端解析模式");
         private readonly static Option<bool> UseIntlApi = new(new string[] { "--use-intl-api", "-intl" }, "使用国际版(东南亚视频)解析模式");
         private readonly static Option<bool> UseMP4box = new(new string[] { "--use-mp4box" }, "使用MP4Box来混流");
-        private readonly static Option<string> EncodingPriority = new(new string[] { "--encoding-priority" }, "视频编码的选择优先级, 用逗号分割 例: \"hevc,av1,avc\"");
-        private readonly static Option<string> DfnPriority = new(new string[] { "--dfn-priority" }, "画质优先级,用逗号分隔 例: \"8K 超高清, 1080P 高码率, HDR 真彩, 杜比视界\"");
+        private readonly static Option<string> EncodingPriority = new(new string[] { "--encoding-priority", "-e" }, "视频编码的选择优先级, 用逗号分割 例: \"hevc,av1,avc\"");
+        private readonly static Option<string> DfnPriority = new(new string[] { "--dfn-priority", "-q" }, "画质优先级,用逗号分隔 例: \"8K 超高清, 1080P 高码率, HDR 真彩, 杜比视界\"");
         private readonly static Option<bool> OnlyShowInfo = new(new string[] { "--only-show-info", "-info" }, "仅解析而不进行下载");
         private readonly static Option<bool> HideStreams = new(new string[] { "--hide-streams", "-hs" }, "不要显示所有可用音视频流");
         private readonly static Option<bool> Interactive = new(new string[] { "--interactive", "-ia" }, "交互式选择清晰度");
@@ -37,7 +37,7 @@ namespace BBDown
         private readonly static Option<bool> SkipCover = new(new string[] { "--skip-cover" }, "跳过封面下载");
         private readonly static Option<bool> ForceHttp = new(new string[] { "--force-http" }, "下载音视频时强制使用HTTP协议替换HTTPS(默认开启)");
         private readonly static Option<bool> DownloadDanmaku = new(new string[] { "--download-danmaku", "-dd" }, "下载弹幕");
-        private readonly static Option<bool> SkipAi = new(new string[] { "--skip-ai" }, "跳过AI字幕下载");
+        private readonly static Option<bool> SkipAi = new(new string[] { "--skip-ai" }, description: "跳过AI字幕下载", getDefaultValue: () => true);
         private readonly static Option<bool> BandwithAscending = new(new string[] { "--bandwith-ascending" }, "比特率升序(最小体积优先)");
         private readonly static Option<string> Language = new(new string[] { "--language" }, "设置混流的音频语言(代码), 如chi, jpn等");
         private readonly static Option<string> Cookie = new(new string[] { "--cookie", "-c" }, "设置字符串cookie用以下载网页接口的会员内容");
