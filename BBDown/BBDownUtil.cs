@@ -358,7 +358,7 @@ namespace BBDown
             try
             {
                 using var progress = new ProgressBar();
-                await RangeDownloadToTmpAsync(0, url, tmpName, 0, null, (_, downloaded, total) => progress.Report((double)downloaded / total));
+                await RangeDownloadToTmpAsync(0, url, tmpName, 0, null, (_, downloaded, total) => progress.Report((double)downloaded / total, downloaded));
                 File.Move(tmpName, path, true);
             }
             catch (Exception)
@@ -406,7 +406,7 @@ namespace BBDown
                     await RangeDownloadToTmpAsync(clip.index, url, tmp, clip.from, clip.to == -1 ? null : clip.to, (index, downloaded, _) =>
                     {
                         clipProgress[index] = downloaded;
-                        progress.Report((double)clipProgress.Values.Sum() / fileSize);
+                        progress.Report((double)clipProgress.Values.Sum() / fileSize, clipProgress.Values.Sum());
                     }, true);
                 }
                 catch (NotSupportedException)
