@@ -39,8 +39,8 @@ Options:
   -app, --use-app-api                            使用APP端解析模式
   -intl, --use-intl-api                          使用国际版(东南亚视频)解析模式
   --use-mp4box                                   使用MP4Box来混流
-  --encoding-priority <encoding-priority>        视频编码的选择优先级, 用逗号分割 例: "hevc,av1,avc"
-  --dfn-priority <dfn-priority>                  画质优先级,用逗号分隔 例: "8K 超高清, 1080P 高码率, HDR 真彩, 杜比视界"
+  -e, --encoding-priority <encoding-priority>    视频编码的选择优先级, 用逗号分割 例: "hevc,av1,avc"
+  -q, --dfn-priority <dfn-priority>              画质优先级,用逗号分隔 例: "8K 超高清, 1080P 高码率, HDR 真彩, 杜比视界"
   -info, --only-show-info                        仅解析而不进行下载
   --show-all                                     展示所有分P标题
   --use-aria2c                                   调用aria2c进行下载(你需要自行准备好二进制可执行文件)
@@ -58,7 +58,7 @@ Options:
   --skip-cover                                   跳过封面下载
   --force-http                                   下载音视频时强制使用HTTP协议替换HTTPS(默认开启)
   -dd, --download-danmaku                        下载弹幕
-  --skip-ai                                      跳过AI字幕下载
+  --skip-ai                                      跳过AI字幕下载 [default: True]
   --bandwith-ascending                           比特率升序(最小体积优先)
   -F, --file-pattern <file-pattern>              使用内置变量自定义单P存储文件名:
 
