@@ -592,6 +592,7 @@ namespace BBDown
                             //videoTracks.Sort((v1, v2) => Compare(v1, v2, encodingPriority, dfnPriority));
                             videoTracks = SortTracks(videoTracks, dfnPriority, encodingPriority, bandwithAscending);
                             audioTracks.Sort(Compare);
+                            if (bandwithAscending) audioTracks.Reverse();
 
                             if (audioOnly) videoTracks.Clear();
                             if (videoOnly) audioTracks.Clear();
