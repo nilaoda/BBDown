@@ -624,12 +624,11 @@ namespace BBDown
                             }
                             if (infoMode) continue;
 
-                            LogDebug("Format Before: " + savePathFormat);
-                            savePath = FormatSavePath(savePathFormat, title, videoTracks.ElementAtOrDefault(vIndex), audioTracks.ElementAtOrDefault(aIndex), p, pagesCount, tvApi, appApi, intlApi);
-                            LogDebug("Format After: " + savePath);
-
                             if (downloadDanmaku)
                             {
+                                LogDebug("Format Before: " + savePathFormat);
+                                savePath = FormatSavePath(savePathFormat, title, videoTracks.ElementAtOrDefault(vIndex), audioTracks.ElementAtOrDefault(aIndex), p, pagesCount, tvApi, appApi, intlApi);
+                                LogDebug("Format After: " + savePath);
                                 var danmakuXmlPath = savePath[..savePath.LastIndexOf('.')] + ".xml";
                                 var danmakuAssPath = savePath[..savePath.LastIndexOf('.')] + ".ass";
                                 Log("正在下载弹幕Xml文件");
@@ -684,6 +683,10 @@ namespace BBDown
                                 selected = true;
                             }
 
+                            LogDebug("Format Before: " + savePathFormat);
+                            savePath = FormatSavePath(savePathFormat, title, videoTracks.ElementAtOrDefault(vIndex), audioTracks.ElementAtOrDefault(aIndex), p, pagesCount, tvApi, appApi, intlApi);
+                            LogDebug("Format After: " + savePath);
+
                             Log($"已选择的流:");
                             if (videoTracks.Count > 0)
                             {
@@ -737,7 +740,6 @@ namespace BBDown
 
                             if (videoTracks.Count > 0)
                             {
-
                                 if (!infoMode && File.Exists(savePath) && new FileInfo(savePath).Length != 0)
                                 {
                                     Log($"{savePath}已存在, 跳过下载...");
