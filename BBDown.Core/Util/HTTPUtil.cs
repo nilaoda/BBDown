@@ -13,7 +13,7 @@ namespace BBDown.Core.Util
             ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true
         })
         {
-            Timeout = TimeSpan.FromMinutes(5)
+            Timeout = TimeSpan.FromMinutes(2)
         };
 
         public static async Task<string> GetWebSourceAsync(string url)
