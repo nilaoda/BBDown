@@ -55,19 +55,19 @@ namespace BBDown
 			Interlocked.Exchange(ref downloadedBytes, bytesCount);
         }
 
-		private void SpeedTimerHandler(object? state)
-		{
-			lock (speedTimer)
+        private void SpeedTimerHandler(object? state)
+        {
+            lock (speedTimer)
             {
                 if (disposed) return;
 
-                if (downloadedBytes > 0)
+                if (downloadedBytes > 0 && downloadedBytes - lastDownloadedBytes > 0)
                 {
                     speedString = " - " + BBDownUtil.FormatFileSize(downloadedBytes - lastDownloadedBytes) + "/s";
                     lastDownloadedBytes = downloadedBytes;
                 }
             }
-		}
+        }
 
         private void TimerHandler(object? state)
 		{
