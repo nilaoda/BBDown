@@ -10,9 +10,5 @@
     <StripSymbols>true</StripSymbols>
     <ObjCopyName Condition="'$(RuntimeIdentifier)' == 'linux-arm64'">aarch64-linux-gnu-objcopy</ObjCopyName>
   </PropertyGroup>
-
-  <ItemGroup Condition="'$(PublishAot)' == 'true' and '$(RuntimeIdentifier)' != 'win-arm64' and '$(RuntimeIdentifier)' != 'linux-arm64' and '$(RuntimeIdentifier)' != 'osx-x64' and '$(RuntimeIdentifier)' != 'osx-arm64'">
-    <PackageReference Include="PublishAotCompressed" Version="1.0.0" />
-  </ItemGroup>
-
+  
 </Project>
