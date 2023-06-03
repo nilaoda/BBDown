@@ -23,7 +23,6 @@ using BBDown.Core.Fetcher;
 using System.Text.Json.Serialization;
 using System.CommandLine.Binding;
 using System.CommandLine.Builder;
-using System.Reflection;
 
 namespace BBDown
 {
@@ -33,7 +32,7 @@ namespace BBDown
         public static string SinglePageDefaultSavePath { get; set; } = "<videoTitle>";
         public static string MultiPageDefaultSavePath { get; set; } = "<videoTitle>/[P<pageNumberWithZero>]<pageTitle>";
 
-        public readonly static string APP_DIR = Path.GetDirectoryName(Assembly.GetCallingAssembly().Location)!;
+        public readonly static string APP_DIR = Path.GetDirectoryName(System.AppContext.BaseDirectory)!;
 
         private static int Compare(Audio r1, Audio r2)
         {
