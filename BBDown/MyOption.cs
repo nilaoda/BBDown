@@ -32,7 +32,7 @@ namespace BBDown
         public bool SkipCover { get; set; }
         public bool ForceHttp { get; set; } = true;
         public bool DownloadDanmaku { get; set; } = false;
-        public bool SkipAi { get; set; } = false;
+        public bool SkipAi { get; set; } = true;
         public bool BandwithAscending { get; set; } = false;
         public string FilePattern { get; set; } = "";
         public string MultiFilePattern { get; set; } = "";
