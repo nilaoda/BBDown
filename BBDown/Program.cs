@@ -657,13 +657,6 @@ namespace BBDown
                                 }
                             }
 
-                            if (coverOnly)
-                            {
-                                var newCoverPath = savePath[..savePath.LastIndexOf('.')] + Path.GetExtension(pic);
-                                await DownloadCoverAsync(pic, p, newCoverPath);
-                                continue;
-                            }
-
                             if (interactMode && !hideStreams && !selected)
                             {
                                 if (videoTracks.Count > 0)
@@ -688,6 +681,14 @@ namespace BBDown
                             LogDebug("Format Before: " + savePathFormat);
                             savePath = FormatSavePath(savePathFormat, title, videoTracks.ElementAtOrDefault(vIndex), audioTracks.ElementAtOrDefault(aIndex), p, pagesCount, tvApi, appApi, intlApi);
                             LogDebug("Format After: " + savePath);
+
+                            if (coverOnly)
+                            {
+                                var newCoverPath = savePath[..savePath.LastIndexOf('.')] + Path.GetExtension(pic);
+                                await DownloadCoverAsync(pic, p, newCoverPath);
+                                if (Directory.Exists(p.aid) && Directory.GetFiles(p.aid).Length == 0) Directory.Delete(p.aid, true);
+                                continue;
+                            }
 
                             Log($"已选择的流:");
                             if (videoTracks.Count > 0)
