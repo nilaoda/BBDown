@@ -801,7 +801,7 @@ namespace BBDown
             return sub[..sub.LastIndexOf(".")];
         }
 
-        public static string GetMixinKey(string orig)
+        private static string GetMixinKey(string orig)
         {
             byte[] mixinKeyEncTab = new byte[]
             {
@@ -809,7 +809,7 @@ namespace BBDown
                 27, 43, 5, 49, 33, 9, 42, 19, 29, 28, 14, 39, 12, 38, 41, 13
             };
 
-            var tmp = new StringBuilder();
+            var tmp = new StringBuilder(32);
             foreach (var index in mixinKeyEncTab)
             {
                 tmp.Append(orig[index]);
@@ -817,7 +817,7 @@ namespace BBDown
             return tmp.ToString();
         }
 
-        public static async Task<(bool, string)> CheckLogin(string cookie)
+        public static async Task<bool> CheckLogin(string cookie)
         {
             try
             {
@@ -826,13 +826,13 @@ namespace BBDown
                 var json = JsonDocument.Parse(source).RootElement;
                 var is_login = json.GetProperty("data").GetProperty("isLogin").GetBoolean();
                 var wbi_img = json.GetProperty("data").GetProperty("wbi_img");
-                var wbi = GetMixinKey(RSubString(wbi_img.GetProperty("img_url").GetString()) + RSubString(wbi_img.GetProperty("sub_url").GetString()));
-                LogDebug($"wbi: {wbi}");
-                return (is_login, wbi);
+                Core.Config.WBI = GetMixinKey(RSubString(wbi_img.GetProperty("img_url").GetString()) + RSubString(wbi_img.GetProperty("sub_url").GetString()));
+                LogDebug("wbi: {0}", Core.Config.WBI);
+                return is_login;
             }
             catch (Exception)
             {
-                return (false, "");
+                return false;
             }
         }
 
