@@ -10,6 +10,11 @@ namespace BBDown.Core
 {
     public partial class Parser
     {
+        public static string WbiSign(string api)
+        {
+            return $"{api}&w_rid=" + string.Concat(MD5.HashData(Encoding.UTF8.GetBytes(api + Config.WBI)).Select(i => i.ToString("x2")).ToArray());
+        }
+
         private static async Task<string> GetPlayJsonAsync(bool onlyAvc, string aidOri, string aid, string cid, string epId, bool tvApi, bool intl, bool appApi, string qn = "0")
         {
             LogDebug("aid={0},cid={1},epId={2},tvApi={3},IntlApi={4},appApi={5},qn={6}", aid, cid, epId, tvApi, intl, appApi, qn);
@@ -24,13 +29,14 @@ namespace BBDown.Core
             if (appApi) return await AppHelper.DoReqAsync(aid, cid, epId, qn, bangumi, onlyAvc, Config.TOKEN);
 
             string prefix = tvApi ? bangumi ? "api.snm0516.aisee.tv/pgc/player/api/playurltv" : "api.snm0516.aisee.tv/x/tv/ugc/playurl"
-                        : bangumi ? $"{Config.HOST}/pgc/player/web/playurl" : $"{Config.HOST}/x/player/playurl";
-            string api = $"https://{prefix}?avid={aid}&cid={cid}&qn={qn}&type=&otype=json" + (tvApi ? "" : "&fourk=1") +
-                $"&fnver=0&fnval=4048" + (Config.AREA != "" ? Config.TOKEN != "" ? $"&access_key={Config.TOKEN}&area={Config.AREA}" : $"&area={Config.AREA}" : "") +
-                (tvApi ? "&device=android&platform=android" +
-                "&mobi_app=android_tv_yst&npcybs=0&force_host=2&build=102801" +
-                (Config.TOKEN != "" ? $"&access_key={Config.TOKEN}" : "") : "") +
-                (bangumi ? $"&module=bangumi&ep_id={epId}&fourk=1" + "&session=" : "");
+                        : bangumi ? $"{Config.HOST}/pgc/player/web/playurl" : "api.bilibili.com/x/player/wbi/playurl";
+
+            string api = $"avid={aid}&cid={cid}&fnval=4048&fnver=0" +
+                (tvApi ? "" : "&fourk=1") + (Config.AREA != "" ? Config.TOKEN != "" ? $"&access_key={Config.TOKEN}&area={Config.AREA}" : $"&area={Config.AREA}" : "") +
+                (tvApi ? "&device=android&platform=android&mobi_app=android_tv_yst&npcybs=0&force_host=2&build=102801" +
+                (Config.TOKEN != "" ? $"&access_key={Config.TOKEN}" : "") : "") + $"&otype=json&qn={qn}" +
+                (bangumi ? $"&module=bangumi&ep_id={epId}&fourk=1&session=" : Config.COOKIE != "" ? $"&wts={GetTimeStamp(true)}" : $"&try_look=1&wts={GetTimeStamp(true)}");
+            api = $"https://{prefix}?{(bangumi ? api : WbiSign(api))}";
             if (tvApi && bangumi)
             {
                 api = (Config.TOKEN != "" ? $"access_key={Config.TOKEN}&" : "") +
@@ -79,6 +85,12 @@ namespace BBDown.Core
             return webJson;
         }
 
+        public static string SkiPcdn(List<string> urlList, string baseUrl)
+        {
+            urlList.Add(baseUrl);
+            return urlList.FirstOrDefault(i => !PcdnRegex().IsMatch(i), urlList.First());
+        }
+
         public static async Task<(string, List<Video>, List<Audio>, List<string>, List<string>)> ExtractTracksAsync(string aidOri, string aid, string cid, string epId, bool tvApi, bool intlApi, bool appApi, string qn = "0")
         {
             List<Video> videoTracks = new();
@@ -106,13 +118,15 @@ namespace BBDown.Core
                         if (dashVideo.GetProperty("base_url").ToString() != "")
                         {
                             var videoId = stream.GetProperty("stream_info").GetProperty("quality").ToString();
+                            var urlList = new List<string>() { dashVideo.GetProperty("base_url").ToString() };
+                            urlList.AddRange(dashVideo.GetProperty("backup_url").EnumerateArray().ToList().Select(i => i.ToString()));
                             Video v = new()
                             {
                                 dur = pDur,
                                 id = videoId,
                                 dfn = Config.qualitys[videoId],
                                 bandwith = Convert.ToInt64(dashVideo.GetProperty("bandwidth").ToString()) / 1000,
-                                baseUrl = dashVideo.GetProperty("base_url").ToString(),
+                                baseUrl = urlList.FirstOrDefault(i => !BaseUrlRegex().IsMatch(i), urlList.First()),
                                 codecs = GetVideoCodec(dashVideo.GetProperty("codecid").ToString()),
                                 size = dashVideo.TryGetProperty("size", out var sizeNode) ? Convert.ToDouble(sizeNode.ToString()) : 0
                             };
@@ -123,13 +137,15 @@ namespace BBDown.Core
 
                 foreach(var node in audio)
                 {
+                    var urlList = new List<string>() { node.GetProperty("base_url").ToString() };
+                    urlList.AddRange(node.GetProperty("backup_url").EnumerateArray().ToList().Select(i => i.ToString()));
                     Audio a = new()
                     {
                         id = node.GetProperty("id").ToString(),
                         dfn = node.GetProperty("id").ToString(),
                         dur = pDur,
                         bandwith = Convert.ToInt64(node.GetProperty("bandwidth").ToString()) / 1000,
-                        baseUrl = node.GetProperty("base_url").ToString(),
+                        baseUrl = urlList.FirstOrDefault(i => !BaseUrlRegex().IsMatch(i), urlList.First()),
                         codecs = "M4A"
                     };
                     if (!audioTracks.Contains(a)) audioTracks.Add(a);
@@ -393,5 +409,7 @@ namespace BBDown.Core
         private static partial Regex PlayerJsonRegex();
         [GeneratedRegex("http.*:\\d+")]
         private static partial Regex BaseUrlRegex();
+        [GeneratedRegex("://.*:\\d+/")]
+        private static partial Regex PcdnRegex();
     }
 }

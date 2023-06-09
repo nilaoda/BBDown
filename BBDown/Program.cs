@@ -181,6 +181,12 @@ namespace BBDown
                         LogWarn($"已切换至 -M \"{MultiPageDefaultSavePath}\"");
                     }
                 }
+                if (myOption.BandwithAscending)
+                {
+                    LogWarn("--bandwith-ascending 已被弃用, 建议使用 --video-ascending 与 --audio-ascending 来指定视频或音频是否升序, 本次执行已将视频与音频均设为升序");
+                    myOption.VideoAscending = true;
+                    myOption.AudioAscending = true;
+                }
 
                 bool interactMode = myOption.Interactive;
                 bool infoMode = myOption.OnlyShowInfo;
@@ -227,7 +233,9 @@ namespace BBDown
                 bool forceHttp = myOption.ForceHttp;
                 bool downloadDanmaku = myOption.DownloadDanmaku || danmakuOnly;
                 bool skipAi = myOption.SkipAi;
-                bool bandwithAscending = myOption.BandwithAscending;
+                bool videoAscending = myOption.VideoAscending;
+                bool audioAscending = myOption.AudioAscending;
+                bool allowPcdn = myOption.AllowPcdn;
                 bool showAll = myOption.ShowAll;
                 bool useAria2c = myOption.UseAria2c;
                 string aria2cArgs = myOption.Aria2cArgs;
@@ -354,7 +362,7 @@ namespace BBDown
                 }
 
                 // 检测是否登录了账号
-                (bool is_login, string wbi) = await CheckLogin(Config.COOKIE);
+                bool is_login = await CheckLogin(Config.COOKIE);
                 if (!intlApi && !tvApi && Config.AREA == "")
                 {
                     Log("检测账号登录...");
@@ -411,7 +419,6 @@ namespace BBDown
                 else if (aidOri.StartsWith("mid"))
                 {
                     fetcher = new SpaceVideoFetcher();
-                    aidOri += $"|{wbi}";
                 }
                 else if (aidOri.StartsWith("listBizId"))
                 {
@@ -590,9 +597,9 @@ namespace BBDown
                             }
                             //排序
                             //videoTracks.Sort((v1, v2) => Compare(v1, v2, encodingPriority, dfnPriority));
-                            videoTracks = SortTracks(videoTracks, dfnPriority, encodingPriority, bandwithAscending);
+                            videoTracks = SortTracks(videoTracks, dfnPriority, encodingPriority, videoAscending);
                             audioTracks.Sort(Compare);
-                            if (bandwithAscending) audioTracks.Reverse();
+                            if (audioAscending) audioTracks.Reverse();
 
                             if (audioOnly) videoTracks.Clear();
                             if (videoOnly) audioTracks.Clear();
@@ -702,16 +709,19 @@ namespace BBDown
                             if (uposHost == "")
                             {
                                 //处理PCDN
-                                var pcdnReg = PcdnRegex();
-                                if (videoTracks.Count > 0 && pcdnReg.IsMatch(videoTracks[vIndex].baseUrl))
+                                if (!allowPcdn)
                                 {
-                                    LogWarn($"检测到视频流为PCDN, 尝试强制替换为{BACKUP_HOST}……");
-                                    videoTracks[vIndex].baseUrl = pcdnReg.Replace(videoTracks[vIndex].baseUrl, $"://{BACKUP_HOST}/");
-                                }
-                                if (audioTracks.Count > 0 && pcdnReg.IsMatch(audioTracks[aIndex].baseUrl))
-                                {
-                                    LogWarn($"检测到音频流为PCDN, 尝试强制替换为{BACKUP_HOST}……");
-                                    audioTracks[aIndex].baseUrl = pcdnReg.Replace(audioTracks[aIndex].baseUrl, $"://{BACKUP_HOST}/");
+                                    var pcdnReg = PcdnRegex();
+                                    if (videoTracks.Count > 0 && pcdnReg.IsMatch(videoTracks[vIndex].baseUrl))
+                                    {
+                                        LogWarn($"检测到视频流为PCDN, 尝试强制替换为{BACKUP_HOST}……");
+                                        videoTracks[vIndex].baseUrl = pcdnReg.Replace(videoTracks[vIndex].baseUrl, $"://{BACKUP_HOST}/");
+                                    }
+                                    if (audioTracks.Count > 0 && pcdnReg.IsMatch(audioTracks[aIndex].baseUrl))
+                                    {
+                                        LogWarn($"检测到音频流为PCDN, 尝试强制替换为{BACKUP_HOST}……");
+                                        audioTracks[aIndex].baseUrl = pcdnReg.Replace(audioTracks[aIndex].baseUrl, $"://{BACKUP_HOST}/");
+                                    }
                                 }
 
                                 var akamReg = AkamRegex();
@@ -842,7 +852,7 @@ namespace BBDown
                         reParse:
                             //排序
                             //videoTracks.Sort((v1, v2) => Compare(v1, v2, encodingPriority, dfnPriority));
-                            videoTracks = SortTracks(videoTracks, dfnPriority, encodingPriority, bandwithAscending);
+                            videoTracks = SortTracks(videoTracks, dfnPriority, encodingPriority, videoAscending);
 
                             if (interactMode && !flag && !selected)
                             {
@@ -1003,7 +1013,7 @@ namespace BBDown
             }
         }
 
-        private static List<Video> SortTracks(List<Video> videoTracks, Dictionary<string, int> dfnPriority, Dictionary<string, byte> encodingPriority, bool bandwithAscending)
+        private static List<Video> SortTracks(List<Video> videoTracks, Dictionary<string, int> dfnPriority, Dictionary<string, byte> encodingPriority, bool videoAscending)
         {
             //用户同时输入了自定义分辨率优先级和自定义编码优先级, 则根据输入顺序依次进行排序
             return dfnPriority.Count > 0 && encodingPriority.Count > 0 && Environment.CommandLine.IndexOf("--encoding-priority") < Environment.CommandLine.IndexOf("--dfn-priority")
@@ -1011,13 +1021,13 @@ namespace BBDown
                     .OrderBy(v => encodingPriority.TryGetValue(v.codecs, out byte i) ? i : 100)
                     .ThenBy(v => dfnPriority.TryGetValue(v.dfn, out int i) ? i : 100)
                     .ThenByDescending(v => Convert.ToInt32(v.id))
-                    .ThenBy(v => bandwithAscending ? v.bandwith : -v.bandwith)
+                    .ThenBy(v => videoAscending ? v.bandwith : -v.bandwith)
                     .ToList()
                 : videoTracks
                     .OrderBy(v => dfnPriority.TryGetValue(v.dfn, out int i) ? i : 100)
                     .ThenBy(v => encodingPriority.TryGetValue(v.codecs, out byte i) ? i : 100)
                     .ThenByDescending(v => Convert.ToInt32(v.id))
-                    .ThenBy(v => bandwithAscending ? v.bandwith : -v.bandwith)
+                    .ThenBy(v => videoAscending ? v.bandwith : -v.bandwith)
                     .ToList();
         }
 

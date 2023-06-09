@@ -38,7 +38,9 @@ namespace BBDown
         private readonly static Option<bool> ForceHttp = new(new string[] { "--force-http" }, "下载音视频时强制使用HTTP协议替换HTTPS(默认开启)");
         private readonly static Option<bool> DownloadDanmaku = new(new string[] { "--download-danmaku", "-dd" }, "下载弹幕");
         private readonly static Option<bool> SkipAi = new(new string[] { "--skip-ai" }, description: "跳过AI字幕下载");
-        private readonly static Option<bool> BandwithAscending = new(new string[] { "--bandwith-ascending" }, "比特率升序(最小体积优先)");
+        private readonly static Option<bool> VideoAscending = new(new string[] { "--video-ascending" }, "视频升序(最小体积优先)");
+        private readonly static Option<bool> AudioAscending = new(new string[] { "--audio-ascending" }, "音频升序(最小体积优先)");
+        private readonly static Option<bool> AllowPcdn = new(new string[] { "--allow-pcdn" }, "不替换PCDN域名, 仅在正常情况与--upos-host均无法下载时使用");
         private readonly static Option<string> Language = new(new string[] { "--language" }, "设置混流的音频语言(代码), 如chi, jpn等");
         private readonly static Option<string> Cookie = new(new string[] { "--cookie", "-c" }, "设置字符串cookie用以下载网页接口的会员内容");
         private readonly static Option<string> AccessToken = new(new string[] { "--access-token", "-token" }, "设置access_token用以下载TV/APP接口的会员内容");
@@ -60,6 +62,7 @@ namespace BBDown
         private readonly static Option<bool> OnlyAv1 = new(new string[] { "--only-av1", "-av1" }, "只下载av1编码") { IsHidden = true };
         private readonly static Option<bool> AddDfnSubfix = new(new string[] { "--add-dfn-subfix" }, "为文件加入清晰度后缀, 如XXX[1080P 高码率]") { IsHidden = true };
         private readonly static Option<bool> NoPaddingPageNum = new(new string[] { "--no-padding-page-num" }, "不给分P序号补零") { IsHidden = true };
+        private readonly static Option<bool> BandwithAscending = new(new string[] { "--bandwith-ascending" }, "比特率升序(最小体积优先)") { IsHidden = true };
 
 
         class MyOptionBinder : BinderBase<MyOption>
@@ -95,7 +98,9 @@ namespace BBDown
                 if (bindingContext.ParseResult.HasOption(ForceHttp)) option.ForceHttp = bindingContext.ParseResult.GetValueForOption(ForceHttp)!;
                 if (bindingContext.ParseResult.HasOption(DownloadDanmaku)) option.DownloadDanmaku = bindingContext.ParseResult.GetValueForOption(DownloadDanmaku)!;
                 if (bindingContext.ParseResult.HasOption(SkipAi)) option.SkipAi = bindingContext.ParseResult.GetValueForOption(SkipAi)!;
-                if (bindingContext.ParseResult.HasOption(BandwithAscending)) option.BandwithAscending = bindingContext.ParseResult.GetValueForOption(BandwithAscending)!;
+                if (bindingContext.ParseResult.HasOption(VideoAscending)) option.VideoAscending = bindingContext.ParseResult.GetValueForOption(VideoAscending)!;
+                if (bindingContext.ParseResult.HasOption(AudioAscending)) option.AudioAscending = bindingContext.ParseResult.GetValueForOption(AudioAscending)!;
+                if (bindingContext.ParseResult.HasOption(AllowPcdn)) option.AllowPcdn = bindingContext.ParseResult.GetValueForOption(AllowPcdn)!;
                 if (bindingContext.ParseResult.HasOption(FilePattern)) option.FilePattern = bindingContext.ParseResult.GetValueForOption(FilePattern)!;
                 if (bindingContext.ParseResult.HasOption(MultiFilePattern)) option.MultiFilePattern = bindingContext.ParseResult.GetValueForOption(MultiFilePattern)!;
                 if (bindingContext.ParseResult.HasOption(SelectPage)) option.SelectPage = bindingContext.ParseResult.GetValueForOption(SelectPage)!;
@@ -119,6 +124,7 @@ namespace BBDown
                 if (bindingContext.ParseResult.HasOption(OnlyAv1)) option.OnlyAv1 = bindingContext.ParseResult.GetValueForOption(OnlyAv1)!;
                 if (bindingContext.ParseResult.HasOption(AddDfnSubfix)) option.AddDfnSubfix = bindingContext.ParseResult.GetValueForOption(AddDfnSubfix)!;
                 if (bindingContext.ParseResult.HasOption(NoPaddingPageNum)) option.NoPaddingPageNum = bindingContext.ParseResult.GetValueForOption(NoPaddingPageNum)!;
+                if (bindingContext.ParseResult.HasOption(BandwithAscending)) option.BandwithAscending = bindingContext.ParseResult.GetValueForOption(BandwithAscending)!;
                 return option;
             }
         }
@@ -152,7 +158,9 @@ namespace BBDown
                 ForceHttp,
                 DownloadDanmaku,
                 SkipAi,
-                BandwithAscending,
+                VideoAscending,
+                AudioAscending,
+                AllowPcdn,
                 FilePattern,
                 MultiFilePattern,
                 SelectPage,
@@ -175,7 +183,8 @@ namespace BBDown
                 OnlyAvc,
                 OnlyAv1,
                 AddDfnSubfix,
-                NoPaddingPageNum
+                NoPaddingPageNum,
+                BandwithAscending
             };
 
             rootCommand.SetHandler(async (myOption) => await action(myOption), new MyOptionBinder());
