@@ -35,7 +35,7 @@ namespace BBDown.Core
                 (tvApi ? "" : "&fourk=1") + (Config.AREA != "" ? Config.TOKEN != "" ? $"&access_key={Config.TOKEN}&area={Config.AREA}" : $"&area={Config.AREA}" : "") +
                 (tvApi ? "&device=android&platform=android&mobi_app=android_tv_yst&npcybs=0&force_host=2&build=102801" +
                 (Config.TOKEN != "" ? $"&access_key={Config.TOKEN}" : "") : "") + $"&otype=json&qn={qn}" +
-                (bangumi ? $"&module=bangumi&ep_id={epId}&fourk=1&session=" : $"&try_look=1&wts={GetTimeStamp(true)}");
+                (bangumi ? $"&module=bangumi&ep_id={epId}&fourk=1&session=" : Config.COOKIE != "" ? $"&wts={GetTimeStamp(true)}" : $"&try_look=1&wts={GetTimeStamp(true)}");
             api = $"https://{prefix}?{(bangumi ? api : WbiSign(api))}";
             if (tvApi && bangumi)
             {
