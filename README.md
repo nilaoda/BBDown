@@ -58,8 +58,10 @@ Options:
   --skip-cover                                   跳过封面下载
   --force-http                                   下载音视频时强制使用HTTP协议替换HTTPS(默认开启)
   -dd, --download-danmaku                        下载弹幕
-  --skip-ai                                      跳过AI字幕下载 [default: True]
-  --bandwith-ascending                           比特率升序(最小体积优先)
+  --skip-ai                                      跳过AI字幕下载(默认开启)
+  --video-ascending                              视频升序(最小体积优先)
+  --audio-ascending                              音频升序(最小体积优先)
+  --allow-pcdn                                   不替换PCDN域名, 仅在正常情况与--upos-host均无法下载时使用
   -F, --file-pattern <file-pattern>              使用内置变量自定义单P存储文件名:
 
                                                  <videoTitle>: 视频主标题
