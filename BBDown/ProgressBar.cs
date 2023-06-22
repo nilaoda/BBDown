@@ -20,8 +20,9 @@ namespace BBDown
 		private bool disposed = false;
 		private int animationIndex = 0;
 
-		//速度计算
-		private long lastDownloadedBytes = 0;
+        //速度计算
+        private readonly TimeSpan speedCalcInterval = TimeSpan.FromSeconds(1);
+        private long lastDownloadedBytes = 0;
 		private long downloadedBytes = 0;
 		private string speedString = "";
         private readonly Timer speedTimer;
@@ -29,7 +30,7 @@ namespace BBDown
         public ProgressBar()
 		{
 			timer = new Timer(TimerHandler);
-			speedTimer = new Timer(SpeedTimerHandler, null, 100, 1000);
+			speedTimer = new Timer(SpeedTimerHandler);
 
             // A progress bar is only for temporary display in a console window.
             // If the console output is redirected to a file, draw nothing.
@@ -37,7 +38,9 @@ namespace BBDown
             if (!Console.IsOutputRedirected)
 			{
 				ResetTimer();
-			}
+				ResetSpeedTimer();
+
+            }
 		}
 
 		public void Report(double value)
@@ -66,6 +69,8 @@ namespace BBDown
                     speedString = " - " + BBDownUtil.FormatFileSize(downloadedBytes - lastDownloadedBytes) + "/s";
                     lastDownloadedBytes = downloadedBytes;
                 }
+
+				ResetSpeedTimer();
             }
         }
 
@@ -120,9 +125,14 @@ namespace BBDown
 		private void ResetTimer()
 		{
             timer.Change(animationInterval, TimeSpan.FromMilliseconds(-1));
-		}
+        }
 
-		public void Dispose()
+        private void ResetSpeedTimer()
+        {
+            speedTimer.Change(speedCalcInterval, TimeSpan.FromMilliseconds(-1));
+        }
+
+        public void Dispose()
 		{
 			lock (timer)
 			{

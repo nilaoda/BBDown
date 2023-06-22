@@ -428,7 +428,7 @@ namespace BBDown
             List<Clip> clips = new();
             int index = 0;
             long counter = 0;
-            int perSize = 10 * 1024 * 1024;
+            int perSize = 20 * 1024 * 1024;
             while (fileSize > 0)
             {
                 Clip c = new()
