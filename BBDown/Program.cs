@@ -544,12 +544,13 @@ namespace BBDown
                             {
                                 LogDebug("获取字幕...");
                                 subtitleInfo = await SubUtil.GetSubtitlesAsync(p.aid, p.cid, p.epid, p.index, intlApi);
+                                if (skipAi && subtitleInfo.Count > 0)
+                                {
+                                    Log($"跳过下载AI字幕");
+                                    subtitleInfo = subtitleInfo.Where(s => !s.lan.StartsWith("ai-")).ToList();
+                                }
                                 foreach (Subtitle s in subtitleInfo)
                                 {
-                                    if (skipAi && s.lan.StartsWith("ai-")) {
-                                        Log($"跳过下载AI字幕 {s.lan} => {SubUtil.GetSubtitleCode(s.lan).Item2}");
-                                        continue;
-                                    }
                                     Log($"下载字幕 {s.lan} => {SubUtil.GetSubtitleCode(s.lan).Item2}...");
                                     LogDebug("下载：{0}", s.url);
                                     await SubUtil.SaveSubtitleAsync(s.url, s.path);
@@ -706,6 +707,10 @@ namespace BBDown
                             if (audioTracks.Count > 0)
                                 LogColor($"[音频] [{audioTracks[aIndex].codecs}] [{audioTracks[aIndex].bandwith} kbps] [~{FormatFileSize(audioTracks[aIndex].dur * audioTracks[aIndex].bandwith * 1024 / 8)}]", false);
 
+                            //用户开启了强制替换
+                            if (myOption.ForceReplaceHost)
+                                uposHost = BACKUP_HOST;
+
                             if (uposHost == "")
                             {
                                 //处理PCDN
@@ -741,12 +746,12 @@ namespace BBDown
                                 var uposReg = UposRegex();
                                 if (videoTracks.Count > 0)
                                 {
-                                    Log($"尝试将视频流强制替换为{uposHost}……");
+                                    LogWarn($"尝试将视频流强制替换为{uposHost}……");
                                     videoTracks[vIndex].baseUrl = uposReg.Replace(videoTracks[vIndex].baseUrl, $"://{uposHost}/");
                                 }
                                 if (audioTracks.Count > 0)
                                 {
-                                    Log($"尝试将音频流强制替换为{uposHost}……");
+                                    LogWarn($"尝试将音频流强制替换为{uposHost}……");
                                     audioTracks[aIndex].baseUrl = uposReg.Replace(audioTracks[aIndex].baseUrl, $"://{uposHost}/");
                                 }
                             }
