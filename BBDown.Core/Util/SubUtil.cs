@@ -212,61 +212,83 @@ namespace BBDown.Core.Util
             };
         }
 
-        public static async Task<List<Subtitle>> GetSubtitlesAsync(string aid, string cid, string epId, int index, bool intl)
-        {
-            List<Subtitle> subtitles = new();
-            if (intl)
-            {
-                try
-                {
-                    string api = "https://" + (Config.EPHOST == "api.bilibili.com" ? "api.biliintl.com" : Config.EPHOST) + $"/intl/gateway/web/v2/subtitle?episode_id={epId}";
-                    string json = await GetWebSourceAsync(api);
-                    using var infoJson = JsonDocument.Parse(json);
-                    var subs = infoJson.RootElement.GetProperty("data").GetProperty("subtitles").EnumerateArray();
-                    foreach (var sub in subs)
-                    {
-                        var lan = sub.GetProperty("lang_key").ToString();
-                        var url = sub.GetProperty("url").ToString();
-                        Subtitle subtitle = new()
-                        {
-                            url = url,
-                            lan = lan,
-                            path = $"{aid}/{aid}.{cid}.{lan}{(url.Contains(".json") ? ".srt" : ".ass")}"
-                        };
-                        subtitles.Add(subtitle);
-                    }
-                    return subtitles;
-                }
-                catch (Exception)
-                {
-                    try
-                    {
-                        string api = "https://" + (Config.HOST == "api.bilibili.com" ? "api.bilibili.tv" : Config.HOST) +
-                            $"/intl/gateway/v2/ogv/view/app/season?ep_id={epId}&platform=android&s_locale=zh_SG" + (Config.TOKEN != "" ? $"&access_key={Config.TOKEN}" : "");
-                        string json = await GetWebSourceAsync(api);
-                        using var infoJson = JsonDocument.Parse(json);
-                        var subs = infoJson.RootElement.GetProperty("result").GetProperty("modules")[0].GetProperty("data")
-                            .GetProperty("episodes")[index-1].GetProperty("subtitles").EnumerateArray();
-                        foreach (var sub in subs)
-                        {
-                            var lan = sub.GetProperty("key").ToString();
-                            var url = sub.GetProperty("url").ToString().Replace("\\\\/", "/");
-                            Subtitle subtitle = new()
-                            {
-                                url = url,
-                                lan = lan,
-                                path = $"{aid}/{aid}.{cid}.{lan}{(url.Contains(".json") ? ".srt" : ".ass")}"
-                            };
-                            subtitles.Add(subtitle);
-                        }
-                        return subtitles;
-                    }
-                    catch (Exception) { return subtitles; } //返回空列表
-                }
-            }
+        #region 字幕接口
 
+        private static async Task<List<Subtitle>?> GetIntlSubtitlesFromApi1Async(string aid, string cid, string epId, int index)
+        {
             try
             {
+                List<Subtitle> subtitles = new();
+                string api = "https://" + (Config.EPHOST == "api.bilibili.com" ? "api.biliintl.com" : Config.EPHOST) + $"/intl/gateway/web/v2/subtitle?episode_id={epId}";
+                string json = await GetWebSourceAsync(api);
+                using var infoJson = JsonDocument.Parse(json);
+                var subs = infoJson.RootElement.GetProperty("data").GetProperty("subtitles").EnumerateArray();
+                foreach (var sub in subs)
+                {
+                    var lan = sub.GetProperty("lang_key").ToString();
+                    var url = sub.GetProperty("url").ToString();
+                    Subtitle subtitle = new()
+                    {
+                        url = url,
+                        lan = lan,
+                        path = $"{aid}/{aid}.{cid}.{lan}{(url.Contains(".json") ? ".srt" : ".ass")}"
+                    };
+
+                    //有空的URL 不合法
+                    if (subtitles.Any(s => string.IsNullOrEmpty(s.url)))
+                        throw new Exception("Bad url");
+
+                    subtitles.Add(subtitle);
+                }
+                return subtitles;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        private static async Task<List<Subtitle>?> GetIntlSubtitlesFromApi2Async(string aid, string cid, string epId, int index)
+        {
+            try
+            {
+                List<Subtitle> subtitles = new();
+                string api = "https://" + (Config.HOST == "api.bilibili.com" ? "api.bilibili.tv" : Config.HOST) +
+                            $"/intl/gateway/v2/ogv/view/app/season?ep_id={epId}&platform=android&s_locale=zh_SG" + (Config.TOKEN != "" ? $"&access_key={Config.TOKEN}" : "");
+                string json = await GetWebSourceAsync(api);
+                using var infoJson = JsonDocument.Parse(json);
+                var subs = infoJson.RootElement.GetProperty("result").GetProperty("modules")[0].GetProperty("data")
+                    .GetProperty("episodes")[index - 1].GetProperty("subtitles").EnumerateArray();
+                foreach (var sub in subs)
+                {
+                    var lan = sub.GetProperty("key").ToString();
+                    var url = sub.GetProperty("url").ToString().Replace("\\\\/", "/");
+                    Subtitle subtitle = new()
+                    {
+                        url = url,
+                        lan = lan,
+                        path = $"{aid}/{aid}.{cid}.{lan}{(url.Contains(".json") ? ".srt" : ".ass")}"
+                    };
+
+                    //有空的URL 不合法
+                    if (subtitles.Any(s => string.IsNullOrEmpty(s.url)))
+                        throw new Exception("Bad url");
+
+                    subtitles.Add(subtitle);
+                }
+                return subtitles;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        private static async Task<List<Subtitle>?> GetSubtitlesFromApi1Async(string aid, string cid, string epId, int index)
+        {
+            try
+            {
+                List<Subtitle> subtitles = new();
                 string api = $"https://api.bilibili.com/x/web-interface/view?aid={aid}&cid={cid}";
                 string json = await GetWebSourceAsync(api);
                 using var infoJson = JsonDocument.Parse(json);
@@ -282,6 +304,11 @@ namespace BBDown.Core.Util
                     };
                     subtitles.Add(subtitle);
                 }
+
+                //有空的URL 不合法
+                if (subtitles.Any(s => string.IsNullOrEmpty(s.url)))
+                    throw new Exception("Bad url");
+
                 //无字幕片源 但是字幕没上导致的空列表，尝试从国际接口获取
                 //if (subtitles.Count == 0 && !string.IsNullOrEmpty(epId))
                 //{
@@ -291,70 +318,125 @@ namespace BBDown.Core.Util
             }
             catch (Exception)
             {
-                try
-                {
-                    string api = $"https://api.bilibili.com/x/player/v2?cid={cid}&aid={aid}";
-                    string json = await GetWebSourceAsync(api);
-                    using var infoJson = JsonDocument.Parse(json);
-                    var subs = infoJson.RootElement.GetProperty("data").GetProperty("subtitle").GetProperty("subtitles").EnumerateArray();
-                    foreach (var sub in subs)
-                    {
-                        var lan = sub.GetProperty("lan").ToString();
-                        Subtitle subtitle = new()
-                        {
-                            url = "https:" + sub.GetProperty("subtitle_url").ToString(),
-                            lan = lan,
-                            path = $"{aid}/{aid}.{cid}.{lan}.srt"
-                        };
-                        subtitles.Add(subtitle);
-                    }
-                    return subtitles;
-                }
-                catch (Exception)
-                {
-                    try
-                    {
-                        //grpc调用接口 protobuf
-                        string api = "https://app.biliapi.net/bilibili.community.service.dm.v1.DM/DmView";
-                        int _aid = Convert.ToInt32(aid);
-                        int _cid = Convert.ToInt32(cid);
-                        int _type = 1;
-                        byte[] data = new byte[18];
-                        data[0] = 0x0; data[1] = 0x0; data[2] = 0x0; data[3] = 0x0; data[4] = 0xD; //先固定死了
-                        int i = 5;
-                        data[i++] = Convert.ToByte((1 << 3) | 0); // index=1
-                        while ((_aid & -128) != 0)
-                        {
-                            data[i++] = Convert.ToByte((_aid & 127) | 128);
-                            _aid >>= 7;
-                        }
-                        data[i++] = Convert.ToByte(_aid);
-                        data[i++] = Convert.ToByte((2 << 3) | 0); // index=2
-                        while ((_cid & -128) != 0)
-                        {
-                            data[i++] = Convert.ToByte((_cid & 127) | 128);
-                            _cid >>= 7;
-                        }
-                        data[i++] = Convert.ToByte(_cid);
-                        data[i++] = Convert.ToByte((3 << 3) | 0); // index=3
-                        data[i++] = Convert.ToByte(_type);
-                        string t = await GetPostResponseAsync(api, data);
-                        Regex reg = CnJsonRegex();
-                        foreach (Match m in reg.Matches(t).Cast<Match>())
-                        {
-                            Subtitle subtitle = new()
-                            {
-                                url = m.Groups[2].Value,
-                                lan = m.Groups[1].Value,
-                                path = $"{aid}/{aid}.{cid}.{m.Groups[1].Value}.srt"
-                            };
-                            subtitles.Add(subtitle);
-                        }
-                        return subtitles;
-                    }
-                    catch (Exception) { return subtitles; } //返回空列表
-                }
+                return null;
             }
+        }
+
+        private static async Task<List<Subtitle>?> GetSubtitlesFromApi2Async(string aid, string cid, string epId, int index)
+        {
+            try
+            {
+                List<Subtitle> subtitles = new();
+                string api = $"https://api.bilibili.com/x/player/v2?cid={cid}&aid={aid}";
+                string json = await GetWebSourceAsync(api);
+                using var infoJson = JsonDocument.Parse(json);
+                var subs = infoJson.RootElement.GetProperty("data").GetProperty("subtitle").GetProperty("subtitles").EnumerateArray();
+                foreach (var sub in subs)
+                {
+                    var lan = sub.GetProperty("lan").ToString();
+                    Subtitle subtitle = new()
+                    {
+                        url = sub.GetProperty("subtitle_url").ToString(),
+                        lan = lan,
+                        path = $"{aid}/{aid}.{cid}.{lan}.srt"
+                    };
+                    subtitles.Add(subtitle);
+                }
+
+                //有空的URL 不合法
+                if (subtitles.Any(s => string.IsNullOrEmpty(s.url)))
+                    throw new Exception("Bad url");
+
+                return subtitles;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        private static async Task<List<Subtitle>?> GetSubtitlesFromApi3Async(string aid, string cid, string epId, int index)
+        {
+            try
+            {
+                List<Subtitle> subtitles = new();
+                //grpc调用接口 protobuf
+                string api = "https://app.biliapi.net/bilibili.community.service.dm.v1.DM/DmView";
+                int _aid = Convert.ToInt32(aid);
+                int _cid = Convert.ToInt32(cid);
+                int _type = 1;
+                byte[] data = new byte[18];
+                data[0] = 0x0; data[1] = 0x0; data[2] = 0x0; data[3] = 0x0; data[4] = 0xD; //先固定死了
+                int i = 5;
+                data[i++] = Convert.ToByte((1 << 3) | 0); // index=1
+                while ((_aid & -128) != 0)
+                {
+                    data[i++] = Convert.ToByte((_aid & 127) | 128);
+                    _aid >>= 7;
+                }
+                data[i++] = Convert.ToByte(_aid);
+                data[i++] = Convert.ToByte((2 << 3) | 0); // index=2
+                while ((_cid & -128) != 0)
+                {
+                    data[i++] = Convert.ToByte((_cid & 127) | 128);
+                    _cid >>= 7;
+                }
+                data[i++] = Convert.ToByte(_cid);
+                data[i++] = Convert.ToByte((3 << 3) | 0); // index=3
+                data[i++] = Convert.ToByte(_type);
+                string t = await GetPostResponseAsync(api, data);
+                Regex reg = CnJsonRegex();
+                foreach (Match m in reg.Matches(t).Cast<Match>())
+                {
+                    Subtitle subtitle = new()
+                    {
+                        url = m.Groups[2].Value,
+                        lan = m.Groups[1].Value,
+                        path = $"{aid}/{aid}.{cid}.{m.Groups[1].Value}.srt"
+                    };
+                    subtitles.Add(subtitle);
+                }
+
+                //有空的URL 不合法
+                if (subtitles.Any(s => string.IsNullOrEmpty(s.url)))
+                    throw new Exception("Bad url");
+
+                return subtitles;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        #endregion
+
+        public static async Task<List<Subtitle>> GetSubtitlesAsync(string aid, string cid, string epId, int index, bool intl)
+        {
+            List<Subtitle>? subtitles = new();
+            if (intl)
+            {
+                subtitles = await GetIntlSubtitlesFromApi1Async(aid, cid, epId, index) ?? await GetIntlSubtitlesFromApi2Async(aid, cid, epId, index);
+            }
+            else
+            {
+                subtitles = await GetSubtitlesFromApi2Async(aid, cid, epId, index)
+                    ?? await GetSubtitlesFromApi1Async(aid, cid, epId, index)
+                    ?? await GetSubtitlesFromApi3Async(aid, cid, epId, index);
+            }
+
+            if (subtitles == null)
+            {
+                return new List<Subtitle>(); //返回空列表
+            }
+
+            //修正 url 协议
+            foreach (var item in subtitles)
+            {
+                if (item.url.StartsWith("//")) item.url = "https:" + item.url;
+            }
+
+            return subtitles;
         }
 
         public static async Task SaveSubtitleAsync(string url, string path)
