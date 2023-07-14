@@ -263,6 +263,16 @@ namespace BBDown.Core
                             urlList.AddRange(element.EnumerateArray().ToList().Select(i => i.ToString()));
                         }
                         var audioId = node.GetProperty("id").ToString();
+                        var codecs = node.GetProperty("codecs").ToString();
+                        codecs = codecs switch
+                        {
+                            "mp4a.40.2" => "M4A",
+                            "mp4a.40.5" => "M4A",
+                            "ec-3" => "E-AC-3",
+                            "fLaC" => "FLAC",
+                            _ => codecs
+                        };
+
                         Audio a = new()
                         {
                             id = audioId,
@@ -270,7 +280,7 @@ namespace BBDown.Core
                             dur = pDur,
                             bandwith = Convert.ToInt64(node.GetProperty("bandwidth").ToString()) / 1000,
                             baseUrl = urlList.FirstOrDefault(i => !BaseUrlRegex().IsMatch(i), urlList.First()),
-                            codecs = node.GetProperty("codecs").ToString().Replace("mp4a.40.2", "M4A").Replace("ec-3", "E-AC-3").Replace("fLaC", "FLAC")
+                            codecs = codecs
                         };
                         audioTracks.Add(a);
                     }
