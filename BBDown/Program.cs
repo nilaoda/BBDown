@@ -557,7 +557,7 @@ namespace BBDown
                                     await SubUtil.SaveSubtitleAsync(s.url, s.path);
                                     if (subOnly && File.Exists(s.path) && File.ReadAllText(s.path) != "")
                                     {
-                                        var _outSubPath = FormatSavePath(savePathFormat, title, null, null, p, pagesCount, tvApi, appApi, intlApi);
+                                        var _outSubPath = FormatSavePath(savePathFormat, title, null, null, p, pagesCount, tvApi, appApi, intlApi, pubTime);
                                         if (_outSubPath.Contains('/'))
                                         {
                                             if (!Directory.Exists(_outSubPath.Split('/').First()))
@@ -638,7 +638,7 @@ namespace BBDown
                             if (downloadDanmaku)
                             {
                                 LogDebug("Format Before: " + savePathFormat);
-                                savePath = FormatSavePath(savePathFormat, title, videoTracks.ElementAtOrDefault(vIndex), audioTracks.ElementAtOrDefault(aIndex), p, pagesCount, tvApi, appApi, intlApi);
+                                savePath = FormatSavePath(savePathFormat, title, videoTracks.ElementAtOrDefault(vIndex), audioTracks.ElementAtOrDefault(aIndex), p, pagesCount, tvApi, appApi, intlApi, pubTime);
                                 LogDebug("Format After: " + savePath);
                                 var danmakuXmlPath = savePath[..savePath.LastIndexOf('.')] + ".xml";
                                 var danmakuAssPath = savePath[..savePath.LastIndexOf('.')] + ".ass";
@@ -688,7 +688,7 @@ namespace BBDown
                             }
 
                             LogDebug("Format Before: " + savePathFormat);
-                            savePath = FormatSavePath(savePathFormat, title, videoTracks.ElementAtOrDefault(vIndex), audioTracks.ElementAtOrDefault(aIndex), p, pagesCount, tvApi, appApi, intlApi);
+                            savePath = FormatSavePath(savePathFormat, title, videoTracks.ElementAtOrDefault(vIndex), audioTracks.ElementAtOrDefault(aIndex), p, pagesCount, tvApi, appApi, intlApi, pubTime);
                             LogDebug("Format After: " + savePath);
 
                             if (coverOnly)
@@ -888,7 +888,7 @@ namespace BBDown
                                 }
                             }
                             if (infoMode) continue;
-                            savePath = FormatSavePath(savePathFormat, title, videoTracks.ElementAtOrDefault(vIndex), null, p, pagesCount, tvApi, appApi, intlApi);
+                            savePath = FormatSavePath(savePathFormat, title, videoTracks.ElementAtOrDefault(vIndex), null, p, pagesCount, tvApi, appApi, intlApi, pubTime);
                             if (File.Exists(savePath) && new FileInfo(savePath).Length != 0)
                             {
                                 Log($"{savePath}已存在, 跳过下载...");
@@ -1037,7 +1037,7 @@ namespace BBDown
                     .ToList();
         }
 
-        private static string FormatSavePath(string savePathFormat, string title, Video? videoTrack, Audio? audioTrack, Page p, int pagesCount, bool tvApi, bool appApi, bool intlApi)
+        private static string FormatSavePath(string savePathFormat, string title, Video? videoTrack, Audio? audioTrack, Page p, int pagesCount, bool tvApi, bool appApi, bool intlApi, string pubTime)
         {
             var result = savePathFormat.Replace('\\', '/');
             var regex = InfoRegex();
@@ -1061,6 +1061,7 @@ namespace BBDown
                     "videoBandwidth" => videoTrack == null ? "" : videoTrack.bandwith.ToString(),
                     "audioCodecs" => audioTrack == null ? "" : audioTrack.codecs,
                     "audioBandwidth" => audioTrack == null ? "" : audioTrack.bandwith.ToString(),
+                    "publishDate" => string.IsNullOrEmpty(pubTime) ? "" : DateTime.Parse(pubTime).ToString("yyyy-MM-dd_HH-mm-ss"),
                     "apiType" => tvApi ? "TV" : (appApi ? "APP" : (intlApi ? "INTL" : "WEB")),
                     _ => $"<{key}>"
                 };
