@@ -68,6 +68,7 @@ Options:
                                                  <pageNumber>: 视频分P序号
                                                  <pageNumberWithZero>: 视频分P序号(前缀补零)
                                                  <pageTitle>: 视频分P标题
+                                                 <bvid>: 视频BV号
                                                  <aid>: 视频aid
                                                  <cid>: 视频cid
                                                  <dfn>: 视频清晰度
@@ -79,6 +80,7 @@ Options:
                                                  <audioBandwidth>: 音频码率
                                                  <ownerName>: 上传者名称
                                                  <ownerMid>: 上传者mid
+                                                 <publishDate>: 发布时间
                                                  <apiType>: API类型(TV/APP/INTL/WEB)
 
                                                  默认为: <videoTitle>
@@ -95,11 +97,10 @@ Options:
   --mp4box-path <mp4box-path>                    设置mp4box的路径
   --aria2c-path <aria2c-path>                    设置aria2c的路径
   --upos-host <upos-host>                        自定义upos服务器
+  --force-replace-host                           强制替换下载服务器host(默认开启)
   --delay-per-page <delay-per-page>              设置下载合集分P之间的下载间隔时间(单位: 秒, 默认无间隔)
-  --host <host>                                  指定BiliPlus host(使用BiliPlus需要access_token, 不需要cookie,
-                                                 解析服务器能够获取你账号的大部分权限!)
-  --ep-host <ep-host>                            指定BiliPlus EP host(用于代理api.bilibili.com/pgc/view/web/season,
-                                                 大部分解析服务器不支持代理该接口)
+  --host <host>                                  指定BiliPlus host(使用BiliPlus需要access_token, 不需要cookie, 解析服务器能够获取你账号的大部分权限!)
+  --ep-host <ep-host>                            指定BiliPlus EP host(用于代理api.bilibili.com/pgc/view/web/season, 大部分解析服务器不支持代理该接口)
   --area <area>                                  (hk|tw|th) 使用BiliPlus时必选, 指定BiliPlus area
   --config-file <config-file>                    读取指定的BBDown本地配置文件(默认为: BBDown.config)
   --version                                      Show version information
@@ -179,6 +180,7 @@ Commands:
 `<pageNumber>`|视频分P序号
 `<pageNumberWithZero>`|视频分P序号(前缀补零)
 `<pageTitle>`|视频分P标题
+`<bvid>`|视频BV号
 `<aid>`|视频aid
 `<cid>`|视频cid
 `<dfn>`|视频清晰度
@@ -190,6 +192,7 @@ Commands:
 `<audioBandwidth>`|音频码率
 `<ownerName>`|上传者名称(下载番剧时，该值为"")
 `<ownerMid>`|上传者mid(下载番剧时，该值为"")
+`<publishDate>`|发布时间(yyyy-MM-dd_HH-mm-ss)
 `<apiType>`|API类型（TV/APP/INTL/WEB）
 
 </details>
