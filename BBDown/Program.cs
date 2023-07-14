@@ -96,6 +96,7 @@ namespace BBDown
                     LogError(ex.Message);
                     try { Console.CursorVisible = true; } catch { }
                     Thread.Sleep(3000);
+                    Environment.Exit(1);
                 }, 1)
                 .Build();
 
