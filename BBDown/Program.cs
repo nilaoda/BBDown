@@ -1062,7 +1062,7 @@ namespace BBDown
                     "videoBandwidth" => videoTrack == null ? "" : videoTrack.bandwith.ToString(),
                     "audioCodecs" => audioTrack == null ? "" : audioTrack.codecs,
                     "audioBandwidth" => audioTrack == null ? "" : audioTrack.bandwith.ToString(),
-                    "publishDate" => string.IsNullOrEmpty(pubTime) ? "" : DateTime.Parse(pubTime).ToString("yyyy-MM-dd_HH-mm-ss"),
+                    "publishDate" => (string.IsNullOrEmpty(pubTime) || !DateTime.TryParse(pubTime, out var dt)) ? "" : dt.ToString("yyyy-MM-dd_HH-mm-ss"),
                     "apiType" => tvApi ? "TV" : (appApi ? "APP" : (intlApi ? "INTL" : "WEB")),
                     _ => $"<{key}>"
                 };
