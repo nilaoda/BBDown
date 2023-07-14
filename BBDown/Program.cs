@@ -1050,6 +1050,7 @@ namespace BBDown
                     "pageNumber" => p.index.ToString(),
                     "pageNumberWithZero" => p.index.ToString().PadLeft((int)Math.Log10(pagesCount) + 1, '0'),
                     "pageTitle" => GetValidFileName(p.title, filterSlash: true).Trim().TrimEnd('.').Trim(),
+                    "bvid" => p.bvid,
                     "aid" => p.aid,
                     "cid" => p.cid,
                     "ownerName" => p.ownerName == null ? "" : GetValidFileName(p.ownerName, filterSlash: true).Trim().TrimEnd('.').Trim(),

@@ -36,6 +36,7 @@ namespace BBDown
         public bool VideoAscending { get; set; } = false;
         public bool AudioAscending { get; set; } = false;
         public bool AllowPcdn { get; set; } = false;
+        public bool ForceReplaceHost { get; set; } = true;
         public string FilePattern { get; set; } = "";
         public string MultiFilePattern { get; set; } = "";
         public string SelectPage { get; set; } = "";

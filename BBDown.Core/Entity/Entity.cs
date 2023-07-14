@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using BBDown.Core.Util;
+using System.Diagnostics.CodeAnalysis;
 
 namespace BBDown.Core.Entity
 {
@@ -17,6 +18,10 @@ namespace BBDown.Core.Entity
             public string? desc;
             public string? ownerName;
             public string? ownerMid;
+            public string bvid
+            {
+                get => BilibiliBvConverter.Encode(long.Parse(aid));
+            }
             public List<ViewPoint> points = new();
 
             [SetsRequiredMembers]
