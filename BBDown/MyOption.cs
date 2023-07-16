@@ -32,8 +32,11 @@ namespace BBDown
         public bool SkipCover { get; set; }
         public bool ForceHttp { get; set; } = true;
         public bool DownloadDanmaku { get; set; } = false;
-        public bool SkipAi { get; set; } = false;
-        public bool BandwithAscending { get; set; } = false;
+        public bool SkipAi { get; set; } = true;
+        public bool VideoAscending { get; set; } = false;
+        public bool AudioAscending { get; set; } = false;
+        public bool AllowPcdn { get; set; } = false;
+        public bool ForceReplaceHost { get; set; } = true;
         public string FilePattern { get; set; } = "";
         public string MultiFilePattern { get; set; } = "";
         public string SelectPage { get; set; } = "";
@@ -58,5 +61,6 @@ namespace BBDown
         public bool OnlyAv1 { get; set; }
         public bool AddDfnSubfix { get; set; }
         public bool NoPaddingPageNum { get; set; }
+        public bool BandwithAscending { get; set; }
     }
 }

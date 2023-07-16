@@ -96,6 +96,7 @@ namespace BBDown
                     LogError(ex.Message);
                     try { Console.CursorVisible = true; } catch { }
                     Thread.Sleep(3000);
+                    Environment.Exit(1);
                 }, 1)
                 .Build();
 
@@ -181,6 +182,12 @@ namespace BBDown
                         LogWarn($"已切换至 -M \"{MultiPageDefaultSavePath}\"");
                     }
                 }
+                if (myOption.BandwithAscending)
+                {
+                    LogWarn("--bandwith-ascending 已被弃用, 建议使用 --video-ascending 与 --audio-ascending 来指定视频或音频是否升序, 本次执行已将视频与音频均设为升序");
+                    myOption.VideoAscending = true;
+                    myOption.AudioAscending = true;
+                }
 
                 bool interactMode = myOption.Interactive;
                 bool infoMode = myOption.OnlyShowInfo;
@@ -227,7 +234,9 @@ namespace BBDown
                 bool forceHttp = myOption.ForceHttp;
                 bool downloadDanmaku = myOption.DownloadDanmaku || danmakuOnly;
                 bool skipAi = myOption.SkipAi;
-                bool bandwithAscending = myOption.BandwithAscending;
+                bool videoAscending = myOption.VideoAscending;
+                bool audioAscending = myOption.AudioAscending;
+                bool allowPcdn = myOption.AllowPcdn;
                 bool showAll = myOption.ShowAll;
                 bool useAria2c = myOption.UseAria2c;
                 string aria2cArgs = myOption.Aria2cArgs;
@@ -354,7 +363,7 @@ namespace BBDown
                 }
 
                 // 检测是否登录了账号
-                (bool is_login, string wbi) = await CheckLogin(Config.COOKIE);
+                bool is_login = await CheckLogin(Config.COOKIE);
                 if (!intlApi && !tvApi && Config.AREA == "")
                 {
                     Log("检测账号登录...");
@@ -411,7 +420,6 @@ namespace BBDown
                 else if (aidOri.StartsWith("mid"))
                 {
                     fetcher = new SpaceVideoFetcher();
-                    aidOri += $"|{wbi}";
                 }
                 else if (aidOri.StartsWith("listBizId"))
                 {
@@ -537,18 +545,19 @@ namespace BBDown
                             {
                                 LogDebug("获取字幕...");
                                 subtitleInfo = await SubUtil.GetSubtitlesAsync(p.aid, p.cid, p.epid, p.index, intlApi);
+                                if (skipAi && subtitleInfo.Count > 0)
+                                {
+                                    Log($"跳过下载AI字幕");
+                                    subtitleInfo = subtitleInfo.Where(s => !s.lan.StartsWith("ai-")).ToList();
+                                }
                                 foreach (Subtitle s in subtitleInfo)
                                 {
-                                    if (skipAi && s.lan.StartsWith("ai-")) {
-                                        Log($"跳过下载AI字幕 {s.lan} => {SubUtil.GetSubtitleCode(s.lan).Item2}");
-                                        continue;
-                                    }
                                     Log($"下载字幕 {s.lan} => {SubUtil.GetSubtitleCode(s.lan).Item2}...");
                                     LogDebug("下载：{0}", s.url);
                                     await SubUtil.SaveSubtitleAsync(s.url, s.path);
                                     if (subOnly && File.Exists(s.path) && File.ReadAllText(s.path) != "")
                                     {
-                                        var _outSubPath = FormatSavePath(savePathFormat, title, null, null, p, pagesCount, tvApi, appApi, intlApi);
+                                        var _outSubPath = FormatSavePath(savePathFormat, title, null, null, p, pagesCount, tvApi, appApi, intlApi, pubTime);
                                         if (_outSubPath.Contains('/'))
                                         {
                                             if (!Directory.Exists(_outSubPath.Split('/').First()))
@@ -590,9 +599,9 @@ namespace BBDown
                             }
                             //排序
                             //videoTracks.Sort((v1, v2) => Compare(v1, v2, encodingPriority, dfnPriority));
-                            videoTracks = SortTracks(videoTracks, dfnPriority, encodingPriority, bandwithAscending);
+                            videoTracks = SortTracks(videoTracks, dfnPriority, encodingPriority, videoAscending);
                             audioTracks.Sort(Compare);
-                            if (bandwithAscending) audioTracks.Reverse();
+                            if (audioAscending) audioTracks.Reverse();
 
                             if (audioOnly) videoTracks.Clear();
                             if (videoOnly) audioTracks.Clear();
@@ -629,7 +638,7 @@ namespace BBDown
                             if (downloadDanmaku)
                             {
                                 LogDebug("Format Before: " + savePathFormat);
-                                savePath = FormatSavePath(savePathFormat, title, videoTracks.ElementAtOrDefault(vIndex), audioTracks.ElementAtOrDefault(aIndex), p, pagesCount, tvApi, appApi, intlApi);
+                                savePath = FormatSavePath(savePathFormat, title, videoTracks.ElementAtOrDefault(vIndex), audioTracks.ElementAtOrDefault(aIndex), p, pagesCount, tvApi, appApi, intlApi, pubTime);
                                 LogDebug("Format After: " + savePath);
                                 var danmakuXmlPath = savePath[..savePath.LastIndexOf('.')] + ".xml";
                                 var danmakuAssPath = savePath[..savePath.LastIndexOf('.')] + ".ass";
@@ -657,13 +666,6 @@ namespace BBDown
                                 }
                             }
 
-                            if (coverOnly)
-                            {
-                                var newCoverPath = savePath[..savePath.LastIndexOf('.')] + Path.GetExtension(pic);
-                                await DownloadCoverAsync(pic, p, newCoverPath);
-                                continue;
-                            }
-
                             if (interactMode && !hideStreams && !selected)
                             {
                                 if (videoTracks.Count > 0)
@@ -686,8 +688,16 @@ namespace BBDown
                             }
 
                             LogDebug("Format Before: " + savePathFormat);
-                            savePath = FormatSavePath(savePathFormat, title, videoTracks.ElementAtOrDefault(vIndex), audioTracks.ElementAtOrDefault(aIndex), p, pagesCount, tvApi, appApi, intlApi);
+                            savePath = FormatSavePath(savePathFormat, title, videoTracks.ElementAtOrDefault(vIndex), audioTracks.ElementAtOrDefault(aIndex), p, pagesCount, tvApi, appApi, intlApi, pubTime);
                             LogDebug("Format After: " + savePath);
+
+                            if (coverOnly)
+                            {
+                                var newCoverPath = savePath[..savePath.LastIndexOf('.')] + Path.GetExtension(pic);
+                                await DownloadCoverAsync(pic, p, newCoverPath);
+                                if (Directory.Exists(p.aid) && Directory.GetFiles(p.aid).Length == 0) Directory.Delete(p.aid, true);
+                                continue;
+                            }
 
                             Log($"已选择的流:");
                             if (videoTracks.Count > 0)
@@ -698,19 +708,26 @@ namespace BBDown
                             if (audioTracks.Count > 0)
                                 LogColor($"[音频] [{audioTracks[aIndex].codecs}] [{audioTracks[aIndex].bandwith} kbps] [~{FormatFileSize(audioTracks[aIndex].dur * audioTracks[aIndex].bandwith * 1024 / 8)}]", false);
 
+                            //用户开启了强制替换
+                            if (myOption.ForceReplaceHost)
+                                uposHost = BACKUP_HOST;
+
                             if (uposHost == "")
                             {
                                 //处理PCDN
-                                var pcdnReg = PcdnRegex();
-                                if (videoTracks.Count > 0 && pcdnReg.IsMatch(videoTracks[vIndex].baseUrl))
+                                if (!allowPcdn)
                                 {
-                                    LogWarn($"检测到视频流为PCDN, 尝试强制替换为{BACKUP_HOST}……");
-                                    videoTracks[vIndex].baseUrl = pcdnReg.Replace(videoTracks[vIndex].baseUrl, $"://{BACKUP_HOST}/");
-                                }
-                                if (audioTracks.Count > 0 && pcdnReg.IsMatch(audioTracks[aIndex].baseUrl))
-                                {
-                                    LogWarn($"检测到音频流为PCDN, 尝试强制替换为{BACKUP_HOST}……");
-                                    audioTracks[aIndex].baseUrl = pcdnReg.Replace(audioTracks[aIndex].baseUrl, $"://{BACKUP_HOST}/");
+                                    var pcdnReg = PcdnRegex();
+                                    if (videoTracks.Count > 0 && pcdnReg.IsMatch(videoTracks[vIndex].baseUrl))
+                                    {
+                                        LogWarn($"检测到视频流为PCDN, 尝试强制替换为{BACKUP_HOST}……");
+                                        videoTracks[vIndex].baseUrl = pcdnReg.Replace(videoTracks[vIndex].baseUrl, $"://{BACKUP_HOST}/");
+                                    }
+                                    if (audioTracks.Count > 0 && pcdnReg.IsMatch(audioTracks[aIndex].baseUrl))
+                                    {
+                                        LogWarn($"检测到音频流为PCDN, 尝试强制替换为{BACKUP_HOST}……");
+                                        audioTracks[aIndex].baseUrl = pcdnReg.Replace(audioTracks[aIndex].baseUrl, $"://{BACKUP_HOST}/");
+                                    }
                                 }
 
                                 var akamReg = AkamRegex();
@@ -730,12 +747,12 @@ namespace BBDown
                                 var uposReg = UposRegex();
                                 if (videoTracks.Count > 0)
                                 {
-                                    Log($"尝试将视频流强制替换为{uposHost}……");
+                                    LogWarn($"尝试将视频流强制替换为{uposHost}……");
                                     videoTracks[vIndex].baseUrl = uposReg.Replace(videoTracks[vIndex].baseUrl, $"://{uposHost}/");
                                 }
                                 if (audioTracks.Count > 0)
                                 {
-                                    Log($"尝试将音频流强制替换为{uposHost}……");
+                                    LogWarn($"尝试将音频流强制替换为{uposHost}……");
                                     audioTracks[aIndex].baseUrl = uposReg.Replace(audioTracks[aIndex].baseUrl, $"://{uposHost}/");
                                 }
                             }
@@ -841,7 +858,7 @@ namespace BBDown
                         reParse:
                             //排序
                             //videoTracks.Sort((v1, v2) => Compare(v1, v2, encodingPriority, dfnPriority));
-                            videoTracks = SortTracks(videoTracks, dfnPriority, encodingPriority, bandwithAscending);
+                            videoTracks = SortTracks(videoTracks, dfnPriority, encodingPriority, videoAscending);
 
                             if (interactMode && !flag && !selected)
                             {
@@ -871,7 +888,7 @@ namespace BBDown
                                 }
                             }
                             if (infoMode) continue;
-                            savePath = FormatSavePath(savePathFormat, title, videoTracks.ElementAtOrDefault(vIndex), null, p, pagesCount, tvApi, appApi, intlApi);
+                            savePath = FormatSavePath(savePathFormat, title, videoTracks.ElementAtOrDefault(vIndex), null, p, pagesCount, tvApi, appApi, intlApi, pubTime);
                             if (File.Exists(savePath) && new FileInfo(savePath).Length != 0)
                             {
                                 Log($"{savePath}已存在, 跳过下载...");
@@ -1002,7 +1019,7 @@ namespace BBDown
             }
         }
 
-        private static List<Video> SortTracks(List<Video> videoTracks, Dictionary<string, int> dfnPriority, Dictionary<string, byte> encodingPriority, bool bandwithAscending)
+        private static List<Video> SortTracks(List<Video> videoTracks, Dictionary<string, int> dfnPriority, Dictionary<string, byte> encodingPriority, bool videoAscending)
         {
             //用户同时输入了自定义分辨率优先级和自定义编码优先级, 则根据输入顺序依次进行排序
             return dfnPriority.Count > 0 && encodingPriority.Count > 0 && Environment.CommandLine.IndexOf("--encoding-priority") < Environment.CommandLine.IndexOf("--dfn-priority")
@@ -1010,17 +1027,17 @@ namespace BBDown
                     .OrderBy(v => encodingPriority.TryGetValue(v.codecs, out byte i) ? i : 100)
                     .ThenBy(v => dfnPriority.TryGetValue(v.dfn, out int i) ? i : 100)
                     .ThenByDescending(v => Convert.ToInt32(v.id))
-                    .ThenBy(v => bandwithAscending ? v.bandwith : -v.bandwith)
+                    .ThenBy(v => videoAscending ? v.bandwith : -v.bandwith)
                     .ToList()
                 : videoTracks
                     .OrderBy(v => dfnPriority.TryGetValue(v.dfn, out int i) ? i : 100)
                     .ThenBy(v => encodingPriority.TryGetValue(v.codecs, out byte i) ? i : 100)
                     .ThenByDescending(v => Convert.ToInt32(v.id))
-                    .ThenBy(v => bandwithAscending ? v.bandwith : -v.bandwith)
+                    .ThenBy(v => videoAscending ? v.bandwith : -v.bandwith)
                     .ToList();
         }
 
-        private static string FormatSavePath(string savePathFormat, string title, Video? videoTrack, Audio? audioTrack, Page p, int pagesCount, bool tvApi, bool appApi, bool intlApi)
+        private static string FormatSavePath(string savePathFormat, string title, Video? videoTrack, Audio? audioTrack, Page p, int pagesCount, bool tvApi, bool appApi, bool intlApi, string pubTime)
         {
             var result = savePathFormat.Replace('\\', '/');
             var regex = InfoRegex();
@@ -1033,6 +1050,7 @@ namespace BBDown
                     "pageNumber" => p.index.ToString(),
                     "pageNumberWithZero" => p.index.ToString().PadLeft((int)Math.Log10(pagesCount) + 1, '0'),
                     "pageTitle" => GetValidFileName(p.title, filterSlash: true).Trim().TrimEnd('.').Trim(),
+                    "bvid" => p.bvid,
                     "aid" => p.aid,
                     "cid" => p.cid,
                     "ownerName" => p.ownerName == null ? "" : GetValidFileName(p.ownerName, filterSlash: true).Trim().TrimEnd('.').Trim(),
@@ -1044,6 +1062,7 @@ namespace BBDown
                     "videoBandwidth" => videoTrack == null ? "" : videoTrack.bandwith.ToString(),
                     "audioCodecs" => audioTrack == null ? "" : audioTrack.codecs,
                     "audioBandwidth" => audioTrack == null ? "" : audioTrack.bandwith.ToString(),
+                    "publishDate" => (string.IsNullOrEmpty(pubTime) || !DateTime.TryParse(pubTime, out var dt)) ? "" : dt.ToString("yyyy-MM-dd_HH-mm-ss"),
                     "apiType" => tvApi ? "TV" : (appApi ? "APP" : (intlApi ? "INTL" : "WEB")),
                     _ => $"<{key}>"
                 };

@@ -37,8 +37,10 @@ namespace BBDown
         private readonly static Option<bool> SkipCover = new(new string[] { "--skip-cover" }, "跳过封面下载");
         private readonly static Option<bool> ForceHttp = new(new string[] { "--force-http" }, "下载音视频时强制使用HTTP协议替换HTTPS(默认开启)");
         private readonly static Option<bool> DownloadDanmaku = new(new string[] { "--download-danmaku", "-dd" }, "下载弹幕");
-        private readonly static Option<bool> SkipAi = new(new string[] { "--skip-ai" }, description: "跳过AI字幕下载", getDefaultValue: () => true);
-        private readonly static Option<bool> BandwithAscending = new(new string[] { "--bandwith-ascending" }, "比特率升序(最小体积优先)");
+        private readonly static Option<bool> SkipAi = new(new string[] { "--skip-ai" }, description: "跳过AI字幕下载(默认开启)");
+        private readonly static Option<bool> VideoAscending = new(new string[] { "--video-ascending" }, "视频升序(最小体积优先)");
+        private readonly static Option<bool> AudioAscending = new(new string[] { "--audio-ascending" }, "音频升序(最小体积优先)");
+        private readonly static Option<bool> AllowPcdn = new(new string[] { "--allow-pcdn" }, "不替换PCDN域名, 仅在正常情况与--upos-host均无法下载时使用");
         private readonly static Option<string> Language = new(new string[] { "--language" }, "设置混流的音频语言(代码), 如chi, jpn等");
         private readonly static Option<string> Cookie = new(new string[] { "--cookie", "-c" }, "设置字符串cookie用以下载网页接口的会员内容");
         private readonly static Option<string> AccessToken = new(new string[] { "--access-token", "-token" }, "设置access_token用以下载TV/APP接口的会员内容");
@@ -47,8 +49,9 @@ namespace BBDown
         private readonly static Option<string> Mp4boxPath = new(new string[] { "--mp4box-path" }, "设置mp4box的路径");
         private readonly static Option<string> Aria2cPath = new(new string[] { "--aria2c-path" }, "设置aria2c的路径");
         private readonly static Option<string> UposHost = new(new string[] { "--upos-host" }, "自定义upos服务器");
+        private readonly static Option<bool> ForceReplaceHost = new(new string[] { "--force-replace-host" }, "强制替换下载服务器host(默认开启)");
         private readonly static Option<string> DelayPerPage = new(new string[] { "--delay-per-page" }, "设置下载合集分P之间的下载间隔时间(单位: 秒, 默认无间隔)");
-        private readonly static Option<string> FilePattern = new(new string[] { "--file-pattern", "-F" }, $"使用内置变量自定义单P存储文件名:\r\n\r\n" + $"<videoTitle>: 视频主标题\r\n" + $"<pageNumber>: 视频分P序号\r\n" + $"<pageNumberWithZero>: 视频分P序号(前缀补零)\r\n" + $"<pageTitle>: 视频分P标题\r\n" + $"<aid>: 视频aid\r\n" + $"<cid>: 视频cid\r\n" + $"<dfn>: 视频清晰度\r\n" + $"<res>: 视频分辨率\r\n" + $"<fps>: 视频帧率\r\n" + $"<videoCodecs>: 视频编码\r\n" + $"<videoBandwidth>: 视频码率\r\n" + $"<audioCodecs>: 音频编码\r\n" + $"<audioBandwidth>: 音频码率\r\n" + $"<ownerName>: 上传者名称\r\n" + $"<ownerMid>: 上传者mid\r\n" + $"<apiType>: API类型(TV/APP/INTL/WEB)\r\n\r\n" + $"默认为: {Program.SinglePageDefaultSavePath}\r\n");
+        private readonly static Option<string> FilePattern = new(new string[] { "--file-pattern", "-F" }, $"使用内置变量自定义单P存储文件名:\r\n\r\n" + $"<videoTitle>: 视频主标题\r\n" + $"<pageNumber>: 视频分P序号\r\n" + $"<pageNumberWithZero>: 视频分P序号(前缀补零)\r\n" + $"<pageTitle>: 视频分P标题\r\n" + $"<bvid>: 视频BV号\r\n" + $"<aid>: 视频aid\r\n" + $"<cid>: 视频cid\r\n" + $"<dfn>: 视频清晰度\r\n" + $"<res>: 视频分辨率\r\n" + $"<fps>: 视频帧率\r\n" + $"<videoCodecs>: 视频编码\r\n" + $"<videoBandwidth>: 视频码率\r\n" + $"<audioCodecs>: 音频编码\r\n" + $"<audioBandwidth>: 音频码率\r\n" + $"<ownerName>: 上传者名称\r\n" + $"<ownerMid>: 上传者mid\r\n" + $"<publishDate>: 发布时间\r\n" + $"<apiType>: API类型(TV/APP/INTL/WEB)\r\n\r\n" + $"默认为: {Program.SinglePageDefaultSavePath}\r\n");
         private readonly static Option<string> MultiFilePattern = new(new string[] { "--multi-file-pattern", "-M" }, $"使用内置变量自定义多P存储文件名:\r\n\r\n" + $"默认为: {Program.MultiPageDefaultSavePath}\r\n");
         private readonly static Option<string> Host = new(new string[] { "--host" }, "指定BiliPlus host(使用BiliPlus需要access_token, 不需要cookie, 解析服务器能够获取你账号的大部分权限!)");
         private readonly static Option<string> EpHost = new(new string[] { "--ep-host" }, "指定BiliPlus EP host(用于代理api.bilibili.com/pgc/view/web/season, 大部分解析服务器不支持代理该接口)");
@@ -60,6 +63,7 @@ namespace BBDown
         private readonly static Option<bool> OnlyAv1 = new(new string[] { "--only-av1", "-av1" }, "只下载av1编码") { IsHidden = true };
         private readonly static Option<bool> AddDfnSubfix = new(new string[] { "--add-dfn-subfix" }, "为文件加入清晰度后缀, 如XXX[1080P 高码率]") { IsHidden = true };
         private readonly static Option<bool> NoPaddingPageNum = new(new string[] { "--no-padding-page-num" }, "不给分P序号补零") { IsHidden = true };
+        private readonly static Option<bool> BandwithAscending = new(new string[] { "--bandwith-ascending" }, "比特率升序(最小体积优先)") { IsHidden = true };
 
 
         class MyOptionBinder : BinderBase<MyOption>
@@ -95,7 +99,9 @@ namespace BBDown
                 if (bindingContext.ParseResult.HasOption(ForceHttp)) option.ForceHttp = bindingContext.ParseResult.GetValueForOption(ForceHttp)!;
                 if (bindingContext.ParseResult.HasOption(DownloadDanmaku)) option.DownloadDanmaku = bindingContext.ParseResult.GetValueForOption(DownloadDanmaku)!;
                 if (bindingContext.ParseResult.HasOption(SkipAi)) option.SkipAi = bindingContext.ParseResult.GetValueForOption(SkipAi)!;
-                if (bindingContext.ParseResult.HasOption(BandwithAscending)) option.BandwithAscending = bindingContext.ParseResult.GetValueForOption(BandwithAscending)!;
+                if (bindingContext.ParseResult.HasOption(VideoAscending)) option.VideoAscending = bindingContext.ParseResult.GetValueForOption(VideoAscending)!;
+                if (bindingContext.ParseResult.HasOption(AudioAscending)) option.AudioAscending = bindingContext.ParseResult.GetValueForOption(AudioAscending)!;
+                if (bindingContext.ParseResult.HasOption(AllowPcdn)) option.AllowPcdn = bindingContext.ParseResult.GetValueForOption(AllowPcdn)!;
                 if (bindingContext.ParseResult.HasOption(FilePattern)) option.FilePattern = bindingContext.ParseResult.GetValueForOption(FilePattern)!;
                 if (bindingContext.ParseResult.HasOption(MultiFilePattern)) option.MultiFilePattern = bindingContext.ParseResult.GetValueForOption(MultiFilePattern)!;
                 if (bindingContext.ParseResult.HasOption(SelectPage)) option.SelectPage = bindingContext.ParseResult.GetValueForOption(SelectPage)!;
@@ -108,6 +114,7 @@ namespace BBDown
                 if (bindingContext.ParseResult.HasOption(Mp4boxPath)) option.Mp4boxPath = bindingContext.ParseResult.GetValueForOption(Mp4boxPath)!;
                 if (bindingContext.ParseResult.HasOption(Aria2cPath)) option.Aria2cPath = bindingContext.ParseResult.GetValueForOption(Aria2cPath)!;
                 if (bindingContext.ParseResult.HasOption(UposHost)) option.UposHost = bindingContext.ParseResult.GetValueForOption(UposHost)!;
+                if (bindingContext.ParseResult.HasOption(ForceReplaceHost)) option.ForceReplaceHost = bindingContext.ParseResult.GetValueForOption(ForceReplaceHost)!;
                 if (bindingContext.ParseResult.HasOption(DelayPerPage)) option.DelayPerPage = bindingContext.ParseResult.GetValueForOption(DelayPerPage)!;
                 if (bindingContext.ParseResult.HasOption(Host)) option.Host = bindingContext.ParseResult.GetValueForOption(Host)!;
                 if (bindingContext.ParseResult.HasOption(EpHost)) option.EpHost = bindingContext.ParseResult.GetValueForOption(EpHost)!;
@@ -119,6 +126,7 @@ namespace BBDown
                 if (bindingContext.ParseResult.HasOption(OnlyAv1)) option.OnlyAv1 = bindingContext.ParseResult.GetValueForOption(OnlyAv1)!;
                 if (bindingContext.ParseResult.HasOption(AddDfnSubfix)) option.AddDfnSubfix = bindingContext.ParseResult.GetValueForOption(AddDfnSubfix)!;
                 if (bindingContext.ParseResult.HasOption(NoPaddingPageNum)) option.NoPaddingPageNum = bindingContext.ParseResult.GetValueForOption(NoPaddingPageNum)!;
+                if (bindingContext.ParseResult.HasOption(BandwithAscending)) option.BandwithAscending = bindingContext.ParseResult.GetValueForOption(BandwithAscending)!;
                 return option;
             }
         }
@@ -152,7 +160,9 @@ namespace BBDown
                 ForceHttp,
                 DownloadDanmaku,
                 SkipAi,
-                BandwithAscending,
+                VideoAscending,
+                AudioAscending,
+                AllowPcdn,
                 FilePattern,
                 MultiFilePattern,
                 SelectPage,
@@ -165,6 +175,7 @@ namespace BBDown
                 Mp4boxPath,
                 Aria2cPath,
                 UposHost,
+                ForceReplaceHost,
                 DelayPerPage,
                 Host,
                 EpHost,
@@ -175,7 +186,8 @@ namespace BBDown
                 OnlyAvc,
                 OnlyAv1,
                 AddDfnSubfix,
-                NoPaddingPageNum
+                NoPaddingPageNum,
+                BandwithAscending
             };
 
             rootCommand.SetHandler(async (myOption) => await action(myOption), new MyOptionBinder());
