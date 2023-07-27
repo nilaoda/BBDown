@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System;
+using System.Net;
 using System.Net.Http.Headers;
 using static BBDown.Core.Logger;
 
@@ -6,6 +7,7 @@ namespace BBDown.Core.Util
 {
     public class HTTPUtil
     {
+
         public static readonly HttpClient AppHttpClient = new(new HttpClientHandler
         {
             AllowAutoRedirect = true,
@@ -16,10 +18,25 @@ namespace BBDown.Core.Util
             Timeout = TimeSpan.FromMinutes(2)
         };
 
+        private static readonly Random random = new Random();
+        private static readonly string[] platforms = { "Windows NT 10.0; Win64", "Macintosh; Intel Mac OS X 10_15", "X11; Linux x86_64" };
+
+        private static string RandomVersion(int min, int max)
+        {
+            double version = random.NextDouble() * (max - min) + min;
+            return version.ToString("F3");
+        }
+
+        public static string GetRandomUserAgent()
+        {
+            string[] browsers = { $"AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{RandomVersion(80, 110)} Safari/537.36", $"Gecko/20100101 Firefox/{RandomVersion(80, 110)}" };
+            return $"Mozilla/5.0 ({platforms[random.Next(platforms.Length)]}) {browsers[random.Next(browsers.Length)]}";
+        }
+
         public static async Task<string> GetWebSourceAsync(string url)
         {
             using var webRequest = new HttpRequestMessage(HttpMethod.Get, url);
-            webRequest.Headers.TryAddWithoutValidation("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0 Safari/605.1.15");
+            webRequest.Headers.TryAddWithoutValidation("User-Agent", GetRandomUserAgent());
             webRequest.Headers.TryAddWithoutValidation("Accept-Encoding", "gzip, deflate");
             webRequest.Headers.TryAddWithoutValidation("Cookie", (url.Contains("/ep") || url.Contains("/ss")) ? Config.COOKIE + ";CURRENT_FNVAL=4048;" : Config.COOKIE);
             if (url.Contains("api.bilibili.com/pgc/player/web/playurl") || url.Contains("api.bilibili.com/pugv/player/web/playurl"))
