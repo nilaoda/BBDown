@@ -39,8 +39,8 @@ namespace BBDown.Core.Util
             webRequest.Headers.TryAddWithoutValidation("User-Agent", GetRandomUserAgent());
             webRequest.Headers.TryAddWithoutValidation("Accept-Encoding", "gzip, deflate");
             webRequest.Headers.TryAddWithoutValidation("Cookie", (url.Contains("/ep") || url.Contains("/ss")) ? Config.COOKIE + ";CURRENT_FNVAL=4048;" : Config.COOKIE);
-            if (url.Contains("api.bilibili.com/pgc/player/web/playurl") || url.Contains("api.bilibili.com/pugv/player/web/playurl"))
-                webRequest.Headers.TryAddWithoutValidation("Referer", "https://www.bilibili.com");
+            if (url.Contains("api.bilibili.com"))
+                webRequest.Headers.TryAddWithoutValidation("Referer", "https://www.bilibili.com/");
             webRequest.Headers.CacheControl = CacheControlHeaderValue.Parse("no-cache");
             webRequest.Headers.Connection.Clear();
 
