@@ -221,7 +221,7 @@ namespace BBDown
             if (bv.Length == 10)
             {
                 // 能在本地就在本地
-                return Core.Util.BilibiliBvConverter.Decode(bv);
+                return Core.Util.BilibiliBvConverter.Decode(bv).ToString();
             }
             else
             {
