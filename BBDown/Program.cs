@@ -251,9 +251,10 @@ namespace BBDown
                 Config.HOST = myOption.Host;
                 Config.EPHOST = myOption.EpHost;
                 Config.AREA = myOption.Area;
-                HTTPUtil.UserAgent = myOption.UserAgent == "" ? HTTPUtil.GetRandomUserAgent() : myOption.UserAgent;
                 Config.COOKIE = myOption.Cookie;
                 Config.TOKEN = myOption.AccessToken.Replace("access_token=", "");
+
+                if (!string.IsNullOrEmpty(myOption.UserAgent)) HTTPUtil.UserAgent = myOption.UserAgent; //优先使用用户设置的UA
 
                 if (interactMode) hideStreams = false; //手动选择时不能隐藏流
 

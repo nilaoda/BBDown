@@ -27,7 +27,7 @@ namespace BBDown.Core.Util
             return version.ToString("F3");
         }
 
-        public static string GetRandomUserAgent()
+        private static string GetRandomUserAgent()
         {
             string[] browsers = { $"AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{RandomVersion(80, 110)} Safari/537.36", $"Gecko/20100101 Firefox/{RandomVersion(80, 110)}" };
             return $"Mozilla/5.0 ({platforms[random.Next(platforms.Length)]}) {browsers[random.Next(browsers.Length)]}";
