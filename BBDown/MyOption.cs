@@ -41,6 +41,7 @@ namespace BBDown
         public string MultiFilePattern { get; set; } = "";
         public string SelectPage { get; set; } = "";
         public string Language { get; set; } = "";
+        public string UserAgent { get; set; } = "";
         public string Cookie { get; set; } = "";
         public string AccessToken { get; set; } = "";
         public string Aria2cArgs { get; set; } = "";

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace BBDown.Core.Util
 {
     //code from: https://www.zhihu.com/question/381784377/answer/1099438784
-    internal class BilibiliBvConverter
+    public class BilibiliBvConverter
     {
         private static string table = "fZodR9XQDSUm21yCkr6zBqiveYah8bt4xsWpHnJE7jL5VG3guMTKNPAwcF";
         private static Dictionary<char, long> tr = new Dictionary<char, long>();
@@ -41,7 +41,7 @@ namespace BBDown.Core.Util
             return new string(r);
         }
 
-        private static int[] s = { 11, 10, 3, 8, 4, 6 };
+        private static byte[] s = { 9, 8, 1, 6, 2, 4 };
         private static long xor = 177451812;
         private static long add = 8728348608;
     }
