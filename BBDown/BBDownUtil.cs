@@ -221,19 +221,7 @@ namespace BBDown
             if (bv.Length == 10)
             {
                 // 能在本地就在本地
-                string TABLE = "fZodR9XQDSUm21yCkr6zBqiveYah8bt4xsWpHnJE7jL5VG3guMTKNPAwcF";
-                var BVChange = new Dictionary<char, byte>();
-                byte[] S = { 9, 8, 1, 6, 2, 4 };
-                long XOR = 177451812;
-                long ADD = 8728348608;
-                for (byte i = 0; i < 58; i++) BVChange.Add(TABLE[i], i);
-
-                long T = 0;
-                for (byte i = 0; i < 6; i++)
-                {
-                    T += (long)Math.Pow(58, i) * BVChange[bv[S[i]]];
-                }
-                return ((T - ADD) ^ XOR).ToString();
+                return Core.Util.BilibiliBvConverter.Decode(bv);
             }
             else
             {

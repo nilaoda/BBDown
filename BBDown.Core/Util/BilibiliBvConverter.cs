@@ -41,7 +41,7 @@ namespace BBDown.Core.Util
             return new string(r);
         }
 
-        private static int[] s = { 11, 10, 3, 8, 4, 6 };
+        private static byte[] s = { 9, 8, 1, 6, 2, 4 };
         private static long xor = 177451812;
         private static long add = 8728348608;
     }

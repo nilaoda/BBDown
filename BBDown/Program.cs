@@ -251,6 +251,7 @@ namespace BBDown
                 Config.HOST = myOption.Host;
                 Config.EPHOST = myOption.EpHost;
                 Config.AREA = myOption.Area;
+                HTTPUtil.UserAgent = myOption.UserAgent;
                 Config.COOKIE = myOption.Cookie;
                 Config.TOKEN = myOption.AccessToken.Replace("access_token=", "");
 

@@ -42,6 +42,7 @@ namespace BBDown
         private readonly static Option<bool> AudioAscending = new(new string[] { "--audio-ascending" }, "音频升序(最小体积优先)");
         private readonly static Option<bool> AllowPcdn = new(new string[] { "--allow-pcdn" }, "不替换PCDN域名, 仅在正常情况与--upos-host均无法下载时使用");
         private readonly static Option<string> Language = new(new string[] { "--language" }, "设置混流的音频语言(代码), 如chi, jpn等");
+        private readonly static Option<string> UserAgent = new(new string[] { "--user-agent", "-ua" }, "指定user-agent, 否则使用随机user-agent");
         private readonly static Option<string> Cookie = new(new string[] { "--cookie", "-c" }, "设置字符串cookie用以下载网页接口的会员内容");
         private readonly static Option<string> AccessToken = new(new string[] { "--access-token", "-token" }, "设置access_token用以下载TV/APP接口的会员内容");
         private readonly static Option<string> WorkDir = new(new string[] { "--work-dir" }, "设置程序的工作目录");
@@ -106,6 +107,7 @@ namespace BBDown
                 if (bindingContext.ParseResult.HasOption(MultiFilePattern)) option.MultiFilePattern = bindingContext.ParseResult.GetValueForOption(MultiFilePattern)!;
                 if (bindingContext.ParseResult.HasOption(SelectPage)) option.SelectPage = bindingContext.ParseResult.GetValueForOption(SelectPage)!;
                 if (bindingContext.ParseResult.HasOption(Language)) option.Language = bindingContext.ParseResult.GetValueForOption(Language)!;
+                if (bindingContext.ParseResult.HasOption(UserAgent)) option.UserAgent = bindingContext.ParseResult.GetValueForOption(UserAgent)!;
                 if (bindingContext.ParseResult.HasOption(Cookie)) option.Cookie = bindingContext.ParseResult.GetValueForOption(Cookie)!;
                 if (bindingContext.ParseResult.HasOption(AccessToken)) option.AccessToken = bindingContext.ParseResult.GetValueForOption(AccessToken)!;
                 if (bindingContext.ParseResult.HasOption(Aria2cArgs)) option.Aria2cArgs = bindingContext.ParseResult.GetValueForOption(Aria2cArgs)!;
@@ -167,6 +169,7 @@ namespace BBDown
                 MultiFilePattern,
                 SelectPage,
                 Language,
+                UserAgent,
                 Cookie,
                 AccessToken,
                 Aria2cArgs,

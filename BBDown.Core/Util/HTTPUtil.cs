@@ -33,10 +33,12 @@ namespace BBDown.Core.Util
             return $"Mozilla/5.0 ({platforms[random.Next(platforms.Length)]}) {browsers[random.Next(browsers.Length)]}";
         }
 
+        public static string UserAgent { get; set; } = GetRandomUserAgent();
+
         public static async Task<string> GetWebSourceAsync(string url)
         {
             using var webRequest = new HttpRequestMessage(HttpMethod.Get, url);
-            webRequest.Headers.TryAddWithoutValidation("User-Agent", GetRandomUserAgent());
+            webRequest.Headers.TryAddWithoutValidation("User-Agent", UserAgent);
             webRequest.Headers.TryAddWithoutValidation("Accept-Encoding", "gzip, deflate");
             webRequest.Headers.TryAddWithoutValidation("Cookie", (url.Contains("/ep") || url.Contains("/ss")) ? Config.COOKIE + ";CURRENT_FNVAL=4048;" : Config.COOKIE);
             if (url.Contains("api.bilibili.com"))
@@ -44,7 +46,7 @@ namespace BBDown.Core.Util
             webRequest.Headers.CacheControl = CacheControlHeaderValue.Parse("no-cache");
             webRequest.Headers.Connection.Clear();
 
-            LogDebug("获取网页内容：Url: {0}, Headers: {1}", url, webRequest.Headers);
+            LogDebug("获取网页内容: Url: {0}, Headers: {1}", url, webRequest.Headers);
             var webResponse = (await AppHttpClient.SendAsync(webRequest, HttpCompletionOption.ResponseHeadersRead)).EnsureSuccessStatusCode();
 
             string htmlCode = await webResponse.Content.ReadAsStringAsync();
