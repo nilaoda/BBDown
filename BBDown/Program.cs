@@ -197,10 +197,12 @@ namespace BBDown
                 bool useMp4box = myOption.UseMP4box;
 
                 var encodingPriority = new Dictionary<string, byte>();
+                string firstEncoding = "";
                 if (myOption.EncodingPriority != null)
                 {
                     var encodingPriorityTemp = myOption.EncodingPriority.Replace("，", ",").Split(',').Select(s => s.ToUpper().Trim()).Where(s => !string.IsNullOrEmpty(s));
                     byte index = 0;
+                    firstEncoding = encodingPriorityTemp.First();
                     foreach (string encoding in encodingPriorityTemp)
                     {
                         if (encodingPriority.ContainsKey(encoding)) { continue; }
@@ -579,7 +581,7 @@ namespace BBDown
                         }
 
                         //调用解析
-                        (webJsonStr, videoTracks, audioTracks, clips, dfns) = await ExtractTracksAsync(aidOri, p.aid, p.cid, p.epid, tvApi, intlApi, appApi);
+                        (webJsonStr, videoTracks, audioTracks, clips, dfns) = await ExtractTracksAsync(aidOri, p.aid, p.cid, p.epid, tvApi, intlApi, appApi, firstEncoding);
 
                         if (Config.DEBUG_LOG)
                             File.WriteAllText($"debug.json", webJsonStr);
@@ -873,7 +875,7 @@ namespace BBDown
                                 Console.ResetColor();
                                 //重新解析
                                 videoTracks.Clear();
-                                (webJsonStr, videoTracks, audioTracks, clips, dfns) = await ExtractTracksAsync(aidOri, p.aid, p.cid, p.epid, tvApi, intlApi, appApi, dfns[vIndex]);
+                                (webJsonStr, videoTracks, audioTracks, clips, dfns) = await ExtractTracksAsync(aidOri, p.aid, p.cid, p.epid, tvApi, intlApi, appApi, firstEncoding, dfns[vIndex]);
                                 flag = true;
                                 selected = true;
                                 goto reParse;

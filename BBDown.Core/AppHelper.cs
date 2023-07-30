@@ -33,6 +33,17 @@ namespace BBDown.Core
         private static readonly string region = "CN";
         private static readonly string language = "zh";
 
+        private static PlayViewReq.Types.CodeType GetVideoCodeType(string code)
+        {
+            return code switch
+            {
+                "AVC" => PlayViewReq.Types.CodeType.Code264,
+                "HEVC" => PlayViewReq.Types.CodeType.Code265,
+                "AV1" => PlayViewReq.Types.CodeType.Codeav1,
+                _ => PlayViewReq.Types.CodeType.Code265
+            };
+        }
+
         /// <summary>
         /// 发起请求并返回响应报文(protobuf -> json)
         /// </summary>
@@ -41,11 +52,11 @@ namespace BBDown.Core
         /// <param name="qn"></param>
         /// <param name="appkey"></param>
         /// <returns></returns>
-        public static async Task<string> DoReqAsync(string aid, string cid, string epId, string qn, bool bangumi, bool onlyAvc, string appkey = "")
+        public static async Task<string> DoReqAsync(string aid, string cid, string epId, string qn, bool bangumi, string encoding, string appkey = "")
         {
             var headers = GetHeader(appkey);
             LogDebug("App-Req-Headers: {0}", JsonSerializer.Serialize(headers, JsonContext.Default.DictionaryStringString));
-            var body = GetPayload(Convert.ToInt64(aid), Convert.ToInt64(cid), Convert.ToInt64(qn), onlyAvc ? PlayViewReq.Types.CodeType.Code264 : PlayViewReq.Types.CodeType.Code265);
+            var body = GetPayload(Convert.ToInt64(aid), Convert.ToInt64(cid), Convert.ToInt64(qn), GetVideoCodeType(encoding));
             //Console.WriteLine(ReadMessage<PlayViewReq>(body));
             var data = await GetPostResponseAsync(API, body, headers);
             PlayViewReply? resp;
@@ -62,7 +73,7 @@ namespace BBDown.Core
 
                 if (bangumi)
                 {
-                    body = GetPayload(Convert.ToInt64(epId), Convert.ToInt64(cid), Convert.ToInt64(qn), onlyAvc ? PlayViewReq.Types.CodeType.Code264 : PlayViewReq.Types.CodeType.Code265);
+                    body = GetPayload(Convert.ToInt64(epId), Convert.ToInt64(cid), Convert.ToInt64(qn), GetVideoCodeType(encoding));
                     data = await GetPostResponseAsync(API2, body, headers);
                     resp = new MessageParser<PlayViewReply>(() => new PlayViewReply()).ParseFrom(ReadMessage(data));
                 }
@@ -95,6 +106,7 @@ namespace BBDown.Core
                         videos.Add(new AudioInfoWitCodecId(
                             item.StreamInfo.Quality,
                             item.DashVideo.BaseUrl,
+                            item.DashVideo.BackupUrl.ToList(),
                             (uint)(item.DashVideo.Size * 8 / (resp.VideoInfo.Timelength / 1000)),
                             item.DashVideo.Codecid
                         ));
@@ -150,8 +162,8 @@ namespace BBDown.Core
                 EpId = aid,
                 Cid = cid,
                 //obj.Qn = qn;
-                Qn = 126,
-                Fnval = 976,
+                Qn = 127,
+                Fnval = 4048,
                 Spmid = "main.ugc-video-detail.0.0",
                 FromSpmid = "main.my-history.0.0",
                 PreferCodecType = codec,
@@ -378,7 +390,7 @@ namespace BBDown.Core
         [JsonPropertyName("codecs")]
         public string Codecs { get; }
 
-        public AudioInfoWithCodecName(uint id, string base_url,List<string> backup_url, uint bandwidth, string codecs)
+        public AudioInfoWithCodecName(uint id, string base_url, List<string> backup_url, uint bandwidth, string codecs)
         {
             Id = id;
             BaseUrl = base_url;
@@ -397,15 +409,18 @@ namespace BBDown.Core
         public uint Id { get; }
         [JsonPropertyName("base_url")]
         public string BaseUrl { get; }
+        [JsonPropertyName("backup_url")]
+        public List<string> BackupUrl { get; }
         [JsonPropertyName("bandwidth")]
         public uint Bandwidth { get; }
         [JsonPropertyName("codecid")]
         public uint Codecid { get; }
 
-        public AudioInfoWitCodecId(uint id, string base_url, uint bandwidth, uint codecid)
+        public AudioInfoWitCodecId(uint id, string base_url, List<string> backup_url, uint bandwidth, uint codecid)
         {
             Id = id;
             BaseUrl = base_url;
+            BackupUrl = backup_url;
             Bandwidth = bandwidth;
             Codecid = codecid;
         }
