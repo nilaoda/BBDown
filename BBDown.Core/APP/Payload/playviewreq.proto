@@ -17,6 +17,7 @@ message PlayViewReq {
         NOCODE = 0;
         CODE264 = 1;
         CODE265 = 2;
+        CODEAV1 = 3;
     }
     optional CodeType preferCodecType = 12;
     optional bool isPreview = 13;

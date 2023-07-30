@@ -15,7 +15,7 @@ namespace BBDown.Core
             return $"{api}&w_rid=" + string.Concat(MD5.HashData(Encoding.UTF8.GetBytes(api + Config.WBI)).Select(i => i.ToString("x2")).ToArray());
         }
 
-        private static async Task<string> GetPlayJsonAsync(bool onlyAvc, string aidOri, string aid, string cid, string epId, bool tvApi, bool intl, bool appApi, string qn = "0")
+        private static async Task<string> GetPlayJsonAsync(string encoding, string aidOri, string aid, string cid, string epId, bool tvApi, bool intl, bool appApi, string qn = "0")
         {
             LogDebug("aid={0},cid={1},epId={2},tvApi={3},IntlApi={4},appApi={5},qn={6}", aid, cid, epId, tvApi, intl, appApi, qn);
 
@@ -26,7 +26,7 @@ namespace BBDown.Core
             bool bangumi = cheese || aidOri.StartsWith("ep:");
             LogDebug("bangumi={0},cheese={1}", bangumi, cheese);
 
-            if (appApi) return await AppHelper.DoReqAsync(aid, cid, epId, qn, bangumi, onlyAvc, Config.TOKEN);
+            if (appApi) return await AppHelper.DoReqAsync(aid, cid, epId, qn, bangumi, encoding, Config.TOKEN);
 
             string prefix = tvApi ? bangumi ? "api.snm0516.aisee.tv/pgc/player/api/playurltv" : "api.snm0516.aisee.tv/x/tv/ugc/playurl"
                         : bangumi ? $"{Config.HOST}/pgc/player/web/playurl" : "api.bilibili.com/x/player/wbi/playurl";
@@ -85,13 +85,7 @@ namespace BBDown.Core
             return webJson;
         }
 
-        public static string SkiPcdn(List<string> urlList, string baseUrl)
-        {
-            urlList.Add(baseUrl);
-            return urlList.FirstOrDefault(i => !PcdnRegex().IsMatch(i), urlList.First());
-        }
-
-        public static async Task<(string, List<Video>, List<Audio>, List<string>, List<string>)> ExtractTracksAsync(string aidOri, string aid, string cid, string epId, bool tvApi, bool intlApi, bool appApi, string qn = "0")
+        public static async Task<(string, List<Video>, List<Audio>, List<string>, List<string>)> ExtractTracksAsync(string aidOri, string aid, string cid, string epId, bool tvApi, bool intlApi, bool appApi, string encoding, string qn = "0")
         {
             List<Video> videoTracks = new();
             List<Audio> audioTracks = new();
@@ -100,7 +94,7 @@ namespace BBDown.Core
             var intlCode = "0";
 
             //调用解析
-            string webJsonStr = await GetPlayJsonAsync(false, aidOri, aid, cid, epId, tvApi, intlApi, appApi, qn);
+            string webJsonStr = await GetPlayJsonAsync(encoding, aidOri, aid, cid, epId, tvApi, intlApi, appApi, qn);
 
         startParsing:
             var respJson = JsonDocument.Parse(webJsonStr);
@@ -179,7 +173,7 @@ namespace BBDown.Core
             reParse:
                 if (reParse)
                 {
-                    webJsonStr = await GetPlayJsonAsync(false, aidOri, aid, cid, epId, tvApi, intlApi, appApi, GetMaxQn());
+                    webJsonStr = await GetPlayJsonAsync(encoding, aidOri, aid, cid, epId, tvApi, intlApi, appApi, GetMaxQn());
                     respJson = JsonDocument.Parse(webJsonStr);
                 }
                 try { video = !tvApi ? respJson.RootElement.GetProperty(nodeName).GetProperty("dash").GetProperty("video").EnumerateArray().ToList() : respJson.RootElement.GetProperty("dash").GetProperty("video").EnumerateArray().ToList(); } catch { }
@@ -289,7 +283,7 @@ namespace BBDown.Core
             else if (webJsonStr.Contains("\"durl\":[")) //flv
             {
                 //默认以最高清晰度解析
-                webJsonStr = await GetPlayJsonAsync(false, aidOri, aid, cid, epId, tvApi, intlApi, appApi, GetMaxQn());
+                webJsonStr = await GetPlayJsonAsync(encoding, aidOri, aid, cid, epId, tvApi, intlApi, appApi, GetMaxQn());
                 respJson = JsonDocument.Parse(webJsonStr);
                 string quality = "";
                 string videoCodecid = "";
@@ -419,7 +413,5 @@ namespace BBDown.Core
         private static partial Regex PlayerJsonRegex();
         [GeneratedRegex("http.*:\\d+")]
         private static partial Regex BaseUrlRegex();
-        [GeneratedRegex("://.*:\\d+/")]
-        private static partial Regex PcdnRegex();
     }
 }
