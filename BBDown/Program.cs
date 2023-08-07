@@ -293,7 +293,7 @@ namespace BBDown
                 {
                     if (useMp4box)
                     {
-                        if (string.IsNullOrEmpty(BBDownMuxer.MP4BOX))
+                        if (string.IsNullOrEmpty(BBDownMuxer.MP4BOX) || !File.Exists(BBDownMuxer.MP4BOX))
                         {
                             var binPath = FindExecutable("mp4box") ?? FindExecutable("MP4box");
                             if (string.IsNullOrEmpty(binPath))
@@ -301,7 +301,7 @@ namespace BBDown
                             BBDownMuxer.MP4BOX = binPath;
                         }
                     }
-                    else if (string.IsNullOrEmpty(BBDownMuxer.FFMPEG))
+                    else if (string.IsNullOrEmpty(BBDownMuxer.FFMPEG) || !File.Exists(BBDownMuxer.FFMPEG))
                     {
                         var binPath = FindExecutable("ffmpeg");
                         if (string.IsNullOrEmpty(binPath))
@@ -313,7 +313,7 @@ namespace BBDown
                 //寻找aria2c
                 if (useAria2c)
                 {
-                    if (string.IsNullOrEmpty(BBDownAria2c.ARIA2C))
+                    if (string.IsNullOrEmpty(BBDownAria2c.ARIA2C) || !File.Exists(BBDownAria2c.ARIA2C))
                     {
                         var binPath = FindExecutable("aria2c");
                         if (string.IsNullOrEmpty(binPath))
