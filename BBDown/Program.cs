@@ -1013,6 +1013,11 @@ namespace BBDown
         private static async Task DownloadCoverAsync(string pic, Page p, string coverPath)
         {
             Log("下载封面...");
+
+            // 不存在则新建文件夹
+            var desDir = Path.GetDirectoryName(coverPath)!;
+            if (!Directory.Exists(desDir)) Directory.CreateDirectory(desDir);
+
             var cover = pic == "" ? p.cover : pic;
             if (cover != null)
             {
