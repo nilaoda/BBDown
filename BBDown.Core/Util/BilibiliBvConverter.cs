@@ -33,12 +33,12 @@ namespace BBDown.Core.Util
         public static string Encode(long x)
         {
             x = (x ^ xor) + add;
-            char[] r = "BV1  4 1 7  ".ToCharArray();
+            char[] r = "1  4 1 7  ".ToCharArray();
             for (int i = 0; i < 6; i++)
             {
                 r[s[i]] = table[(int)(x / (long)Math.Pow(58, i) % 58)];
             }
-            return new string(r);
+            return "BV" + new string(r);
         }
 
         private static byte[] s = { 9, 8, 1, 6, 2, 4 };
