@@ -79,15 +79,6 @@ namespace BBDown
             //TV登录
             loginTVCommand.SetHandler(LoginTV);
 
-            Console.BackgroundColor = ConsoleColor.DarkBlue;
-            Console.ForegroundColor = ConsoleColor.White;
-            var ver = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version!;
-            Console.Write($"BBDown version {ver.Major}.{ver.Minor}.{ver.Build}, Bilibili Downloader.\r\n");
-            Console.ResetColor();
-            Console.Write("欢迎到讨论区交流：\r\n" +
-                "https://github.com/nilaoda/BBDown/discussions\r\n");
-            Console.WriteLine();
-
             var parser = new CommandLineBuilder(rootCommand)
                 .UseDefaults()
                 .EnablePosixBundling(false)
@@ -106,7 +97,10 @@ namespace BBDown
             //显式抛出异常
             if (commandLineResult.Errors.Count > 0)
             {
-                LogError(commandLineResult.Errors.First().Message);
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.Error.WriteLine(commandLineResult.Errors.First().Message);
+                Console.ResetColor();
+                Console.Error.WriteLine($"请使用 BBDown --help 查看帮助");
                 return 1;
             }
 
@@ -129,6 +123,15 @@ namespace BBDown
                 }
             }
             if (newArgsList.Contains("--debug")) Config.DEBUG_LOG = true;
+
+            Console.BackgroundColor = ConsoleColor.DarkBlue;
+            Console.ForegroundColor = ConsoleColor.White;
+            var ver = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version!;
+            Console.Write($"BBDown version {ver.Major}.{ver.Minor}.{ver.Build}, Bilibili Downloader.\r\n");
+            Console.ResetColor();
+            Console.Write("遇到问题请首先到以下地址查阅有无相关信息：\r\n" +
+                "https://github.com/nilaoda/BBDown/issues\r\n");
+            Console.WriteLine();
 
             //处理配置文件
             BBDownConfigParser.HandleConfig(newArgsList, rootCommand);
