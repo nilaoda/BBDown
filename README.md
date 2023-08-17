@@ -89,6 +89,7 @@ Options:
                                                  默认为: <videoTitle>/[P<pageNumberWithZero>]<pageTitle>
   -p, --select-page <select-page>                选择指定分p或分p范围: (-p 8 或 -p 1,2 或 -p 3-5 或 -p ALL 或 -p LAST)
   --language <language>                          设置混流的音频语言(代码), 如chi, jpn等
+  -ua, --user-agent <user-agent>                 指定user-agent, 否则使用随机user-agent
   -c, --cookie <cookie>                          设置字符串cookie用以下载网页接口的会员内容
   -token, --access-token <access-token>          设置access_token用以下载TV/APP接口的会员内容
   --aria2c-args <aria2c-args>                    调用aria2c的附加参数(默认参数包含"-x16 -s16 -j16 -k 5M", 使用时注意字符串转义)
