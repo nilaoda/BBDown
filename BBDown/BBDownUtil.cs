@@ -28,7 +28,7 @@ namespace BBDown
             {
                 var ver = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version!;
                 string nowVer = $"{ver.Major}.{ver.Minor}.{ver.Build}";
-                string redirctUrl = await Get302("https://github.com/nilaoda/BBDown/releases/latest");
+                string redirctUrl = await GetWebLocationAsync("https://github.com/nilaoda/BBDown/releases/latest");
                 string latestVer = redirctUrl.Replace("https://github.com/nilaoda/BBDown/releases/tag/", "");
                 if (nowVer != latestVer && !latestVer.StartsWith("https"))
                 {
@@ -47,7 +47,11 @@ namespace BBDown
             if (input.StartsWith("http"))
             {
                 if (input.Contains("b23.tv"))
-                    input = await Get302(input);
+                {
+                    string tmp = await GetWebLocationAsync(input);
+                    if (tmp == input) throw new Exception("无限重定向");
+                    input = tmp;
+                }
                 Match match;
                 if (input.Contains("video/av"))
                 {
@@ -55,7 +59,7 @@ namespace BBDown
                 }
                 else if (input.ToLower().Contains("video/bv"))
                 {
-                    avid = await GetAidByBVAsync(BVRegex().Match(input).Groups[1].Value);
+                    avid = GetAidByBV(BVRegex().Match(input).Groups[1].Value);
                 }
                 else if (input.Contains("/cheese/"))
                 {
@@ -138,7 +142,7 @@ namespace BBDown
             }
             else if (input.ToLower().StartsWith("bv"))
             {
-                avid = await GetAidByBVAsync(input[2..]);
+                avid = GetAidByBV(input[2..]);
             }
             else if (input.ToLower().StartsWith("av")) //av
             {
@@ -197,40 +201,15 @@ namespace BBDown
         {
             if (!NumRegex().IsMatch(avid))
                 return avid;
-            string api = $"https://api.bilibili.com/x/web-interface/archive/stat?aid={avid}";
-            string json = await GetWebSourceAsync(api);
-            using var jDoc = JsonDocument.Parse(json);
-            bool copyRight = jDoc.RootElement.GetProperty("data").GetProperty("copyright").GetInt32() == 2;
-            if (copyRight)
-            {
-                api = $"https://api.bilibili.com/x/web-interface/view?aid={avid}";
-                json = await GetWebSourceAsync(api);
-                using var infoJson = JsonDocument.Parse(json);
-                var data = infoJson.RootElement.GetProperty("data");
-                if (data.TryGetProperty("redirect_url", out _) && data.GetProperty("redirect_url").ToString().Contains("bangumi"))
-                {
-                    var epId = RedirectRegex().Match(data.GetProperty("redirect_url").ToString()).Groups[1].Value;
-                    return $"ep:{epId}";
-                }
-            }
-            return avid;
+            string api = $"https://www.bilibili.com/video/av{avid}/";
+            string location = await GetWebLocationAsync(api);
+            return location.Contains("/video/") ? avid : $"ep:{RedirectRegex().Match(location).Groups[1].Value}";
         }
 
-        public static async Task<string> GetAidByBVAsync(string bv)
+        public static string GetAidByBV(string bv)
         {
-            if (bv.Length == 10)
-            {
-                // 能在本地就在本地
-                return Core.Util.BilibiliBvConverter.Decode(bv).ToString();
-            }
-            else
-            {
-                string api = $"https://api.bilibili.com/x/web-interface/archive/stat?bvid={bv}";
-                string json = await GetWebSourceAsync(api);
-                using var jDoc = JsonDocument.Parse(json);
-                string aid = jDoc.RootElement.GetProperty("data").GetProperty("aid").ToString();
-                return aid;
-            }
+            // 能在本地就在本地
+            return Core.Util.BilibiliBvConverter.Decode(bv).ToString();
         }
 
         public static async Task<string> GetEpidBySSIdAsync(string ssid)
@@ -511,33 +490,6 @@ namespace BBDown
             long totalSizeBytes = response.Content.Headers.ContentLength ?? 0;
 
             return totalSizeBytes;
-        }
-
-        //重定向
-        public static async Task<string> Get302(string url)
-        {
-            //this allows you to set the settings so that we can get the redirect url
-            var handler = new HttpClientHandler()
-            {
-                AllowAutoRedirect = false
-            };
-            string redirectedUrl = "";
-            using (HttpClient client = new(handler))
-            using (HttpResponseMessage response = await client.GetAsync(url))
-            using (HttpContent content = response.Content)
-            {
-                // ... Read the response to see if we have the redirected url
-                if (response.StatusCode == System.Net.HttpStatusCode.Found)
-                {
-                    HttpResponseHeaders headers = response.Headers;
-                    if (headers != null && headers.Location != null)
-                    {
-                        redirectedUrl = headers.Location.AbsoluteUri;
-                    }
-                }
-            }
-
-            return redirectedUrl;
         }
 
         private static char[] InvalidChars = "34,60,62,124,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,58,42,63,92,47"
