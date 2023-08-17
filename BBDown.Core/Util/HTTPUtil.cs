@@ -54,6 +54,22 @@ namespace BBDown.Core.Util
             return htmlCode;
         }
 
+        // 重写重定向处理, 自动跟随多次重定向
+        public static async Task<string> GetWebLocationAsync(string url)
+        {
+            using var webRequest = new HttpRequestMessage(HttpMethod.Head, url);
+            webRequest.Headers.TryAddWithoutValidation("User-Agent", UserAgent);
+            webRequest.Headers.TryAddWithoutValidation("Accept-Encoding", "gzip, deflate");
+            webRequest.Headers.CacheControl = CacheControlHeaderValue.Parse("no-cache");
+            webRequest.Headers.Connection.Clear();
+
+            LogDebug("获取网页重定向地址: Url: {0}, Headers: {1}", url, webRequest.Headers);
+            var webResponse = (await AppHttpClient.SendAsync(webRequest, HttpCompletionOption.ResponseHeadersRead)).EnsureSuccessStatusCode();
+            string location = webResponse.RequestMessage.RequestUri.AbsoluteUri;
+            LogDebug("Location: {0}", location);
+            return location;
+        }
+
         public static async Task<string> GetPostResponseAsync(string Url, byte[] postData)
         {
             LogDebug("Post to: {0}, data: {1}", Url, Convert.ToBase64String(postData));
