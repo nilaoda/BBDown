@@ -185,11 +185,10 @@ namespace BBDown
 
         public static string FormatTime(int time, bool absolute = false)
         {
-            TimeSpan ts = new(0, 0, time);
-            string str = !absolute
-                ? (ts.Hours.ToString("00") == "00" ? "" : ts.Hours.ToString("00") + "h") + ts.Minutes.ToString("00") + "m" + ts.Seconds.ToString("00") + "s"
-                : ts.Hours.ToString("00") + ":" + ts.Minutes.ToString("00") + ":" + ts.Seconds.ToString("00");
-            return str;
+            TimeSpan ts = TimeSpan.FromSeconds(time);
+            return !absolute
+                ? (ts.Hours == 0 ? ts.ToString(@"mm\mss\s") : ts.ToString(@"hh\hmm\mss\s"))
+                : ts.ToString(@"hh\:mm\:ss");
         }
 
         /// <summary>

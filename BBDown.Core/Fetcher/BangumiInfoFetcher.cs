@@ -18,13 +18,13 @@ namespace BBDown.Core.Fetcher
             string cover = result.GetProperty("cover").ToString();
             string title = result.GetProperty("title").ToString();
             string desc = result.GetProperty("evaluate").ToString();
-            string pubTime = result.GetProperty("publish").GetProperty("pub_time").ToString();
-            var pages = result.GetProperty("episodes").EnumerateArray().ToList();
+            long pubTime = DateTimeOffset.ParseExact(result.GetProperty("publish").GetProperty("pub_time").ToString(), "yyyy-MM-dd HH:mm:ss", null).ToUnixTimeSeconds();
+            var pages = result.GetProperty("episodes").EnumerateArray();
             List<Page> pagesInfo = new();
             int i = 1;
 
             //episodes为空; 或者未包含对应epid，番外/花絮什么的
-            if (pages.Count == 0 || !result.GetProperty("episodes").ToString().Contains($"/ep{id}"))
+            if (!(pages.Any() && result.GetProperty("episodes").ToString().Contains($"/ep{id}")))
             {
                 if (result.TryGetProperty("section", out JsonElement sections))
                 {
@@ -33,7 +33,7 @@ namespace BBDown.Core.Fetcher
                         if (section.ToString().Contains($"/ep{id}"))
                         {
                             title += "[" + section.GetProperty("title").ToString() + "]";
-                            pages = section.GetProperty("episodes").EnumerateArray().ToList();
+                            pages = section.GetProperty("episodes").EnumerateArray();
                             break;
                         }
                     }
@@ -57,7 +57,8 @@ namespace BBDown.Core.Fetcher
                     page.GetProperty("cid").ToString(),
                     page.GetProperty("id").ToString(),
                     _title,
-                    0, res);
+                    0, res,
+                    page.GetProperty("pub_time").GetInt64());
                 if (p.epid == id) index = p.index.ToString();
                 pagesInfo.Add(p);
             }

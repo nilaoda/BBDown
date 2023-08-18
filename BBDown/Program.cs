@@ -39,6 +39,11 @@ namespace BBDown
             return r1.bandwith - r2.bandwith > 0 ? -1 : 1;
         }
 
+        private static string FormatTimeStamp(long ts, string format)
+        {
+            return ts == 0 ? "null" : DateTimeOffset.FromUnixTimeSeconds(ts).ToLocalTime().ToString(format);
+        }
+
         [JsonSerializable(typeof(MyOption))]
         partial class MyOptionJsonContext : JsonSerializerContext { }
 
@@ -249,7 +254,7 @@ namespace BBDown
                 string input = myOption.Url;
                 string savePathFormat = myOption.FilePattern;
                 string lang = myOption.Language;
-                string selectPage = myOption.SelectPage.ToUpper();
+                string selectPage = myOption.SelectPage.ToUpper().Trim().Trim(',');
                 string uposHost = myOption.UposHost;
                 string aidOri = ""; //原始aid
                 int delay = Convert.ToInt32(myOption.DelayPerPage);
@@ -337,15 +342,6 @@ namespace BBDown
                 if (skipSubtitle)
                     subOnly = false;
 
-                List<string>? selectedPages = null;
-                if (!string.IsNullOrEmpty(GetQueryString("p", input)))
-                {
-                    selectedPages = new List<string>
-                    {
-                        GetQueryString("p", input)
-                    };
-                }
-
                 LogDebug("AppDirectory: {0}", APP_DIR);
                 LogDebug("运行参数：{0}", JsonSerializer.Serialize(myOption, MyOptionJsonContext.Default.MyOption));
                 if (string.IsNullOrEmpty(Config.COOKIE) && File.Exists(Path.Combine(APP_DIR, "BBDown.data")))
@@ -383,35 +379,6 @@ namespace BBDown
                 Log("获取aid...");
                 aidOri = await GetAvIdAsync(input);
                 Log("获取aid结束: " + aidOri);
-                //-p的优先级大于URL中的自带p参数, 所以先清空selectedPages
-                if (!string.IsNullOrEmpty(selectPage) && selectPage != "ALL")
-                {
-                    selectedPages = new List<string>();
-                    try
-                    {
-                        string tmp = selectPage;
-                        tmp = tmp.Trim().Trim(',');
-                        if (tmp.Contains('-'))
-                        {
-                            int start = int.Parse(tmp.Split('-')[0]);
-                            int end = int.Parse(tmp.Split('-')[1]);
-                            for (int i = start; i <= end; i++)
-                            {
-                                selectedPages.Add(i.ToString());
-                            }
-                        }
-                        else
-                        {
-                            foreach (var s in tmp.Split(','))
-                            {
-                                selectedPages.Add(s);
-                            }
-                        }
-                    }
-                    catch { LogError("解析分P参数时失败了~"); selectedPages = null; };
-                }
-
-                if (selectPage == "ALL") selectedPages = null;
 
                 if (string.IsNullOrEmpty(aidOri)) throw new Exception("输入有误");
                 Log("获取视频信息...");
@@ -443,9 +410,9 @@ namespace BBDown
                 var vInfo = await fetcher.FetchAsync(aidOri);
                 string title = vInfo.Title;
                 string pic = vInfo.Pic;
-                string pubTime = vInfo.PubTime;
+                long pubTime = vInfo.PubTime;
                 LogColor("视频标题: " + title);
-                Log("发布时间: " + pubTime);
+                Log("发布时间: " + FormatTimeStamp(pubTime, "yyyy-MM-dd HH:mm:ss zzz"));
                 List<Page> pagesInfo = vInfo.PagesInfo;
                 List<Subtitle> subtitleInfo = new();
                 bool more = false;
@@ -467,22 +434,54 @@ namespace BBDown
                     }
                 }
 
-                //选择最新分P
-                if (!string.IsNullOrEmpty(selectPage) && (selectPage == "LAST" || selectPage == "NEW" || selectPage == "LATEST"))
+                List<string>? selectedPages = null;
+
+                if (string.IsNullOrEmpty(selectPage))
                 {
+                    //如果用户没有选择分P, 根据epid或query param来确定某一集
+                    if (!string.IsNullOrEmpty(vInfo.Index))
+                    {
+                        selectedPages = new List<string> { vInfo.Index };
+                        Log("程序已自动选择你输入的集数, 如果要下载其他集数请自行指定分P(如可使用-p ALL代表全部)");
+                    }
+                    else if (!string.IsNullOrEmpty(GetQueryString("p", input)))
+                    {
+                        selectedPages = new List<string> { GetQueryString("p", input) };
+                        Log("程序已自动选择你输入的集数, 如果要下载其他集数请自行指定分P(如可使用-p ALL代表全部)");
+                    }
+                }
+                else if (selectPage != "ALL")
+                {
+                    selectedPages = new List<string>();
+
+                    //选择最新分P
+                    string lastPage = pagesInfo.Count.ToString();
+                    foreach (string key in new string[] { "LAST", "NEW", "LATEST" })
+                    {
+                        selectPage = selectPage.Replace(key, lastPage);
+                    }
+
                     try
                     {
-                        selectedPages = new List<string> { pagesInfo.Count.ToString() };
-                        Log("程序已选择最新一P");
+                        if (selectPage.Contains('-'))
+                        {
+                            string[] tmp = selectPage.Split('-');
+                            int start = int.Parse(tmp[0]);
+                            int end = int.Parse(tmp[1]);
+                            for (int i = start; i <= end; i++)
+                            {
+                                selectedPages.Add(i.ToString());
+                            }
+                        }
+                        else
+                        {
+                            foreach (var s in selectPage.Split(','))
+                            {
+                                selectedPages.Add(s);
+                            }
+                        }
                     }
                     catch { LogError("解析分P参数时失败了~"); selectedPages = null; };
-                }
-
-                //如果用户没有选择分P, 根据epid来确定某一集
-                if (selectedPages == null && selectPage != "ALL" && !string.IsNullOrEmpty(vInfo.Index))
-                {
-                    selectedPages = new List<string> { vInfo.Index };
-                    Log("程序已自动选择你输入的集数, 如果要下载其他集数请自行指定分P(如可使用-p ALL代表全部)");
                 }
 
                 Log($"共计 {pagesInfo.Count} 个分P, 已选择：" + (selectedPages == null ? "ALL" : string.Join(",", selectedPages)));
@@ -844,7 +843,7 @@ namespace BBDown
                                 (pagesCount > 1 || (bangumi && !vInfo.IsBangumiEnd)) ? p.title : "",
                                 File.Exists(coverPath) ? coverPath : "",
                                 lang,
-                                subtitleInfo, audioOnly, videoOnly, p.points);
+                                subtitleInfo, audioOnly, videoOnly, p.points, p.pubTime);
                             if (code != 0 || !File.Exists(savePath) || new FileInfo(savePath).Length == 0)
                             {
                                 LogError("合并失败"); continue;
@@ -954,7 +953,7 @@ namespace BBDown
                                 (pagesCount > 1 || (bangumi && !vInfo.IsBangumiEnd)) ? p.title : "",
                                 File.Exists(coverPath) ? coverPath : "",
                                 lang,
-                                subtitleInfo, audioOnly, videoOnly, p.points);
+                                subtitleInfo, audioOnly, videoOnly, p.points, p.pubTime);
                             if (code != 0 || !File.Exists(savePath) || new FileInfo(savePath).Length == 0)
                             {
                                 LogError("合并失败"); continue;
@@ -1049,7 +1048,7 @@ namespace BBDown
                     .ToList();
         }
 
-        private static string FormatSavePath(string savePathFormat, string title, Video? videoTrack, Audio? audioTrack, Page p, int pagesCount, bool tvApi, bool appApi, bool intlApi, string pubTime)
+        private static string FormatSavePath(string savePathFormat, string title, Video? videoTrack, Audio? audioTrack, Page p, int pagesCount, bool tvApi, bool appApi, bool intlApi, long pubTime)
         {
             var result = savePathFormat.Replace('\\', '/');
             var regex = InfoRegex();
@@ -1074,7 +1073,8 @@ namespace BBDown
                     "videoBandwidth" => videoTrack == null ? "" : videoTrack.bandwith.ToString(),
                     "audioCodecs" => audioTrack == null ? "" : audioTrack.codecs,
                     "audioBandwidth" => audioTrack == null ? "" : audioTrack.bandwith.ToString(),
-                    "publishDate" => (string.IsNullOrEmpty(pubTime) || !DateTime.TryParse(pubTime, out var dt)) ? "" : dt.ToString("yyyy-MM-dd_HH-mm-ss"),
+                    "publishDate" => FormatTimeStamp(pubTime, "yyyy-MM-dd_HH-mm-ss"),
+                    "videoDate" => FormatTimeStamp(p.pubTime, "yyyy-MM-dd_HH-mm-ss"),
                     "apiType" => tvApi ? "TV" : (appApi ? "APP" : (intlApi ? "INTL" : "WEB")),
                     _ => $"<{key}>"
                 };
@@ -1100,7 +1100,7 @@ namespace BBDown
                 QRCodeData qrCodeData = qrGenerator.CreateQrCode(url, QRCodeGenerator.ECCLevel.Q);
                 PngByteQRCode pngByteCode = new(qrCodeData);
                 File.WriteAllBytes("qrcode.png", pngByteCode.GetGraphic(7));
-                Log("生成二维码成功：qrcode.png, 请打开并扫描, 或扫描打印的二维码");
+                Log("生成二维码成功: qrcode.png, 请打开并扫描, 或扫描打印的二维码");
                 var consoleQRCode = new ConsoleQRCode(qrCodeData);
                 consoleQRCode.GetGraphic();
 
@@ -1157,7 +1157,7 @@ namespace BBDown
                 QRCodeData qrCodeData = qrGenerator.CreateQrCode(url, QRCodeGenerator.ECCLevel.Q);
                 PngByteQRCode pngByteCode = new(qrCodeData);
                 File.WriteAllBytes("qrcode.png", pngByteCode.GetGraphic(7));
-                Log("生成二维码成功：qrcode.png, 请打开并扫描, 或扫描打印的二维码");
+                Log("生成二维码成功: qrcode.png, 请打开并扫描, 或扫描打印的二维码");
                 var consoleQRCode = new ConsoleQRCode(qrCodeData);
                 consoleQRCode.GetGraphic();
                 parms.Set("auth_code", authCode);

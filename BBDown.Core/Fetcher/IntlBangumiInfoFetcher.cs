@@ -12,7 +12,7 @@ namespace BBDown.Core.Fetcher
         {
             id = id[3..];
             string index = "";
-            //string api = $"https://api.global.bilibili.com/intl/gateway/ogv/m/view?ep_id={id}&s_locale=ja_JP";
+            //string api = $"https://api.global.bilibili.com/intl/gateway/ogv/m/view?ep_id={id}";
             string api = "https://" + (Config.HOST == "api.bilibili.com" ? "api.bilibili.tv" : Config.HOST) +
             $"/intl/gateway/v2/ogv/view/app/season?ep_id={id}&platform=android&s_locale=zh_SG&mobi_app=bstar_a" + (Config.TOKEN != "" ? $"&access_key={Config.TOKEN}" : "");
             string json = (await GetWebSourceAsync(api)).Replace("\\/", "/");
@@ -39,11 +39,11 @@ namespace BBDown.Core.Fetcher
                 }
             }
 
-            string pubTime = result.GetProperty("publish").GetProperty("pub_time").ToString();
+            long pubTime = DateTimeOffset.ParseExact(result.GetProperty("publish").GetProperty("pub_time").ToString(), "yyyy-MM-dd HH:mm:ss", null).ToUnixTimeSeconds();
             var pages = new List<JsonElement>();
-            if (result.TryGetProperty("episodes", out _))
+            if (result.TryGetProperty("episodes", out JsonElement episodes))
             {
-                pages = result.GetProperty("episodes").EnumerateArray().ToList();
+                pages = episodes.EnumerateArray().ToList();
             }
             List<Page> pagesInfo = new();
             int i = 1;
@@ -98,7 +98,8 @@ namespace BBDown.Core.Fetcher
                     page.GetProperty("cid").ToString(),
                     page.GetProperty("id").ToString(),
                     _title,
-                    0, res);
+                    0, res,
+                    page.GetProperty("pub_time").GetInt64());
                 if (p.epid == id) index = p.index.ToString();
                 pagesInfo.Add(p);
             }

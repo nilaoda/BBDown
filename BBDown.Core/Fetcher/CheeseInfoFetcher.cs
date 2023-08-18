@@ -20,7 +20,7 @@ namespace BBDown.Core.Fetcher
             string desc = data.GetProperty("subtitle").ToString();
             string ownerName = data.GetProperty("up_info").GetProperty("uname").ToString();
             string ownerMid = data.GetProperty("up_info").GetProperty("mid").ToString();
-            var pages = data.GetProperty("episodes").EnumerateArray().ToList();
+            var pages = data.GetProperty("episodes").EnumerateArray();
             List<Page> pagesInfo = new();
             foreach (var page in pages)
             {
@@ -31,6 +31,7 @@ namespace BBDown.Core.Fetcher
                     page.GetProperty("title").ToString().Trim(),
                     page.GetProperty("duration").GetInt32(),
                     "",
+                    page.GetProperty("release_date").GetInt64(),
                     "",
                     "",
                     ownerName,
@@ -38,8 +39,7 @@ namespace BBDown.Core.Fetcher
                 if (p.epid == id) index = p.index.ToString();
                 pagesInfo.Add(p);
             }
-            string pubTime = pagesInfo.Count > 0 ? pages[0].GetProperty("release_date").ToString() : "";
-            pubTime = pubTime != "" ? new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc).AddSeconds(Convert.ToDouble(pubTime)).ToLocalTime().ToString() : "";
+            long pubTime = pagesInfo.Any() ? pagesInfo[0].pubTime : 0;
 
             var info = new VInfo
             {

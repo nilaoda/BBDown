@@ -14,6 +14,7 @@ namespace BBDown.Core.Entity
             public required string title;
             public required int dur;
             public required string res;
+            public required long pubTime;
             public string? cover;
             public string? desc;
             public string? ownerName;
@@ -25,7 +26,7 @@ namespace BBDown.Core.Entity
             public List<ViewPoint> points = new();
 
             [SetsRequiredMembers]
-            public Page(int index, string aid, string cid, string epid, string title, int dur, string res)
+            public Page(int index, string aid, string cid, string epid, string title, int dur, string res, long pubTime)
             {
                 this.aid = aid;
                 this.index = index;
@@ -34,10 +35,11 @@ namespace BBDown.Core.Entity
                 this.title = title;
                 this.dur = dur;
                 this.res = res;
+                this.pubTime = pubTime;
             }
 
             [SetsRequiredMembers]
-            public Page(int index, string aid, string cid, string epid, string title, int dur, string res, string cover)
+            public Page(int index, string aid, string cid, string epid, string title, int dur, string res, long pubTime, string cover)
             {
                 this.aid = aid;
                 this.index = index;
@@ -46,11 +48,12 @@ namespace BBDown.Core.Entity
                 this.title = title;
                 this.dur = dur;
                 this.res = res;
+                this.pubTime = pubTime;
                 this.cover = cover;
             }
 
             [SetsRequiredMembers]
-            public Page(int index, string aid, string cid, string epid, string title, int dur, string res, string cover, string desc)
+            public Page(int index, string aid, string cid, string epid, string title, int dur, string res, long pubTime, string cover, string desc)
             {
                 this.aid = aid;
                 this.index = index;
@@ -59,12 +62,13 @@ namespace BBDown.Core.Entity
                 this.title = title;
                 this.dur = dur;
                 this.res = res;
+                this.pubTime = pubTime;
                 this.cover = cover;
                 this.desc = desc;
             }
 
             [SetsRequiredMembers]
-            public Page(int index, string aid, string cid, string epid, string title, int dur, string res, string cover, string desc, string ownerName, string ownerMid)
+            public Page(int index, string aid, string cid, string epid, string title, int dur, string res, long pubTime, string cover, string desc, string ownerName, string ownerMid)
             {
                 this.aid = aid;
                 this.index = index;
@@ -73,6 +77,7 @@ namespace BBDown.Core.Entity
                 this.title = title;
                 this.dur = dur;
                 this.res = res;
+                this.pubTime = pubTime;
                 this.cover = cover;
                 this.desc = desc;
                 this.ownerName = ownerName;
@@ -89,6 +94,7 @@ namespace BBDown.Core.Entity
                 this.title = page.title;
                 this.dur = page.dur;
                 this.res = page.res;
+                this.pubTime = page.pubTime;
                 this.cover = page.cover;
                 this.ownerName = page.ownerName;
                 this.ownerMid = page.ownerMid;

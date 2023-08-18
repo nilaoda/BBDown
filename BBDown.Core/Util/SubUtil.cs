@@ -458,11 +458,11 @@ namespace BBDown.Core.Util
                 lines.AppendLine((i + 1).ToString());
                 if (line.TryGetProperty("from", out JsonElement from))
                 {
-                    lines.AppendLine($"{FormatTime(from.ToString())} --> {FormatTime(line.GetProperty("to").ToString())}");
+                    lines.AppendLine($"{FormatTime(from.GetDouble())} --> {FormatTime(line.GetProperty("to").GetDouble())}");
                 }
                 else
                 {
-                    lines.AppendLine($"{FormatTime("0")} --> {FormatTime(line.GetProperty("to").ToString())}");
+                    lines.AppendLine($"{FormatTime(0.0)} --> {FormatTime(line.GetProperty("to").GetDouble())}");
                 }
                 //有的没有内容
                 if (line.TryGetProperty("content", out JsonElement content))
@@ -472,15 +472,9 @@ namespace BBDown.Core.Util
             return lines.ToString();
         }
 
-        private static string FormatTime(string sec) //64.13
+        private static string FormatTime(double sec) //64.13
         {
-            string[] v = { sec, "" };
-            if (sec.Contains('.'))
-                v = sec.Split('.');
-            v[1] = v[1].PadRight(3, '0')[..3];
-            TimeSpan ts = new(0, 0, Convert.ToInt32(v[0]));
-            string str = ts.Hours.ToString("00") + ":" + ts.Minutes.ToString("00") + ":" + ts.Seconds.ToString("00") + "," + v[1];
-            return str;
+            return TimeSpan.FromSeconds(sec).ToString(@"hh\:mm\:ss\,fff");
         }
 
         [GeneratedRegex("-[a-z]")]
