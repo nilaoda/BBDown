@@ -1017,8 +1017,8 @@ namespace BBDown
             Log("下载封面...");
 
             // 不存在则新建文件夹
-            var desDir = Path.GetDirectoryName(coverPath)!;
-            if (!Directory.Exists(desDir)) Directory.CreateDirectory(desDir);
+            var desDir = Path.GetDirectoryName(coverPath);
+            if (!string.IsNullOrEmpty(desDir) && !Directory.Exists(desDir)) Directory.CreateDirectory(desDir);
 
             var cover = pic == "" ? p.cover : pic;
             if (cover != null)
