@@ -127,8 +127,9 @@ namespace BBDown
                 }
                 else if ((match = BangumiMdRegex().Match(input)).Success)
                 {
-                    var mdId = match.Groups[1].Value;
-                    avid = await GetAvIdAsync(mdId);
+                    string mdId = match.Groups[1].Value;
+                    string epId = await GetEpIdByMDAsync(mdId);
+                    avid = $"ep:{epId}";
                 }
                 else
                 {
@@ -150,7 +151,7 @@ namespace BBDown
             }
             else if (input.StartsWith("ep"))
             {
-                string epId = EpRegex2().Match(input).Groups[1].Value;
+                string epId = input[2..];
                 avid = $"ep:{epId}";
             }
             else if (input.StartsWith("ss"))
@@ -196,22 +197,22 @@ namespace BBDown
         /// </summary>
         /// <param name="avid"></param>
         /// <returns></returns>
-        public static async Task<string> FixAvidAsync(string avid)
+        private static async Task<string> FixAvidAsync(string avid)
         {
-            if (!NumRegex().IsMatch(avid))
+            if (!avid.All(char.IsDigit))
                 return avid;
             string api = $"https://www.bilibili.com/video/av{avid}/";
             string location = await GetWebLocationAsync(api);
-            return location.Contains("/video/") ? avid : $"ep:{RedirectRegex().Match(location).Groups[1].Value}";
+            return location.Contains("/ep") ? $"ep:{EpRegex().Match(location).Groups[1].Value}" : avid;
         }
 
-        public static string GetAidByBV(string bv)
+        private static string GetAidByBV(string bv)
         {
             // 能在本地就在本地
             return Core.Util.BilibiliBvConverter.Decode(bv).ToString();
         }
 
-        public static async Task<string> GetEpidBySSIdAsync(string ssid)
+        private static async Task<string> GetEpidBySSIdAsync(string ssid)
         {
             string api = $"https://api.bilibili.com/pugv/view/web/season?season_id={ssid}";
             string json = await GetWebSourceAsync(api);
@@ -220,7 +221,7 @@ namespace BBDown
             return epId;
         }
 
-        public static async Task<string> GetEpIdByBangumiSSIdAsync(string ssId)
+        private static async Task<string> GetEpIdByBangumiSSIdAsync(string ssId)
 		{
             string api = $"https://{Core.Config.EPHOST}/pgc/view/web/season?season_id={ssId}";
             string json = await GetWebSourceAsync(api);
@@ -229,7 +230,7 @@ namespace BBDown
             return epId;
         }
 
-        public static async Task<string> GetEpIdByMDAsync(string mdId)
+        private static async Task<string> GetEpIdByMDAsync(string mdId)
 		{
             string api = $"https://api.bilibili.com/pgc/review/user?media_id={mdId}";
             string json = await GetWebSourceAsync(api);
@@ -290,7 +291,7 @@ namespace BBDown
         /// <returns></returns>
         private static string ReplaceUrl(string url)
         {
-            if (McdnRegex().IsMatch(url))
+            if (url.Contains(".mcdn.bilivideo.cn:"))
             {
                 LogDebug("对[*.mcdn.bilivideo.cn:xxx]域名不做处理");
                 return url;
@@ -429,7 +430,7 @@ namespace BBDown
         /// <param name="outputFilePath"></param>
         public static void CombineMultipleFilesIntoSingleFile(string[] files, string outputFilePath)
         {
-            if (files.Length == 0) return;
+            if (!files.Any()) return;
             if (files.Length == 1)
             {
                 FileInfo fi = new(files[0]);
@@ -492,7 +493,7 @@ namespace BBDown
         }
 
         private static char[] InvalidChars = "34,60,62,124,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,58,42,63,92,47"
-                .Split(',').Select(s => (char)int.Parse(s)).ToArray();
+                .Split(',').Select(s => (char)byte.Parse(s)).ToArray();
 
         public static string GetValidFileName(string input, string re = "_", bool filterSlash = false)
         {
@@ -791,16 +792,8 @@ namespace BBDown
         private static partial Regex BangumiMdRegex();
         [GeneratedRegex("window.__INITIAL_STATE__=([\\s\\S].*?);\\(function\\(\\)")]
         private static partial Regex StateRegex();
-        [GeneratedRegex("ep(\\d+)")]
-        private static partial Regex EpRegex2();
         [GeneratedRegex("md(\\d+)")]
         private static partial Regex MdRegex();
-        [GeneratedRegex("^\\d+$")]
-        private static partial Regex NumRegex();
-        [GeneratedRegex("ep(\\d+)")]
-        private static partial Regex RedirectRegex();
-        [GeneratedRegex("://.*mcdn\\.bilivideo\\.cn:\\d+")]
-        private static partial Regex McdnRegex();
         [GeneratedRegex("(^|&)?(\\w+)=([^&]+)(&|$)?", RegexOptions.Compiled)]
         private static partial Regex QueryRegex();
         [GeneratedRegex("libavutil\\s+(\\d+)\\. +(\\d+)\\.")]
