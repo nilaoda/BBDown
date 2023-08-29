@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Text;
 using static BBDown.Core.Entity.Entity;
 using static BBDown.BBDownUtil;
@@ -16,7 +17,7 @@ namespace BBDown
         public static string FFMPEG = "ffmpeg";
         public static string MP4BOX = "mp4box";
 
-        public static int RunExe(string app, string parms, bool customBin = false)
+        private static int RunExe(string app, string parms, bool customBin = false)
         {
             int code = 0;
             Process p = new();
@@ -43,7 +44,7 @@ namespace BBDown
             return string.IsNullOrEmpty(str) ? str : str.Replace("\"", "'").Replace("\\", "\\\\");
         }
 
-        public static int MuxByMp4box(string videoPath, string audioPath, string outPath, string desc, string title, string author, string episodeId, string pic, string lang, List<Subtitle>? subs, bool audioOnly, bool videoOnly, List<ViewPoint>? points)
+        private static int MuxByMp4box(string videoPath, string audioPath, string outPath, string desc, string title, string author, string episodeId, string pic, string lang, List<Subtitle>? subs, bool audioOnly, bool videoOnly, List<ViewPoint>? points)
         {
             StringBuilder inputArg = new();
             StringBuilder metaArg = new();
@@ -59,7 +60,7 @@ namespace BBDown
                 inputArg.Append($" -add \"{audioPath}:lang={(lang == "" ? "und" : lang)}\" ");
                 nowId++;
             }
-            if (points != null && points.Count > 0)
+            if (points != null && points.Any())
             {
                 var meta = GetMp4boxMetaString(points);
                 var metaFile = Path.Combine(Path.GetDirectoryName(string.IsNullOrEmpty(videoPath) ? audioPath : videoPath)!, "chapters");
@@ -94,7 +95,7 @@ namespace BBDown
             return RunExe(MP4BOX, arguments, MP4BOX != "mp4box");
         }
 
-        public static int MuxAV(bool useMp4box, string videoPath, string audioPath, string outPath, string desc = "", string title = "", string author = "", string episodeId = "", string pic = "", string lang = "", List<Subtitle>? subs = null, bool audioOnly = false, bool videoOnly = false, List<ViewPoint>? points = null, long pubTime = 0)
+        public static int MuxAV(bool useMp4box, string videoPath, string audioPath, List<AudioMaterial> audioMaterial, string outPath, string desc = "", string title = "", string author = "", string episodeId = "", string pic = "", string lang = "", List<Subtitle>? subs = null, bool audioOnly = false, bool videoOnly = false, List<ViewPoint>? points = null, long pubTime = 0)
         {
             if (audioOnly && audioPath != "")
                 videoPath = "";
@@ -115,7 +116,7 @@ namespace BBDown
             StringBuilder inputArg = new();
             StringBuilder metaArg = new();
             byte inputCount = 0;
-            foreach (string path in new string[] { videoPath, audioPath, pic })
+            foreach (string path in new string[] { videoPath, audioPath })
             {
                 if (!string.IsNullOrEmpty(path))
                 {
@@ -123,6 +124,27 @@ namespace BBDown
                     inputArg.Append($"-i \"{path}\" ");
                 }
             }
+
+            if (audioMaterial.Any())
+            {
+                byte audioCount = 0;
+                metaArg.Append("-metadata:s:a:0 title=\"原音频\" ");
+                foreach (var audio in audioMaterial)
+                {
+                    inputCount++;
+                    audioCount++;
+                    inputArg.Append($"-i \"{audio.path}\" ");
+                    if (!string.IsNullOrWhiteSpace(audio.title)) metaArg.Append($"-metadata:s:a:{audioCount} title=\"{audio.title}\" ");
+                    if (!string.IsNullOrWhiteSpace(audio.personName)) metaArg.Append($"-metadata:s:a:{audioCount} artist=\"{audio.personName}\" ");
+                }
+            }
+
+            if (!string.IsNullOrEmpty(pic))
+            {
+                inputCount++;
+                inputArg.Append($"-i \"{pic}\" ");
+            }
+
             if (subs != null)
             {
                 for (int i = 0; i < subs.Count; i++)
@@ -140,7 +162,7 @@ namespace BBDown
                 metaArg.Append($"-disposition:v:{(audioOnly ? "0" : "1")} attached_pic ");
             // var inputCount = InputRegex().Matches(inputArg.ToString()).Count;
 
-            if (points != null && points.Count > 0)
+            if (points != null && points.Any())
             {
                 var meta = GetFFmpegMetaString(points);
                 var metaFile = Path.Combine(Path.GetDirectoryName(string.IsNullOrEmpty(videoPath) ? audioPath : videoPath)!, "chapters");
@@ -148,24 +170,9 @@ namespace BBDown
                 inputArg.Append($"-i \"{metaFile}\" -map_chapters {inputCount} ");
             }
 
-            for (byte i = 0; i < inputCount; i++)
-            {
-                inputArg.Append($"-map {i} ");
-            }
+            inputArg.Append(string.Concat(Enumerable.Range(0, inputCount).Select(i => $"-map {i} ")));
 
             //----分析完毕
-            /*var arguments = $"-loglevel {(Config.DEBUG_LOG ? "verbose" : "warning")} -y " +
-                 inputArg.ToString() + metaArg.ToString() + $" -metadata title=\"" + (episodeId == "" ? title : episodeId) + "\" " +
-                 (lang == "" ? "" : $"-metadata:s:a:0 language={lang} ") +
-                 $"-metadata description=\"{desc}\" " +
-                 $"-metadata artist=\"{author}\" " +
-                 (episodeId == "" ? "" : $"-metadata album=\"{title}\" ") +
-                 $"-c copy " + (audioOnly && audioPath == "" ? " -vn " : "") +
-                 (subs != null ? " -c:s mov_text " : "") +
-                 "-movflags faststart -strict unofficial -strict -2 -f mp4 " +
-                 $"-- \"{outPath}\"";
-            LogDebug("ffmpeg命令：{0}", arguments);*/
-
             StringBuilder argsBuilder = new StringBuilder();
             argsBuilder.Append($"-loglevel {(Config.DEBUG_LOG ? "verbose" : "warning")} -y ");
             argsBuilder.Append(inputArg);

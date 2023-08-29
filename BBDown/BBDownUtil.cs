@@ -305,12 +305,11 @@ namespace BBDown
 
         public static async Task DownloadFile(string url, string path, bool aria2c, string aria2cArgs, bool forceHttp = false)
         {
+            if (string.IsNullOrEmpty(url)) return;
             if (forceHttp) url = ReplaceUrl(url);
             LogDebug("Start downloading: {0}", url);
-            if (!Directory.Exists(Path.GetDirectoryName(Path.GetFullPath(path))))
-            {
-                Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(path))!);
-            }
+            string desDir = Path.GetDirectoryName(path);
+            if (!string.IsNullOrEmpty(desDir) && !Directory.Exists(desDir)) Directory.CreateDirectory(desDir);
             if (aria2c)
             {
                 await BBDownAria2c.DownloadFileByAria2cAsync(url, path, aria2cArgs);
@@ -320,7 +319,7 @@ namespace BBDown
                 return;
             }
             int retry = 0;
-            string tmpName = Path.Combine(Path.GetDirectoryName(path)!, Path.GetFileNameWithoutExtension(path) + ".tmp");
+            string tmpName = Path.Combine(desDir, Path.GetFileNameWithoutExtension(path) + ".tmp");
         reDown:
             try
             {
@@ -554,13 +553,13 @@ namespace BBDown
         public static string GetSign(string parms)
         {
             string toEncode = parms + "59b43e04ad6965f34319062b478f83dd";
-            return string.Concat(MD5.HashData(Encoding.UTF8.GetBytes(toEncode)).Select(i => i.ToString("x2")).ToArray());
+            return string.Concat(MD5.HashData(Encoding.UTF8.GetBytes(toEncode)).Select(i => i.ToString("x2")));
         }
 
         public static string GetTimeStamp(bool bflag)
         {
             DateTimeOffset ts = DateTimeOffset.Now;
-            return bflag ? ts.ToUnixTimeSeconds().ToString() : ts.ToUnixTimeMilliseconds().ToString();
+            return (bflag ? ts.ToUnixTimeSeconds() : ts.ToUnixTimeMilliseconds()).ToString();
         }
 
         //https://stackoverflow.com/questions/1344221/how-can-i-generate-random-alphanumeric-strings

@@ -189,5 +189,36 @@ namespace BBDown.Core.Entity
             public required long from;
             public required long to;
         }
+
+        public class AudioMaterial
+        {
+            public required string title;
+            public required string personName;
+            public required string path;
+
+            [SetsRequiredMembers]
+            public AudioMaterial(string title, string personName, string path)
+            {
+                this.title = title;
+                this.personName = personName;
+                this.path = path;
+            }
+
+            [SetsRequiredMembers]
+            public AudioMaterial(AudioMaterialInfo audioMaterialInfo)
+            {
+                this.title = audioMaterialInfo.title;
+                this.personName = audioMaterialInfo.personName;
+                this.path = audioMaterialInfo.path;
+            }
+        }
+
+        public class AudioMaterialInfo
+        {
+            public required string title;
+            public required string personName;
+            public required string path;
+            public required List<Audio> audio;
+        }
     }
 }
