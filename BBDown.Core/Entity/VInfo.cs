@@ -22,7 +22,7 @@ namespace BBDown.Core.Entity
         /// <summary>
         /// 视频发布时间
         /// </summary>
-        public required string PubTime { get; set; }
+        public required long PubTime { get; set; }
         public bool IsBangumi { get; set; }
         public bool IsCheese { get; set; }
 

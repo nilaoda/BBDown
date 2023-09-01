@@ -8,8 +8,8 @@ namespace BBDown.Core.Fetcher
 {
     /// <summary>
     /// 收藏夹解析
-    /// https://space.bilibili.com/4743331/favlist?spm_id_from=333.1007.0.0
-    /// 
+    /// https://space.bilibili.com/3/favlist
+    ///
     /// </summary>
     public class FavListFetcher : IFetcher
     {
@@ -21,7 +21,7 @@ namespace BBDown.Core.Fetcher
             //查找默认收藏夹
             if (favId == "")
             {
-                var favListApi = $"https://api.bilibili.com/x/v3/fav/folder/created/list-all?up_mid={mid}&jsonp=jsonp";
+                var favListApi = $"https://api.bilibili.com/x/v3/fav/folder/created/list-all?up_mid={mid}";
                 favId = JsonDocument.Parse(await GetWebSourceAsync(favListApi)).RootElement.GetProperty("data").GetProperty("list").EnumerateArray().First().GetProperty("id").ToString();
             }
 
@@ -29,7 +29,7 @@ namespace BBDown.Core.Fetcher
             int index = 1;
             List<Page> pagesInfo = new();
 
-            var api = $"https://api.bilibili.com/x/v3/fav/resource/list?media_id={favId}&pn=1&ps={pageSize}&keyword=&order=mtime&type=0&tid=0&platform=web&jsonp=jsonp";
+            var api = $"https://api.bilibili.com/x/v3/fav/resource/list?media_id={favId}&pn=1&ps={pageSize}&order=mtime&type=2&tid=0&platform=web";
             var json = await GetWebSourceAsync(api);
             using var infoJson = JsonDocument.Parse(json);
             var data = infoJson.RootElement.GetProperty("data");
@@ -37,14 +37,13 @@ namespace BBDown.Core.Fetcher
             int totalPage = (int)Math.Ceiling((double)totalCount / pageSize);
             var title = data.GetProperty("info").GetProperty("title").GetString()!;
             var intro = data.GetProperty("info").GetProperty("intro").GetString()!;
-            string pubTime = data.GetProperty("info").GetProperty("ctime").ToString();
-            pubTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc).AddSeconds(Convert.ToDouble(pubTime)).ToLocalTime().ToString();
+            long pubTime = data.GetProperty("info").GetProperty("ctime").GetInt64();
             var userName = data.GetProperty("info").GetProperty("upper").GetProperty("name").ToString();
             var medias = data.GetProperty("medias").EnumerateArray().ToList();
-            
+
             for (int page = 2; page <= totalPage; page++)
             {
-                api = $"https://api.bilibili.com/x/v3/fav/resource/list?media_id={favId}&pn={page}&ps={pageSize}&keyword=&order=mtime&type=0&tid=0&platform=web&jsonp=jsonp";
+                api = $"https://api.bilibili.com/x/v3/fav/resource/list?media_id={favId}&pn={page}&ps={pageSize}&order=mtime&type=2&tid=0&platform=web";
                 json = await GetWebSourceAsync(api);
                 var jsonDoc = JsonDocument.Parse(json);
                 data = jsonDoc.RootElement.GetProperty("data");
@@ -53,8 +52,8 @@ namespace BBDown.Core.Fetcher
 
             foreach (var m in medias)
             {
-                //只处理视频类型
-                if (m.GetProperty("type").GetInt32() != 2) continue;
+                //只处理视频类型(可以直接在query param上指定type=2)
+                // if (m.GetProperty("type").GetInt32() != 2) continue;
                 //只处理未失效视频
                 if (m.GetProperty("attr").GetInt32() != 0) continue;
 
@@ -82,6 +81,7 @@ namespace BBDown.Core.Fetcher
                         m.GetProperty("title").ToString(),
                         m.GetProperty("duration").GetInt32(),
                         "",
+                        m.GetProperty("pubtime").GetInt64(),
                         m.GetProperty("cover").ToString(),
                         m.GetProperty("intro").ToString(),
                         m.GetProperty("upper").GetProperty("name").ToString(),

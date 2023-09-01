@@ -22,8 +22,7 @@ namespace BBDown.Core.Fetcher
             var data = infoJson.RootElement.GetProperty("data");
             var listTitle = data.GetProperty("title").GetString()!;
             var intro = data.GetProperty("intro").GetString()!;
-            string pubTime = data.GetProperty("ctime").ToString();
-            pubTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc).AddSeconds(Convert.ToDouble(pubTime)).ToLocalTime().ToString();
+            long pubTime = data.GetProperty("ctime").GetInt64();
 
             List<Page> pagesInfo = new();
             bool hasMore = true;
@@ -51,6 +50,7 @@ namespace BBDown.Core.Fetcher
                         pageCount == 1 ? m.GetProperty("title").ToString() : $"{m.GetProperty("title")}_P{page.GetProperty("page")}_{page.GetProperty("title")}", //单P使用外层标题 多P则拼接内层子标题
                         page.GetProperty("duration").GetInt32(),
                         page.GetProperty("dimension").GetProperty("width").ToString() + "x" + page.GetProperty("dimension").GetProperty("height").ToString(),
+                        m.GetProperty("pubtime").GetInt64(),
                         m.GetProperty("cover").ToString(),
                         desc,
                         ownerName,

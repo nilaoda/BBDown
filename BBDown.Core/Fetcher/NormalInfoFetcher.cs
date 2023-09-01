@@ -20,8 +20,7 @@ namespace BBDown.Core.Fetcher
             var owner = data.GetProperty("owner");
             string ownerMid = owner.GetProperty("mid").ToString();
             string ownerName = owner.GetProperty("name").ToString();
-            string pubTime = data.GetProperty("pubdate").ToString();
-            pubTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc).AddSeconds(Convert.ToDouble(pubTime)).ToLocalTime().ToString();
+            long pubTime = data.GetProperty("pubdate").GetInt64();
             bool bangumi = false;
 
             var pages = data.GetProperty("pages").EnumerateArray().ToList();
@@ -35,6 +34,7 @@ namespace BBDown.Core.Fetcher
                     page.GetProperty("part").ToString().Trim(),
                     page.GetProperty("duration").GetInt32(),
                     page.GetProperty("dimension").GetProperty("width").ToString() + "x" + page.GetProperty("dimension").GetProperty("height").ToString(),
+                    pubTime, //分p视频没有发布时间
                     "",
                     "",
                     ownerName,

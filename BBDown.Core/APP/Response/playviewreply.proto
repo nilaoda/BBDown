@@ -8,14 +8,15 @@ message VideoInfo {
     optional uint32 videoCodecid = 4;
     repeated StreamItem streamList = 5;
     repeated DashItem dashAudio = 6;
-    //�űȰ�����E
+    //杜比伴音流
     optional DolbyItem dolby = 7;
+    optional DolbyItem flac = 9;
 }
 
-//�ű���Ƶ��Ϣ
+//杜比音频信息
 message DolbyItem {
 	optional int32 type = 1;
-	//��Ƶ��E
+	//音频流
 	optional DashItem audio = 2;
 }
 
@@ -46,10 +47,17 @@ message PlayAbilityConf {
     optional bool shakeDisable = 24;
 }
 
+message ClipInfo {
+    optional int32 start = 2;
+    optional int32 end = 3;
+    optional string toastText = 5;
+}
+
 message BusinessInfo {
     optional bool isPreview = 1;
     optional bool bp = 2;
     optional string marlinToken = 3;
+    repeated ClipInfo clipInfo = 6;
 }
 
 message Event {
@@ -121,9 +129,35 @@ message ResponseUrl {
     optional string md5 = 6;
 }
 
+message RoleAudioProto {
+    // 配音列表
+    repeated AudioMaterialProto audioMaterialList = 4;
+}
+
+message AudioMaterialProto {
+    optional string audioId = 1;
+    optional string title = 2;
+    optional string edition = 3;
+    optional string personName = 5;
+    repeated DashItem audio = 7;
+}
+
+message PlayDubbingInfo {
+    // 背景音频
+    optional AudioMaterialProto backgroundAudio = 1;
+    // 角色音频列表
+    repeated RoleAudioProto roleAudioList = 2;
+}
+
+message PlayExtInfo {
+    // 播放配音信息
+    optional PlayDubbingInfo playDubbingInfo = 1;
+}
+
 message PlayViewReply {
     optional VideoInfo videoInfo = 1;
     optional PlayAbilityConf playConf = 2;
     optional BusinessInfo business = 3;
     optional Event event = 4;
+    optional PlayExtInfo playExtInfo = 7;
 }

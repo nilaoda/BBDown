@@ -2,6 +2,7 @@
 using Google.Protobuf;
 using System.Buffers.Binary;
 using System.IO.Compression;
+using System.Linq;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -12,13 +13,13 @@ namespace BBDown.Core
     class AppHelper
     {
         private static readonly string API = "https://grpc.biliapi.net/bilibili.app.playurl.v1.PlayURL/PlayView";
-        private static readonly string API2 = "https://app.bilibili.com/bilibili.pgc.gateway.player.v1.PlayURL/PlayView";
+        private static readonly string API2 = "https://app.bilibili.com/bilibili.pgc.gateway.player.v2.PlayURL/PlayView";
         private static readonly string dalvikVer = "2.1.0";
         private static readonly string osVer = "11";
         private static readonly string brand = "M2012K11AC";
         private static readonly string model = "Build/RKQ1.200826.002";
-        private static readonly string appVer = "6.32.0";
-        private static readonly int build = 6320200;
+        private static readonly string appVer = "7.32.0";
+        private static readonly int build = 7320200; // 新版才能抓到配音
         private static readonly string channel = "xiaomi_cn_tv.danmaku.bili_zm20200902";
         private static readonly Network.Types.TYPE networkType = Network.Types.TYPE.Wifi;
         private static readonly string networkOid = "46007";
@@ -54,34 +55,23 @@ namespace BBDown.Core
         /// <returns></returns>
         public static async Task<string> DoReqAsync(string aid, string cid, string epId, string qn, bool bangumi, string encoding, string appkey = "")
         {
+
             var headers = GetHeader(appkey);
             LogDebug("App-Req-Headers: {0}", JsonSerializer.Serialize(headers, JsonContext.Default.DictionaryStringString));
-            var body = GetPayload(Convert.ToInt64(aid), Convert.ToInt64(cid), Convert.ToInt64(qn), GetVideoCodeType(encoding));
-            //Console.WriteLine(ReadMessage<PlayViewReq>(body));
-            var data = await GetPostResponseAsync(API, body, headers);
-            PlayViewReply? resp;
-            try
+            byte[] body, data;
+            // 只有pgc接口才有配音和片头尾信息
+            if (bangumi)
             {
-                resp = new MessageParser<PlayViewReply>(() => new PlayViewReply()).ParseFrom(ReadMessage(data));
+                body = GetPayload(Convert.ToInt64(epId), Convert.ToInt64(cid), Convert.ToInt64(qn), GetVideoCodeType(encoding));
+                data = await GetPostResponseAsync(API2, body, headers);
             }
-            catch (Exception ex)
+            else
             {
-                if (Config.DEBUG_LOG)
-                {
-                    LogError(ex.Message);
-                }
+                body = GetPayload(Convert.ToInt64(aid), Convert.ToInt64(cid), Convert.ToInt64(qn), GetVideoCodeType(encoding));
+                data = await GetPostResponseAsync(API, body, headers);
+            }
+            var resp = new MessageParser<PlayViewReply>(() => new PlayViewReply()).ParseFrom(ReadMessage(data));
 
-                if (bangumi)
-                {
-                    body = GetPayload(Convert.ToInt64(epId), Convert.ToInt64(cid), Convert.ToInt64(qn), GetVideoCodeType(encoding));
-                    data = await GetPostResponseAsync(API2, body, headers);
-                    resp = new MessageParser<PlayViewReply>(() => new PlayViewReply()).ParseFrom(ReadMessage(data));
-                }
-                else
-                {
-                    throw;
-                }
-            }
             LogDebug("PlayViewReplyPlain: {0}", JsonSerializer.Serialize(resp, JsonContext.Default.PlayViewReply));
             return ConvertToDashJson(resp);
         }
@@ -96,6 +86,7 @@ namespace BBDown.Core
             var resp = (PlayViewReply)data;
             var videos = new List<object>();
             var audios = new List<object>();
+            var clips = new List<object>();
 
             if (resp.VideoInfo.StreamList != null)
             {
@@ -116,16 +107,24 @@ namespace BBDown.Core
 
             if (resp.VideoInfo.DashAudio != null)
             {
-                foreach (var item in resp.VideoInfo.DashAudio)
-                {
-                    audios.Add(new AudioInfoWithCodecName(
-                        item.Id,
-                        item.BaseUrl,
-                        item.BackupUrl.ToList(),
-                        item.Bandwidth,
-                        "M4A"
-                    ));
-                }
+                audios.AddRange(resp.VideoInfo.DashAudio.Select(item => new AudioInfoWithCodecName(
+                    item.Id,
+                    item.BaseUrl,
+                    item.BackupUrl.ToList(),
+                    item.Bandwidth,
+                    "M4A"
+                )));
+            }
+
+            if (resp.VideoInfo.Flac != null && resp.VideoInfo.Flac.Audio != null)
+            {
+                audios.Add(new AudioInfoWithCodecName(
+                    resp.VideoInfo.Flac.Audio.Id,
+                    resp.VideoInfo.Flac.Audio.BaseUrl,
+                    resp.VideoInfo.Flac.Audio.BackupUrl.ToList(),
+                    resp.VideoInfo.Flac.Audio.Bandwidth,
+                    "FLAC"
+                ));
             }
 
             if (resp.VideoInfo.Dolby != null && resp.VideoInfo.Dolby.Audio != null)
@@ -139,6 +138,51 @@ namespace BBDown.Core
                 ));
             }
 
+            if (resp.Business != null && resp.Business.ClipInfo != null)
+            {
+                clips.AddRange(resp.Business.ClipInfo.Select(clip => new DashClip(
+                    clip.Start,
+                    clip.End,
+                    clip.ToastText
+                )));
+            }
+
+            var backgroundAudios = new List<object>();
+            var roles = new List<object>();
+            if (resp.PlayExtInfo != null && resp.PlayExtInfo.PlayDubbingInfo != null && resp.PlayExtInfo.PlayDubbingInfo.BackgroundAudio != null)
+            {
+                var dubInfo = resp.PlayExtInfo.PlayDubbingInfo;
+
+                backgroundAudios.AddRange(dubInfo.BackgroundAudio.Audio.Select(item => new AudioInfoWithCodecName(
+                    item.Id,
+                    item.BaseUrl,
+                    item.BackupUrl.ToList(),
+                    item.Bandwidth,
+                    "M4A"
+                )));
+
+                foreach (var item in dubInfo.RoleAudioList)
+                {
+                    foreach (var role in item.AudioMaterialList)
+                    {
+                        List<object> roleAudios = role.Audio.Select(item => new AudioInfoWithCodecName(
+                            item.Id,
+                            item.BaseUrl,
+                            item.BackupUrl.ToList(),
+                            item.Bandwidth,
+                            "M4A"
+                        )).Cast<object>().ToList();
+
+                        roles.Add(new AudioMaterial(
+                            role.AudioId,
+                            role.Title ?? role.AudioId,
+                            role.PersonName ?? role.Edition ?? "",
+                            roleAudios
+                        ));
+                    }
+                }
+            }
+
             var json = new DashJson(
                 0,
                 "0",
@@ -148,7 +192,12 @@ namespace BBDown.Core
                     new DashInfo(
                         videos,
                         audios
-                    )
+                    ),
+                    clips
+                ),
+                new DubbingInfo(
+                    backgroundAudios,
+                    roles
                 )
             );
 
@@ -164,6 +213,7 @@ namespace BBDown.Core
                 //obj.Qn = qn;
                 Qn = 127,
                 Fnval = 4048,
+                Fourk = true,
                 Spmid = "main.ugc-video-detail.0.0",
                 FromSpmid = "main.my-history.0.0",
                 PreferCodecType = codec,
@@ -369,6 +419,9 @@ namespace BBDown.Core
     }
 
 
+    [JsonSerializable(typeof(AudioMaterial))]
+    [JsonSerializable(typeof(DubbingInfo))]
+    [JsonSerializable(typeof(DashClip))]
     [JsonSerializable(typeof(AudioInfoWithCodecName))]
     [JsonSerializable(typeof(AudioInfoWitCodecId))]
     [JsonSerializable(typeof(DashJson))]
@@ -376,6 +429,66 @@ namespace BBDown.Core
     [JsonSerializable(typeof(PlayViewReply))]
     [JsonSerializable(typeof(Dictionary<string, string>))]
     internal partial class JsonContext : JsonSerializerContext { }
+
+    internal class AudioMaterial
+    {
+        [JsonPropertyName("audio_id")]
+        public string AudioId { get; }
+        [JsonPropertyName("title")]
+        public string Title { get; }
+        [JsonPropertyName("person_name")]
+        public string PersonName { get; }
+        [JsonPropertyName("audio")]
+        public List<object> Audio { get; }
+
+        public AudioMaterial(string audio_id, string title, string person_name, List<object> audio)
+        {
+            AudioId = audio_id;
+            Title = title;
+            PersonName = person_name;
+            Audio = audio;
+        }
+
+        public override bool Equals(object? obj) => obj is AudioMaterial other && AudioId == other.AudioId && Title == other.Title && PersonName == other.PersonName && Audio == other.Audio;
+        public override int GetHashCode() => HashCode.Combine(Title, Audio);
+    }
+
+    internal class DubbingInfo
+    {
+        [JsonPropertyName("background_audio")]
+        public List<object> BackgroundAudio { get; }
+        [JsonPropertyName("role_audio_list")]
+        public List<object> RoleAudioList { get; }
+
+        public DubbingInfo(List<object> background_audio, List<object> role_audio_list)
+        {
+            BackgroundAudio = background_audio;
+            RoleAudioList = role_audio_list;
+        }
+
+        public override bool Equals(object? obj) => obj is DubbingInfo other && BackgroundAudio == other.BackgroundAudio && RoleAudioList == other.RoleAudioList;
+        public override int GetHashCode() => HashCode.Combine(BackgroundAudio, RoleAudioList);
+    }
+
+    internal class DashClip
+    {
+        [JsonPropertyName("start")]
+        public int Start { get; }
+        [JsonPropertyName("end")]
+        public int End { get; }
+        [JsonPropertyName("toastText")]
+        public string ToastText { get; }
+
+        public DashClip(int start, int end, string toastText)
+        {
+            Start = start;
+            End = end;
+            ToastText = toastText;
+        }
+
+        public override bool Equals(object? obj) => obj is DashClip other && Start == other.Start && End == other.End && ToastText == other.ToastText;
+        public override int GetHashCode() => HashCode.Combine(Start, End, ToastText);
+    }
 
     internal class AudioInfoWithCodecName
     {
@@ -452,15 +565,18 @@ namespace BBDown.Core
         public ulong TimeLength { get; }
         [JsonPropertyName("dash")]
         public DashInfo Dash { get; }
+        [JsonPropertyName("clip_info_list")]
+        public List<object> ClipList { get; }
 
-        public DashData(ulong timelength, DashInfo dash)
+        public DashData(ulong timelength, DashInfo dash, List<object> clipList)
         {
             TimeLength = timelength;
             Dash = dash;
+            ClipList = clipList;
         }
 
-        public override bool Equals(object? obj) => obj is DashData other && TimeLength == other.TimeLength && EqualityComparer<DashInfo>.Default.Equals(Dash, other.Dash);
-        public override int GetHashCode() => HashCode.Combine(TimeLength, Dash);
+        public override bool Equals(object? obj) => obj is DashData other && TimeLength == other.TimeLength && EqualityComparer<DashInfo>.Default.Equals(Dash, other.Dash) && EqualityComparer<List<object>>.Default.Equals(ClipList, other.ClipList);
+        public override int GetHashCode() => HashCode.Combine(TimeLength, Dash, ClipList);
     }
 
     internal class DashJson
@@ -473,16 +589,19 @@ namespace BBDown.Core
         public int Ttl { get; }
         [JsonPropertyName("data")]
         public DashData Data { get; }
+        [JsonPropertyName("dubbing_info")]
+        public DubbingInfo DubbingInfo { get; }
 
-        public DashJson(int code, string message, int ttl, DashData data)
+        public DashJson(int code, string message, int ttl, DashData data, DubbingInfo dubbingInfo)
         {
             Code = code;
             Message = message;
             Ttl = ttl;
             Data = data;
+            DubbingInfo = dubbingInfo;
         }
 
         public override bool Equals(object? obj) => obj is DashJson other && Code == other.Code && Message == other.Message && Ttl == other.Ttl && EqualityComparer<DashData>.Default.Equals(Data, other.Data);
-        public override int GetHashCode() => HashCode.Combine(Code, Message, Ttl, Data);
+        public override int GetHashCode() => HashCode.Combine(Code, Message, Ttl, Data, DubbingInfo);
     }
 }
