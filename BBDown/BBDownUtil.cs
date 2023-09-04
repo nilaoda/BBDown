@@ -775,6 +775,10 @@ namespace BBDown
             }
         }
 
+        public static double CalculateSize(int duration, long bandwith) => duration * bandwith * 1024 / 8;
+        public static double CalculateSize(Video video) => video.size > 0 ? video.size : CalculateSize(video.dur, video.bandwith);
+        public static double CalculateSize(Audio audio) => CalculateSize(audio.dur, audio.bandwith);
+
         [GeneratedRegex("av(\\d+)")]
         private static partial Regex AvRegex();
         [GeneratedRegex("[Bb][Vv](\\w+)")]

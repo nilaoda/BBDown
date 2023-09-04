@@ -15,23 +15,16 @@ namespace BBDown
         public bool UseMP4box { get; set; }
         public string? EncodingPriority { get; set; }
         public string? DfnPriority { get; set; }
+        public string DownloadOnly { get; set; } = "avsc";
         public bool OnlyShowInfo { get; set; }
         public bool ShowAll { get; set; }
         public bool UseAria2c { get; set; }
         public bool Interactive { get; set; }
         public bool HideStreams { get; set; }
         public bool MultiThread { get; set; } = true;
-        public bool VideoOnly { get; set; }
-        public bool AudioOnly { get; set; }
-        public bool DanmakuOnly { get; set; }
-        public bool CoverOnly { get; set; }
-        public bool SubOnly { get; set; }
         public bool Debug { get; set; }
         public bool SkipMux { get; set; }
-        public bool SkipSubtitle { get; set; }
-        public bool SkipCover { get; set; }
         public bool ForceHttp { get; set; } = true;
-        public bool DownloadDanmaku { get; set; } = false;
         public bool SkipAi { get; set; } = true;
         public bool VideoAscending { get; set; } = false;
         public bool AudioAscending { get; set; } = false;

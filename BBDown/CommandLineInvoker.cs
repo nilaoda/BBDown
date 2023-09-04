@@ -26,17 +26,10 @@ namespace BBDown
         private readonly static Option<string> Aria2cArgs = new(new string[] { "--aria2c-args" }, "调用aria2c的附加参数(默认参数包含\"-x16 -s16 -j16 -k 5M\", 使用时注意字符串转义)");
         private readonly static Option<bool> MultiThread = new(new string[] { "--multi-thread", "-mt" }, "使用多线程下载(默认开启)");
         private readonly static Option<string> SelectPage = new(new string[] { "--select-page", "-p" }, "选择指定分p或分p范围: (-p 8 或 -p 1,2 或 -p 3-5 或 -p ALL 或 -p LAST 或 -p 3,5,LATEST)");
-        private readonly static Option<bool> AudioOnly = new(new string[] { "--audio-only" }, "仅下载音频");
-        private readonly static Option<bool> VideoOnly = new(new string[] { "--video-only" }, "仅下载视频");
-        private readonly static Option<bool> DanmakuOnly = new(new string[] { "--danmaku-only" }, "仅下载弹幕");
-        private readonly static Option<bool> CoverOnly = new(new string[] { "--cover-only" }, "仅下载封面");
-        private readonly static Option<bool> SubOnly = new(new string[] { "--sub-only" }, "仅下载字幕");
+        private readonly static Option<string> DownloadOnly = new(new string[] { "--only" }, "仅下载部分内容，'a'->音频，'v'->视频，'c'->封面，‘s’->字幕，'d'->弹幕，用例: --only avsc");
         private readonly static Option<bool> Debug = new(new string[] { "--debug" }, "输出调试日志");
         private readonly static Option<bool> SkipMux = new(new string[] { "--skip-mux" }, "跳过混流步骤");
-        private readonly static Option<bool> SkipSubtitle = new(new string[] { "--skip-subtitle" }, "跳过字幕下载");
-        private readonly static Option<bool> SkipCover = new(new string[] { "--skip-cover" }, "跳过封面下载");
         private readonly static Option<bool> ForceHttp = new(new string[] { "--force-http" }, "下载音视频时强制使用HTTP协议替换HTTPS(默认开启)");
-        private readonly static Option<bool> DownloadDanmaku = new(new string[] { "--download-danmaku", "-dd" }, "下载弹幕");
         private readonly static Option<bool> SkipAi = new(new string[] { "--skip-ai" }, description: "跳过AI字幕下载(默认开启)");
         private readonly static Option<bool> VideoAscending = new(new string[] { "--video-ascending" }, "视频升序(最小体积优先)");
         private readonly static Option<bool> AudioAscending = new(new string[] { "--audio-ascending" }, "音频升序(最小体积优先)");
@@ -88,17 +81,10 @@ namespace BBDown
                 if (bindingContext.ParseResult.HasOption(Interactive)) option.Interactive = bindingContext.ParseResult.GetValueForOption(Interactive)!;
                 if (bindingContext.ParseResult.HasOption(HideStreams)) option.HideStreams = bindingContext.ParseResult.GetValueForOption(HideStreams)!;
                 if (bindingContext.ParseResult.HasOption(MultiThread)) option.MultiThread = bindingContext.ParseResult.GetValueForOption(MultiThread)!;
-                if (bindingContext.ParseResult.HasOption(VideoOnly)) option.VideoOnly = bindingContext.ParseResult.GetValueForOption(VideoOnly)!;
-                if (bindingContext.ParseResult.HasOption(AudioOnly)) option.AudioOnly = bindingContext.ParseResult.GetValueForOption(AudioOnly)!;
-                if (bindingContext.ParseResult.HasOption(DanmakuOnly)) option.DanmakuOnly = bindingContext.ParseResult.GetValueForOption(DanmakuOnly)!;
-                if (bindingContext.ParseResult.HasOption(CoverOnly)) option.CoverOnly = bindingContext.ParseResult.GetValueForOption(CoverOnly)!;
-                if (bindingContext.ParseResult.HasOption(SubOnly)) option.SubOnly = bindingContext.ParseResult.GetValueForOption(SubOnly)!;
+                if (bindingContext.ParseResult.HasOption(DownloadOnly)) option.DownloadOnly = bindingContext.ParseResult.GetValueForOption(DownloadOnly)!;
                 if (bindingContext.ParseResult.HasOption(Debug)) option.Debug = bindingContext.ParseResult.GetValueForOption(Debug)!;
                 if (bindingContext.ParseResult.HasOption(SkipMux)) option.SkipMux = bindingContext.ParseResult.GetValueForOption(SkipMux)!;
-                if (bindingContext.ParseResult.HasOption(SkipSubtitle)) option.SkipSubtitle = bindingContext.ParseResult.GetValueForOption(SkipSubtitle)!;
-                if (bindingContext.ParseResult.HasOption(SkipCover)) option.SkipCover = bindingContext.ParseResult.GetValueForOption(SkipCover)!;
                 if (bindingContext.ParseResult.HasOption(ForceHttp)) option.ForceHttp = bindingContext.ParseResult.GetValueForOption(ForceHttp)!;
-                if (bindingContext.ParseResult.HasOption(DownloadDanmaku)) option.DownloadDanmaku = bindingContext.ParseResult.GetValueForOption(DownloadDanmaku)!;
                 if (bindingContext.ParseResult.HasOption(SkipAi)) option.SkipAi = bindingContext.ParseResult.GetValueForOption(SkipAi)!;
                 if (bindingContext.ParseResult.HasOption(VideoAscending)) option.VideoAscending = bindingContext.ParseResult.GetValueForOption(VideoAscending)!;
                 if (bindingContext.ParseResult.HasOption(AudioAscending)) option.AudioAscending = bindingContext.ParseResult.GetValueForOption(AudioAscending)!;
@@ -150,17 +136,9 @@ namespace BBDown
                 Interactive,
                 HideStreams,
                 MultiThread,
-                VideoOnly,
-                AudioOnly,
-                DanmakuOnly,
-                SubOnly,
-                CoverOnly,
                 Debug,
                 SkipMux,
-                SkipSubtitle,
-                SkipCover,
                 ForceHttp,
-                DownloadDanmaku,
                 SkipAi,
                 VideoAscending,
                 AudioAscending,
@@ -168,6 +146,7 @@ namespace BBDown
                 FilePattern,
                 MultiFilePattern,
                 SelectPage,
+                DownloadOnly,
                 Language,
                 UserAgent,
                 Cookie,

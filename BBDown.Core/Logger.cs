@@ -1,7 +1,11 @@
-﻿namespace BBDown.Core
+﻿using System.Text;
+
+namespace BBDown.Core
 {
     public class Logger
     {
+        public static readonly string debugFileName = "debug.json";
+
         public static void Log(object text, bool enter = true)
         {
             Console.Write(DateTime.Now.ToString("[yyyy-MM-dd HH:mm:ss.fff]") + " - " + text);
@@ -55,6 +59,29 @@
                     Console.Write(toFormat);
                 Console.ResetColor();
                 Console.WriteLine();
+            }
+        }
+
+        public static void WriteDebugFile(string content)
+        {
+            if (!Config.DEBUG_LOG)
+                return;
+            FileStream fs;
+            if (File.Exists(debugFileName))
+            {
+                using (fs = File.OpenWrite(debugFileName))
+                {
+                    fs.SetLength(0);
+                }
+            }
+            else
+            {
+                fs = File.Create(debugFileName);
+            }
+            using (fs)
+            using (var writer = new StreamWriter(fs, Encoding.UTF8))
+            {
+                writer.Write(content);
             }
         }
     }
