@@ -17,6 +17,11 @@
 dotnet tool install --global BBDown
 ```
 
+如果需要更新bbdown，使用如下命令
+```
+dotnet tool update --global BBDown
+```
+
 # 下载
 Release版本：https://github.com/nilaoda/BBDown/releases
 
