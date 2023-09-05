@@ -5,6 +5,7 @@ using static BBDown.Core.Logger;
 using static BBDown.Core.Util.HTTPUtil;
 using static BBDown.Core.Entity.Entity;
 using System.Security.Cryptography;
+using BBDown.Core.Entity;
 
 namespace BBDown.Core
 {
@@ -100,26 +101,20 @@ namespace BBDown.Core
             return webJson;
         }
 
-        public static async Task<(string, List<Video>, List<Audio>, List<string>, List<string>, List<Audio>, List<AudioMaterialInfo>, List<ViewPoint>)> ExtractTracksAsync(string aidOri, string aid, string cid, string epId, bool tvApi, bool intlApi, bool appApi, string encoding, string qn = "0")
+        public static async Task<ParsedResult> ExtractTracksAsync(string aidOri, string aid, string cid, string epId, bool tvApi, bool intlApi, bool appApi, string encoding, string qn = "0")
         {
-            List<Video> videoTracks = new();
-            List<Audio> audioTracks = new();
-            List<string> clips = new();
-            List<string> dfns = new();
-            List<Audio> backgroundAudioTracks = new();
-            List<AudioMaterialInfo> roleAudioList = new();
-            List<ViewPoint> points = new();
             var intlCode = "0";
+            ParsedResult parsedResult = new();
 
             //调用解析
-            string webJsonStr = await GetPlayJsonAsync(encoding, aidOri, aid, cid, epId, tvApi, intlApi, appApi, qn);
+            parsedResult.WebJsonString = await GetPlayJsonAsync(encoding, aidOri, aid, cid, epId, tvApi, intlApi, appApi, qn);
 
         startParsing:
-            var respJson = JsonDocument.Parse(webJsonStr);
+            var respJson = JsonDocument.Parse(parsedResult.WebJsonString);
             var data = respJson.RootElement;
 
             //intl接口
-            if (webJsonStr.Contains("\"stream_list\""))
+            if (parsedResult.WebJsonString.Contains("\"stream_list\""))
             {
                 int pDur = data.GetProperty("data").GetProperty("video_info").GetProperty("timelength").GetInt32() / 1000;
                 var audio = data.GetProperty("data").GetProperty("video_info").GetProperty("dash_audio").EnumerateArray().ToList();
@@ -142,7 +137,7 @@ namespace BBDown.Core
                                 codecs = GetVideoCodec(dashVideo.GetProperty("codecid").ToString()),
                                 size = dashVideo.TryGetProperty("size", out var sizeNode) ? Convert.ToDouble(sizeNode.ToString()) : 0
                             };
-                            if (!videoTracks.Contains(v)) videoTracks.Add(v);
+                            if (!parsedResult.VideoTracks.Contains(v)) parsedResult.VideoTracks.Add(v);
                         }
                     }
                 }
@@ -160,27 +155,27 @@ namespace BBDown.Core
                         baseUrl = urlList.FirstOrDefault(i => !BaseUrlRegex().IsMatch(i), urlList.First()),
                         codecs = "M4A"
                     };
-                    if (!audioTracks.Contains(a)) audioTracks.Add(a);
+                    if (!parsedResult.AudioTracks.Contains(a)) parsedResult.AudioTracks.Add(a);
                 }
 
                 if (intlCode == "0")
                 {
                     intlCode = "1";
-                    webJsonStr = await GetPlayJsonAsync(aid, cid, epId, qn, intlCode);
+                    parsedResult.WebJsonString = await GetPlayJsonAsync(aid, cid, epId, qn, intlCode);
                     goto startParsing;
                 }
 
-                return (webJsonStr, videoTracks, audioTracks, clips, dfns, backgroundAudioTracks, roleAudioList, points);
+                return parsedResult;
             }
             // data节点一次性判断完
             string nodeName = null;
-            if (webJsonStr.Contains("\"result\":{")) nodeName = "result";
-            else if (webJsonStr.Contains("\"data\":{")) nodeName = "data";
+            if (parsedResult.WebJsonString.Contains("\"result\":{")) nodeName = "result";
+            else if (parsedResult.WebJsonString.Contains("\"data\":{")) nodeName = "data";
             var root = nodeName == null ? data : data.GetProperty(nodeName);
 
             bool bangumi = aidOri.StartsWith("ep:");
 
-            if (webJsonStr.Contains("\"dash\":{")) //dash
+            if (parsedResult.WebJsonString.Contains("\"dash\":{")) //dash
             {
                 List<JsonElement>? audio = null;
                 List<JsonElement>? video = null;
@@ -195,8 +190,8 @@ namespace BBDown.Core
             reParse:
                 if (reParse)
                 {
-                    webJsonStr = await GetPlayJsonAsync(encoding, aidOri, aid, cid, epId, tvApi, intlApi, appApi, GetMaxQn());
-                    respJson = JsonDocument.Parse(webJsonStr);
+                    parsedResult.WebJsonString = await GetPlayJsonAsync(encoding, aidOri, aid, cid, epId, tvApi, intlApi, appApi, GetMaxQn());
+                    respJson = JsonDocument.Parse(parsedResult.WebJsonString);
                     data = respJson.RootElement;
                     root = nodeName == null ? data : data.GetProperty(nodeName);
                 }
@@ -266,7 +261,7 @@ namespace BBDown.Core
                             v.res = node.GetProperty("width").ToString() + "x" + node.GetProperty("height").ToString();
                             v.fps = node.GetProperty("frame_rate").ToString();
                         }
-                        if (!videoTracks.Contains(v)) videoTracks.Add(v);
+                        if (!parsedResult.VideoTracks.Contains(v)) parsedResult.VideoTracks.Add(v);
                     }
                 }
 
@@ -297,7 +292,7 @@ namespace BBDown.Core
                             _ => codecs
                         };
 
-                        audioTracks.Add(new Audio()
+                        parsedResult.AudioTracks.Add(new Audio()
                         {
                             id = audioId,
                             dfn = audioId,
@@ -316,7 +311,7 @@ namespace BBDown.Core
                         var audioId = node.GetProperty("id").ToString();
                         var urlList = new List<string> { node.GetProperty("base_url").ToString() };
                         urlList.AddRange(node.GetProperty("backup_url").EnumerateArray().Select(i => i.ToString()));
-                        backgroundAudioTracks.Add(new Audio()
+                        parsedResult.BackgroundAudioTracks.Add(new Audio()
                         {
                             id = audioId,
                             dfn = audioId,
@@ -345,7 +340,7 @@ namespace BBDown.Core
                                 codecs = node.GetProperty("codecs").ToString()
                             });
                         }
-                        roleAudioList.Add(new AudioMaterialInfo()
+                        parsedResult.RoleAudioList.Add(new AudioMaterialInfo()
                         {
                             title = role.GetProperty("title").ToString(),
                             personName = role.GetProperty("person_name").ToString(),
@@ -355,11 +350,11 @@ namespace BBDown.Core
                     }
                 }
             }
-            else if (webJsonStr.Contains("\"durl\":[")) //flv
+            else if (parsedResult.WebJsonString.Contains("\"durl\":[")) //flv
             {
                 //默认以最高清晰度解析
-                webJsonStr = await GetPlayJsonAsync(encoding, aidOri, aid, cid, epId, tvApi, intlApi, appApi, GetMaxQn());
-                data = JsonDocument.Parse(webJsonStr).RootElement;
+                parsedResult.WebJsonString = await GetPlayJsonAsync(encoding, aidOri, aid, cid, epId, tvApi, intlApi, appApi, GetMaxQn());
+                data = JsonDocument.Parse(parsedResult.WebJsonString).RootElement;
                 root = nodeName == null ? data : data.GetProperty(nodeName);
                 string quality = "";
                 string videoCodecid = "";
@@ -372,18 +367,18 @@ namespace BBDown.Core
                 //获取所有分段
                 foreach (var node in root.GetProperty("durl").EnumerateArray())
                 {
-                    clips.Add(node.GetProperty("url").ToString());
+                    parsedResult.Clips.Add(node.GetProperty("url").ToString());
                     size += node.GetProperty("size").GetDouble();
                     length += node.GetProperty("length").GetDouble();
                 }
                 //TV模式可用清晰度
                 if (root.TryGetProperty("qn_extras", out JsonElement qnExtras))
                 {
-                    dfns.AddRange(qnExtras.EnumerateArray().Select(node => node.GetProperty("qn").ToString()));
+                    parsedResult.Dfns.AddRange(qnExtras.EnumerateArray().Select(node => node.GetProperty("qn").ToString()));
                 }
                 else if (root.TryGetProperty("accept_quality", out JsonElement acceptQuality)) //非tv模式可用清晰度
                 {
-                    dfns.AddRange(acceptQuality.EnumerateArray()
+                    parsedResult.Dfns.AddRange(acceptQuality.EnumerateArray()
                         .Select(node => node.ToString())
                         .Where(_qn => !string.IsNullOrEmpty(_qn)));
                 }
@@ -397,7 +392,7 @@ namespace BBDown.Core
                     dur = (int)length / 1000,
                     size = size
                 };
-                if (!videoTracks.Contains(v)) videoTracks.Add(v);
+                if (!parsedResult.VideoTracks.Contains(v)) parsedResult.VideoTracks.Add(v);
             }
 
             // 番剧片头片尾转分段信息, 预计效果: 正片? -> 片头 -> 正片 -> 片尾
@@ -405,29 +400,29 @@ namespace BBDown.Core
             {
                 if (root.TryGetProperty("clip_info_list", out JsonElement clipList))
                 {
-                    points.AddRange(clipList.EnumerateArray().Select(clip => new ViewPoint()
+                    parsedResult.ExtraPoints.AddRange(clipList.EnumerateArray().Select(clip => new ViewPoint()
                         {
                             title = clip.GetProperty("toastText").ToString().Replace("即将跳过", ""),
                             start = clip.GetProperty("start").GetInt32(),
                             end = clip.GetProperty("end").GetInt32()
                         })
                     );
-                    points.Sort((p1, p2) => p1.start.CompareTo(p2.start));
+                    parsedResult.ExtraPoints.Sort((p1, p2) => p1.start.CompareTo(p2.start));
                     var newPoints = new List<ViewPoint>();
                     int lastEnd = 0;
-                    foreach (var point in points)
+                    foreach (var point in parsedResult.ExtraPoints)
                     {
                         if (lastEnd < point.start)
                             newPoints.Add(new ViewPoint() { title = "正片", start = lastEnd, end = point.start });
                         newPoints.Add(point);
                         lastEnd = point.end;
                     }
-                    points = newPoints;
+                    parsedResult.ExtraPoints = newPoints;
                 }
 
             }
 
-            return (webJsonStr, videoTracks, audioTracks, clips, dfns, backgroundAudioTracks, roleAudioList, points);
+            return parsedResult;
         }
 
         /// <summary>
