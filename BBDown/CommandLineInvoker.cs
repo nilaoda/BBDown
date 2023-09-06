@@ -1,7 +1,11 @@
-﻿using System;
+﻿using BBDown.Core;
+
+using System;
 using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Binding;
+using System.CommandLine.Builder;
+using System.CommandLine.Invocation;
 using System.CommandLine.Parsing;
 using System.Linq;
 using System.Text;
@@ -128,7 +132,7 @@ namespace BBDown
                 if (bindingContext.ParseResult.HasOption(OnlyAv1)) option.OnlyAv1 = bindingContext.ParseResult.GetValueForOption(OnlyAv1)!;
                 if (bindingContext.ParseResult.HasOption(AddDfnSubfix)) option.AddDfnSubfix = bindingContext.ParseResult.GetValueForOption(AddDfnSubfix)!;
                 if (bindingContext.ParseResult.HasOption(NoPaddingPageNum)) option.NoPaddingPageNum = bindingContext.ParseResult.GetValueForOption(NoPaddingPageNum)!;
-                if (bindingContext.ParseResult.HasOption(BandwithAscending)) option.BandwithAscending = bindingContext.ParseResult.GetValueForOption(BandwithAscending)!;
+                if (bindingContext.ParseResult.HasOption(BandwithAscending)) option.BandwithAscending = bindingContext.ParseResult.GetValueForOption(BandwithAscending);
                 return option;
             }
         }
@@ -196,6 +200,47 @@ namespace BBDown
             rootCommand.SetHandler(async (myOption) => await action(myOption), new MyOptionBinder());
 
             return rootCommand;
+        }
+
+        public static async Task DownloadCommandConflictCheck(InvocationContext context, Func<InvocationContext, Task> next)
+        {
+            StringBuilder? errorOutput = null;
+            void AppendConflictMessage(bool mustSimultaneous, params Option[] options)
+            {
+                errorOutput ??= new();
+                errorOutput.Append("错误: 参数冲突，");
+                errorOutput.Append(mustSimultaneous ? "必须" : "不能");
+                errorOutput.Append("同时使用参数");
+                for (var i = 0; i < options.Length; i++)
+                {
+                    errorOutput.Append(' ');
+                    errorOutput.Append(options[i].Aliases.First());
+                    errorOutput.Append(' ');
+                    if (i != options.Length - 1)
+                        errorOutput.Append(i == options.Length - 2 ? '和' : '、');
+                }
+                errorOutput.AppendLine();
+            }
+
+            var parseResult = context.ParseResult;
+            if (parseResult.CommandResult != parseResult.RootCommandResult)
+                return;  // 不是下载命令，不执行
+
+            var defaultOption = new MyOption();
+            var hideStreams = parseResult.GetResultForOptionNullable(HideStreams) ?? defaultOption.HideStreams;
+            var interactive = parseResult.GetResultForOptionNullable(Interactive) ?? defaultOption.Interactive;
+            if (hideStreams && interactive)
+                AppendConflictMessage(false, HideStreams, Interactive);
+
+            var videoOnly = parseResult.GetResultForOptionNullable(VideoOnly) ?? defaultOption.VideoOnly;
+            var audioOnly = parseResult.GetResultForOptionNullable(AudioOnly) ?? defaultOption.AudioOnly;
+            if (videoOnly && audioOnly)
+                AppendConflictMessage(false, VideoOnly, AudioOnly);
+
+            if (errorOutput == null)
+                await next(context);
+            else
+                Console.WriteLine(errorOutput.ToString());
         }
     }
 }

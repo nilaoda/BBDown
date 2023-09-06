@@ -94,6 +94,7 @@ namespace BBDown
                     Thread.Sleep(3000);
                     Environment.Exit(1);
                 }, 1)
+                .AddMiddleware(CommandLineInvoker.DownloadCommandConflictCheck)
                 .Build();
 
             var newArgsList = new List<string>();
@@ -156,9 +157,6 @@ namespace BBDown
             {
                 //处理废弃选项
                 HandleDeprecatedOptions(myOption);
-                
-                //处理冲突选项
-                HandleConflictingOptions(myOption);
                 
                 //寻找并设置所需的二进制文件路径
                 FindBinaries(myOption);

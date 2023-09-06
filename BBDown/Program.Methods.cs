@@ -173,29 +173,6 @@ namespace BBDown
         }
 
         /// <summary>
-        /// 处理有冲突的选项
-        /// </summary>
-        /// <param name="myOption"></param>
-        private static void HandleConflictingOptions(MyOption myOption)
-        {
-            //手动选择时不能隐藏流
-            if (myOption.Interactive)
-            {
-                myOption.HideStreams = false;
-            }
-            //audioOnly和videoOnly同时开启则全部忽视
-            if (myOption.AudioOnly && myOption.VideoOnly)
-            {
-                myOption.AudioOnly = false;
-                myOption.VideoOnly = false;
-            }
-            if (myOption.SkipSubtitle)
-            {
-                myOption.SubOnly = false;
-            }
-        }
-
-        /// <summary>
         /// 设置用户输入的自定义工作目录
         /// </summary>
         /// <param name="myOption"></param>
