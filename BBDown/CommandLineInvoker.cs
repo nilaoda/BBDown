@@ -125,6 +125,7 @@ namespace BBDown
                 if (bindingContext.ParseResult.HasOption(Host)) option.Host = bindingContext.ParseResult.GetValueForOption(Host)!;
                 if (bindingContext.ParseResult.HasOption(EpHost)) option.EpHost = bindingContext.ParseResult.GetValueForOption(EpHost)!;
                 if (bindingContext.ParseResult.HasOption(Area)) option.Area = bindingContext.ParseResult.GetValueForOption(Area)!;
+                if (bindingContext.ParseResult.HasOption(DemandDfn)) option.DemandDfn = bindingContext.ParseResult.GetValueForOption(DemandDfn);
                 if (bindingContext.ParseResult.HasOption(ConfigFile)) option.ConfigFile = bindingContext.ParseResult.GetValueForOption(ConfigFile)!;
                 if (bindingContext.ParseResult.HasOption(Aria2cProxy)) option.Aria2cProxy = bindingContext.ParseResult.GetValueForOption(Aria2cProxy)!;
                 if (bindingContext.ParseResult.HasOption(OnlyHevc)) option.OnlyHevc = bindingContext.ParseResult.GetValueForOption(OnlyHevc)!;
@@ -187,6 +188,7 @@ namespace BBDown
                 Host,
                 EpHost,
                 Area,
+                DemandDfn,
                 ConfigFile,
                 Aria2cProxy,
                 OnlyHevc,
@@ -236,6 +238,11 @@ namespace BBDown
             var audioOnly = CommandLineExtension.GetValueForOption(parseResult, AudioOnly) ?? defaultOption.AudioOnly;
             if (videoOnly && audioOnly)
                 AppendConflictMessage(false, VideoOnly, AudioOnly);
+
+            var demandDfn = CommandLineExtension.GetValueForOption(parseResult, DemandDfn) ?? defaultOption.DemandDfn;
+            var dfnPriority = parseResult.GetValueForOption(DfnPriority);
+            if (demandDfn && dfnPriority == null)
+                AppendConflictMessage(true, DemandDfn, DfnPriority);
 
             if (errorOutput == null)
                 await next(context);

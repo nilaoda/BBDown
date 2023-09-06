@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
@@ -74,14 +75,14 @@ namespace BBDown
         /// </summary>
         /// <param name="myOption"></param>
         /// <returns></returns>
-        private static Dictionary<string, byte> ParseEncodingPriority(MyOption myOption, out string firstEncoding)
+        private static Dictionary<string, int> ParseEncodingPriority(MyOption myOption, out string firstEncoding)
         {
-            var encodingPriority = new Dictionary<string, byte>();
+            var encodingPriority = new Dictionary<string, int>();
             firstEncoding = "";
             if (myOption.EncodingPriority != null)
             {
                 var encodingPriorityTemp = myOption.EncodingPriority.Replace("，", ",").Split(',').Select(s => s.ToUpper().Trim()).Where(s => !string.IsNullOrEmpty(s));
-                byte index = 0;
+                int index = 0;
                 firstEncoding = encodingPriorityTemp.First();
                 foreach (string encoding in encodingPriorityTemp)
                 {
@@ -454,6 +455,27 @@ namespace BBDown
                 }
                 await DownloadFile(url, destPath, downloadConfig);
             }
+        }
+
+        /// <summary>
+        /// 过滤并排序视频轨道
+        /// </summary>
+        /// <returns>处理后的新的列表</returns>
+        private static List<Video> FilterAndSortVideoTracks(List<Video> videoTracks, Dictionary<string, int> dfnPriority, Dictionary<string, int> encodingPriority, bool videoAscending, bool demandDfn)
+        {
+            Func<Video, int> encodingSortKeySelector = v => encodingPriority.TryGetValue(v.codecs, out int i) ? i : 100;
+            Func<Video, int> dfnSortKeySelector = v => dfnPriority.TryGetValue(v.dfn, out int i) ? i : 100;
+            
+            //用户同时输入了自定义分辨率优先级和自定义编码优先级, 则根据输入顺序依次进行排序
+            var isEncodingFirst = dfnPriority.Any() && encodingPriority.Any() && Environment.CommandLine.IndexOf("--encoding-priority") < Environment.CommandLine.IndexOf("--dfn-priority");
+            (var firstOrderMethod, var secondOrderMethod) = isEncodingFirst ? (encodingSortKeySelector, dfnSortKeySelector) : (dfnSortKeySelector, encodingSortKeySelector);
+            return videoTracks
+                    .Where(v => !demandDfn || dfnPriority.Keys.Contains(v.dfn))
+                    .OrderBy(firstOrderMethod)
+                    .ThenBy(secondOrderMethod)
+                    .ThenByDescending(v => Convert.ToInt32(v.id))
+                    .ThenBy(v => videoAscending ? v.bandwith : -v.bandwith)
+                    .ToList();
         }
 
         [GeneratedRegex("://.*:\\d+/")]

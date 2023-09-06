@@ -387,7 +387,7 @@ namespace BBDown
                             }
 
                             //排序
-                            parsedResult.VideoTracks = SortTracks(parsedResult.VideoTracks, dfnPriority, encodingPriority, myOption.VideoAscending);
+                            parsedResult.VideoTracks = FilterAndSortVideoTracks(parsedResult.VideoTracks, dfnPriority, encodingPriority, myOption.VideoAscending, myOption.DemandDfn);
                             parsedResult.AudioTracks.Sort(Compare);
                             parsedResult.BackgroundAudioTracks.Sort(Compare);
                             foreach (var role in parsedResult.RoleAudioList)
@@ -566,7 +566,7 @@ namespace BBDown
                             var dfns = parsedResult.Dfns;
                         reParse:
                             //排序
-                            parsedResult.VideoTracks = SortTracks(parsedResult.VideoTracks, dfnPriority, encodingPriority, myOption.VideoAscending);
+                            parsedResult.VideoTracks = FilterAndSortVideoTracks(parsedResult.VideoTracks, dfnPriority, encodingPriority, myOption.VideoAscending, myOption.DemandDfn);
 
                             int vIndex = 0;
                             if (myOption.Interactive && !flag && !selected)
@@ -680,24 +680,6 @@ namespace BBDown
                 Thread.Sleep(1);
                 Environment.Exit(1);
             }
-        }
-
-        private static List<Video> SortTracks(List<Video> videoTracks, Dictionary<string, int> dfnPriority, Dictionary<string, byte> encodingPriority, bool videoAscending)
-        {
-            //用户同时输入了自定义分辨率优先级和自定义编码优先级, 则根据输入顺序依次进行排序
-            return dfnPriority.Any() && encodingPriority.Any() && Environment.CommandLine.IndexOf("--encoding-priority") < Environment.CommandLine.IndexOf("--dfn-priority")
-                ? videoTracks
-                    .OrderBy(v => encodingPriority.TryGetValue(v.codecs, out byte i) ? i : 100)
-                    .ThenBy(v => dfnPriority.TryGetValue(v.dfn, out int i) ? i : 100)
-                    .ThenByDescending(v => Convert.ToInt32(v.id))
-                    .ThenBy(v => videoAscending ? v.bandwith : -v.bandwith)
-                    .ToList()
-                : videoTracks
-                    .OrderBy(v => dfnPriority.TryGetValue(v.dfn, out int i) ? i : 100)
-                    .ThenBy(v => encodingPriority.TryGetValue(v.codecs, out byte i) ? i : 100)
-                    .ThenByDescending(v => Convert.ToInt32(v.id))
-                    .ThenBy(v => videoAscending ? v.bandwith : -v.bandwith)
-                    .ToList();
         }
 
         private static string FormatSavePath(string savePathFormat, string title, Video? videoTrack, Audio? audioTrack, Page p, int pagesCount, string apiType, long pubTime)
