@@ -33,7 +33,7 @@ namespace BBDown
                 if (nowVer != latestVer && !latestVer.StartsWith("https"))
                 {
                     Console.Title = $"发现新版本：{latestVer}";
-                    LogColor(Console.Title);
+                    LogColor($"发现新版本：{latestVer}");
                 }
             }
             catch (Exception)
