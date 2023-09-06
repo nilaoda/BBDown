@@ -62,6 +62,7 @@ namespace BBDown
         private readonly static Option<string> EpHost = new(new string[] { "--ep-host" }, "指定BiliPlus EP host(用于代理api.bilibili.com/pgc/view/web/season, 大部分解析服务器不支持代理该接口)");
         private readonly static Option<string> Area = new(new string[] { "--area" }, "(hk|tw|th) 使用BiliPlus时必选, 指定BiliPlus area");
         private readonly static Option<string> ConfigFile = new(new string[] { "--config-file" }, "读取指定的BBDown本地配置文件(默认为: BBDown.config)");//以下仅为兼容旧版本命令行, 不建议使用
+        private readonly static Option<bool> DemandDfn = new(new string[] { "--demand-dfn" }, "是否强制需要指定清晰度(使用--dfn-priority指定)");
         private readonly static Option<string> Aria2cProxy = new(new string[] { "--aria2c-proxy" }, "调用aria2c进行下载时的代理地址配置") { IsHidden = true };
         private readonly static Option<bool> OnlyHevc = new(new string[] { "--only-hevc", "-hevc" }, "只下载hevc编码") { IsHidden = true };
         private readonly static Option<bool> OnlyAvc = new(new string[] { "--only-avc", "-avc" }, "只下载avc编码") { IsHidden = true };
@@ -69,7 +70,6 @@ namespace BBDown
         private readonly static Option<bool> AddDfnSubfix = new(new string[] { "--add-dfn-subfix" }, "为文件加入清晰度后缀, 如XXX[1080P 高码率]") { IsHidden = true };
         private readonly static Option<bool> NoPaddingPageNum = new(new string[] { "--no-padding-page-num" }, "不给分P序号补零") { IsHidden = true };
         private readonly static Option<bool> BandwithAscending = new(new string[] { "--bandwith-ascending" }, "比特率升序(最小体积优先)") { IsHidden = true };
-
 
         class MyOptionBinder : BinderBase<MyOption>
         {
@@ -227,20 +227,20 @@ namespace BBDown
                 return;  // 不是下载命令，不执行
 
             var defaultOption = new MyOption();
-            var hideStreams = parseResult.GetResultForOptionNullable(HideStreams) ?? defaultOption.HideStreams;
-            var interactive = parseResult.GetResultForOptionNullable(Interactive) ?? defaultOption.Interactive;
+            var hideStreams = CommandLineExtension.GetValueForOption(parseResult, HideStreams) ?? defaultOption.HideStreams;
+            var interactive = CommandLineExtension.GetValueForOption(parseResult, Interactive) ?? defaultOption.Interactive;
             if (hideStreams && interactive)
                 AppendConflictMessage(false, HideStreams, Interactive);
 
-            var videoOnly = parseResult.GetResultForOptionNullable(VideoOnly) ?? defaultOption.VideoOnly;
-            var audioOnly = parseResult.GetResultForOptionNullable(AudioOnly) ?? defaultOption.AudioOnly;
+            var videoOnly = CommandLineExtension.GetValueForOption(parseResult, VideoOnly) ?? defaultOption.VideoOnly;
+            var audioOnly = CommandLineExtension.GetValueForOption(parseResult, AudioOnly) ?? defaultOption.AudioOnly;
             if (videoOnly && audioOnly)
                 AppendConflictMessage(false, VideoOnly, AudioOnly);
 
             if (errorOutput == null)
                 await next(context);
             else
-                Console.WriteLine(errorOutput.ToString());
+                Console.Error.WriteLine(errorOutput.ToString());
         }
     }
 }
