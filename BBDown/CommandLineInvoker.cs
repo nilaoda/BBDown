@@ -63,6 +63,7 @@ namespace BBDown
         private readonly static Option<string> Area = new(new string[] { "--area" }, "(hk|tw|th) 使用BiliPlus时必选, 指定BiliPlus area");
         private readonly static Option<string> ConfigFile = new(new string[] { "--config-file" }, "读取指定的BBDown本地配置文件(默认为: BBDown.config)");//以下仅为兼容旧版本命令行, 不建议使用
         private readonly static Option<bool> DemandDfn = new(new string[] { "--demand-dfn" }, "是否强制需要指定清晰度(使用--dfn-priority指定)");
+        private readonly static Option<string> ForceItems = new(new string[] { "--force-items" }, "强制需要指定项目，否则跳过整个分P的下载，例: --force-items acvs 表示强制需要 音频封面视频字幕，a:音频,c:封面,v:视频,s:字幕,d:弹幕");
         private readonly static Option<string> Aria2cProxy = new(new string[] { "--aria2c-proxy" }, "调用aria2c进行下载时的代理地址配置") { IsHidden = true };
         private readonly static Option<bool> OnlyHevc = new(new string[] { "--only-hevc", "-hevc" }, "只下载hevc编码") { IsHidden = true };
         private readonly static Option<bool> OnlyAvc = new(new string[] { "--only-avc", "-avc" }, "只下载avc编码") { IsHidden = true };
@@ -126,6 +127,7 @@ namespace BBDown
                 if (bindingContext.ParseResult.HasOption(EpHost)) option.EpHost = bindingContext.ParseResult.GetValueForOption(EpHost)!;
                 if (bindingContext.ParseResult.HasOption(Area)) option.Area = bindingContext.ParseResult.GetValueForOption(Area)!;
                 if (bindingContext.ParseResult.HasOption(DemandDfn)) option.DemandDfn = bindingContext.ParseResult.GetValueForOption(DemandDfn);
+                if (bindingContext.ParseResult.HasOption(ForceItems)) option.ForceItems = ItemTypeHelper.ParseMultiAbbrString(bindingContext.ParseResult.GetValueForOption(ForceItems) ?? string.Empty);
                 if (bindingContext.ParseResult.HasOption(ConfigFile)) option.ConfigFile = bindingContext.ParseResult.GetValueForOption(ConfigFile)!;
                 if (bindingContext.ParseResult.HasOption(Aria2cProxy)) option.Aria2cProxy = bindingContext.ParseResult.GetValueForOption(Aria2cProxy)!;
                 if (bindingContext.ParseResult.HasOption(OnlyHevc)) option.OnlyHevc = bindingContext.ParseResult.GetValueForOption(OnlyHevc)!;
@@ -136,6 +138,8 @@ namespace BBDown
                 if (bindingContext.ParseResult.HasOption(BandwithAscending)) option.BandwithAscending = bindingContext.ParseResult.GetValueForOption(BandwithAscending);
                 return option;
             }
+
+            public MyOption GetBoundValueExposed(BindingContext context) => GetBoundValue(context);
         }
 
         public static RootCommand GetRootCommand(Func<MyOption, Task> action)
@@ -189,6 +193,7 @@ namespace BBDown
                 EpHost,
                 Area,
                 DemandDfn,
+                ForceItems,
                 ConfigFile,
                 Aria2cProxy,
                 OnlyHevc,
@@ -210,7 +215,7 @@ namespace BBDown
             void AppendConflictMessage(bool mustSimultaneous, params Option[] options)
             {
                 errorOutput ??= new();
-                errorOutput.Append("错误: 参数冲突，");
+                errorOutput.Append("错误：参数冲突，");
                 errorOutput.Append(mustSimultaneous ? "必须" : "不能");
                 errorOutput.Append("同时使用参数");
                 for (var i = 0; i < options.Length; i++)
@@ -229,6 +234,8 @@ namespace BBDown
                 return;  // 不是下载命令，不执行
 
             var defaultOption = new MyOption();
+            var parseOption = new MyOptionBinder().GetBoundValueExposed(context.BindingContext);
+
             var hideStreams = CommandLineExtension.GetValueForOption(parseResult, HideStreams) ?? defaultOption.HideStreams;
             var interactive = CommandLineExtension.GetValueForOption(parseResult, Interactive) ?? defaultOption.Interactive;
             if (hideStreams && interactive)
@@ -243,6 +250,23 @@ namespace BBDown
             var dfnPriority = parseResult.GetValueForOption(DfnPriority);
             if (demandDfn && dfnPriority == null)
                 AppendConflictMessage(true, DemandDfn, DfnPriority);
+
+            if ((parseOption.ForceItems & ItemType.Cover) == ItemType.Cover && parseOption.SkipCover)
+                (errorOutput ??= new StringBuilder()).AppendLine($"错误：参数冲突，不能同时使用 {SkipCover.Aliases.First()} 与 {ForceItems.Aliases.First()} c");
+            if ((parseOption.ForceItems & ItemType.Subtitle) == ItemType.Subtitle && parseOption.SkipSubtitle)
+                (errorOutput ??= new StringBuilder()).AppendLine($"错误：参数冲突，不能同时使用 {SkipSubtitle.Aliases.First()} 与 {ForceItems.Aliases.First()} s");
+            if ((parseOption.ForceItems & ItemType.Danmaku) == ItemType.Danmaku && !parseOption.DownloadDanmaku)
+                (errorOutput ??= new StringBuilder()).AppendLine($"错误：参数冲突，使用 {ForceItems.Aliases.First()} d 时必须同时使用 {DownloadDanmaku.Aliases.First()}");
+            if (parseOption.ForceItems is not ItemType.Audio or ItemType.None && parseOption.AudioOnly)
+                (errorOutput ??= new StringBuilder()).AppendLine($"错误：参数冲突，在使用 {AudioOnly.Aliases.First()} 时 {ForceItems.Aliases.First()} 参数只能包含 a");
+            if (parseOption.ForceItems is not ItemType.Video or ItemType.None && parseOption.VideoOnly)
+                (errorOutput ??= new StringBuilder()).AppendLine($"错误：参数冲突，在使用 {VideoOnly.Aliases.First()} 时 {ForceItems.Aliases.First()} 参数只能包含 v");
+            if (parseOption.ForceItems is not ItemType.Subtitle or ItemType.None && parseOption.SubOnly)
+                (errorOutput ??= new StringBuilder()).AppendLine($"错误：参数冲突，在使用 {SubOnly.Aliases.First()} 时 {ForceItems.Aliases.First()} 参数只能包含 s");
+            if (parseOption.ForceItems is not ItemType.Danmaku or ItemType.None && parseOption.DanmakuOnly)
+                (errorOutput ??= new StringBuilder()).AppendLine($"错误：参数冲突，在使用 {DanmakuOnly.Aliases.First()} 时 {ForceItems.Aliases.First()} 参数只能包含 d");
+            if (parseOption.ForceItems is not ItemType.Cover or ItemType.None && parseOption.CoverOnly)
+                (errorOutput ??= new StringBuilder()).AppendLine($"错误：参数冲突，在使用 {CoverOnly.Aliases.First()} 时 {ForceItems.Aliases.First()} 参数只能包含 c");
 
             if (errorOutput == null)
                 await next(context);

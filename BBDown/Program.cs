@@ -300,6 +300,14 @@ namespace BBDown
                             }
                             if (!myOption.SkipCover && !myOption.SubOnly && !File.Exists(coverPath) && !myOption.DanmakuOnly && !myOption.CoverOnly)
                             {
+                                var coverUrl = pic == "" ? p.cover : pic;
+                                if (string.IsNullOrEmpty(coverUrl) && (myOption.ForceItems & ItemType.Cover) == ItemType.Cover)
+                                {
+                                    LogError("无法找到封面，跳过本视频下载");
+                                    if (Directory.Exists(p.aid))
+                                        Directory.Delete(p.aid, true);
+                                    continue;
+                                }
                                 await DownloadFile((pic == "" ? p.cover! : pic), coverPath, new DownloadConfig());
                             }
 
@@ -311,6 +319,12 @@ namespace BBDown
                                 {
                                     Log($"跳过下载AI字幕");
                                     subtitleInfo = subtitleInfo.Where(s => !s.lan.StartsWith("ai-")).ToList();
+                                }
+                                if (!subtitleInfo.Any() && (myOption.ForceItems & ItemType.Subtitle) == ItemType.Subtitle)
+                                {
+                                    LogError("无法找到字幕，跳过本视频下载");
+                                    if (Directory.Exists(p.aid))
+                                        Directory.Delete(p.aid, true);
                                 }
                                 foreach (Subtitle s in subtitleInfo)
                                 {
@@ -360,19 +374,20 @@ namespace BBDown
                             ForceHttp = myOption.ForceHttp,
                             MultiThread = myOption.MultiThread,
                         };
+                        parsedResult.VideoTracks = FilterAndSortVideoTracks(parsedResult.VideoTracks, dfnPriority, encodingPriority, myOption.VideoAscending, myOption.DemandDfn);
 
                         //此处代码简直灾难, 后续优化吧
                         if ((parsedResult.VideoTracks.Any() || parsedResult.AudioTracks.Any()) && !parsedResult.Clips.Any())   //dash
                         {
-                            if (parsedResult.VideoTracks.Count == 0)
+                            if (parsedResult.VideoTracks.Count == 0 && (!myOption.AudioOnly || (myOption.ForceItems & ItemType.Video) == ItemType.Video))
                             {
-                                LogError("没有找到符合要求的视频流");
-                                if (!myOption.AudioOnly) continue;
+                                LogError("没有找到符合要求的视频流，跳过本视频下载");
+                                continue;
                             }
-                            if (parsedResult.AudioTracks.Count == 0)
+                            if (parsedResult.AudioTracks.Count == 0 && (!myOption.VideoOnly || (myOption.ForceItems & ItemType.Audio) == ItemType.Audio))
                             {
-                                LogError("没有找到符合要求的音频流");
-                                if (!myOption.VideoOnly) continue;
+                                LogError("没有找到符合要求的音频流，跳过本视频下载");
+                                continue;
                             }
 
                             if (myOption.AudioOnly)
@@ -387,7 +402,6 @@ namespace BBDown
                             }
 
                             //排序
-                            parsedResult.VideoTracks = FilterAndSortVideoTracks(parsedResult.VideoTracks, dfnPriority, encodingPriority, myOption.VideoAscending, myOption.DemandDfn);
                             parsedResult.AudioTracks.Sort(Compare);
                             parsedResult.BackgroundAudioTracks.Sort(Compare);
                             foreach (var role in parsedResult.RoleAudioList)
@@ -451,6 +465,11 @@ namespace BBDown
                                 {
                                     Log("弹幕Xml解析失败, 删除Xml...");
                                     File.Delete(danmakuXmlPath);
+                                    if ((myOption.ForceItems & ItemType.Danmaku) == ItemType.Danmaku)
+                                    {
+                                        LogError("弹幕下载失败，跳过本视频下载");
+                                        continue;
+                                    }
                                 }
                                 if (myOption.DanmakuOnly)
                                 {
