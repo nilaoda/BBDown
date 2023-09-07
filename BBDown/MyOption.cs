@@ -21,17 +21,9 @@ namespace BBDown
         public bool Interactive { get; set; }
         public bool HideStreams { get; set; }
         public bool MultiThread { get; set; } = true;
-        public bool VideoOnly { get; set; }
-        public bool AudioOnly { get; set; }
-        public bool DanmakuOnly { get; set; }
-        public bool CoverOnly { get; set; }
-        public bool SubOnly { get; set; }
         public bool Debug { get; set; }
         public bool SkipMux { get; set; }
-        public bool SkipSubtitle { get; set; }
-        public bool SkipCover { get; set; }
         public bool ForceHttp { get; set; } = true;
-        public bool DownloadDanmaku { get; set; } = false;
         public bool SkipAi { get; set; } = true;
         public bool VideoAscending { get; set; } = false;
         public bool AudioAscending { get; set; } = false;
@@ -56,6 +48,7 @@ namespace BBDown
         public string Area { get; set; } = "";
         public bool DemandDfn { get; set; } = false;
         public ItemType ForceItems { get; set; } = ItemType.None;
+        public ItemType DownloadItems { get; set; } = ItemType.Video | ItemType.Audio | ItemType.Subtitle | ItemType.Cover;
         public string? ConfigFile { get; set; }
         //以下仅为兼容旧版本命令行，不建议使用
         public string Aria2cProxy { get; set; } = "";

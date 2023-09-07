@@ -30,15 +30,8 @@ namespace BBDown
         private readonly static Option<string> Aria2cArgs = new(new string[] { "--aria2c-args" }, "调用aria2c的附加参数(默认参数包含\"-x16 -s16 -j16 -k 5M\", 使用时注意字符串转义)");
         private readonly static Option<bool> MultiThread = new(new string[] { "--multi-thread", "-mt" }, "使用多线程下载(默认开启)");
         private readonly static Option<string> SelectPage = new(new string[] { "--select-page", "-p" }, "选择指定分p或分p范围: (-p 8 或 -p 1,2 或 -p 3-5 或 -p ALL 或 -p LAST 或 -p 3,5,LATEST)");
-        private readonly static Option<bool> AudioOnly = new(new string[] { "--audio-only" }, "仅下载音频");
-        private readonly static Option<bool> VideoOnly = new(new string[] { "--video-only" }, "仅下载视频");
-        private readonly static Option<bool> DanmakuOnly = new(new string[] { "--danmaku-only" }, "仅下载弹幕");
-        private readonly static Option<bool> CoverOnly = new(new string[] { "--cover-only" }, "仅下载封面");
-        private readonly static Option<bool> SubOnly = new(new string[] { "--sub-only" }, "仅下载字幕");
         private readonly static Option<bool> Debug = new(new string[] { "--debug" }, "输出调试日志");
         private readonly static Option<bool> SkipMux = new(new string[] { "--skip-mux" }, "跳过混流步骤");
-        private readonly static Option<bool> SkipSubtitle = new(new string[] { "--skip-subtitle" }, "跳过字幕下载");
-        private readonly static Option<bool> SkipCover = new(new string[] { "--skip-cover" }, "跳过封面下载");
         private readonly static Option<bool> ForceHttp = new(new string[] { "--force-http" }, "下载音视频时强制使用HTTP协议替换HTTPS(默认开启)");
         private readonly static Option<bool> DownloadDanmaku = new(new string[] { "--download-danmaku", "-dd" }, "下载弹幕");
         private readonly static Option<bool> SkipAi = new(new string[] { "--skip-ai" }, description: "跳过AI字幕下载(默认开启)");
@@ -61,9 +54,10 @@ namespace BBDown
         private readonly static Option<string> Host = new(new string[] { "--host" }, "指定BiliPlus host(使用BiliPlus需要access_token, 不需要cookie, 解析服务器能够获取你账号的大部分权限!)");
         private readonly static Option<string> EpHost = new(new string[] { "--ep-host" }, "指定BiliPlus EP host(用于代理api.bilibili.com/pgc/view/web/season, 大部分解析服务器不支持代理该接口)");
         private readonly static Option<string> Area = new(new string[] { "--area" }, "(hk|tw|th) 使用BiliPlus时必选, 指定BiliPlus area");
-        private readonly static Option<string> ConfigFile = new(new string[] { "--config-file" }, "读取指定的BBDown本地配置文件(默认为: BBDown.config)");//以下仅为兼容旧版本命令行, 不建议使用
         private readonly static Option<bool> DemandDfn = new(new string[] { "--demand-dfn" }, "是否强制需要指定清晰度(使用--dfn-priority指定)");
         private readonly static Option<string> ForceItems = new(new string[] { "--force-items" }, "强制需要指定项目，否则跳过整个分P的下载，例: --force-items acvs 表示强制需要 音频封面视频字幕，a:音频,c:封面,v:视频,s:字幕,d:弹幕");
+        private readonly static Option<string> DownloadItems = new(new string[] { "--download-items" }, "指定需要下载的项目，例: --download-items avsc 表示只需要下载音频视频字幕封面，a:音频,c:封面,v:视频,s:字幕,d:弹幕");
+        private readonly static Option<string> ConfigFile = new(new string[] { "--config-file" }, "读取指定的BBDown本地配置文件(默认为: BBDown.config)");//以下仅为兼容旧版本命令行, 不建议使用
         private readonly static Option<string> Aria2cProxy = new(new string[] { "--aria2c-proxy" }, "调用aria2c进行下载时的代理地址配置") { IsHidden = true };
         private readonly static Option<bool> OnlyHevc = new(new string[] { "--only-hevc", "-hevc" }, "只下载hevc编码") { IsHidden = true };
         private readonly static Option<bool> OnlyAvc = new(new string[] { "--only-avc", "-avc" }, "只下载avc编码") { IsHidden = true };
@@ -71,6 +65,13 @@ namespace BBDown
         private readonly static Option<bool> AddDfnSubfix = new(new string[] { "--add-dfn-subfix" }, "为文件加入清晰度后缀, 如XXX[1080P 高码率]") { IsHidden = true };
         private readonly static Option<bool> NoPaddingPageNum = new(new string[] { "--no-padding-page-num" }, "不给分P序号补零") { IsHidden = true };
         private readonly static Option<bool> BandwithAscending = new(new string[] { "--bandwith-ascending" }, "比特率升序(最小体积优先)") { IsHidden = true };
+        private readonly static Option<bool> AudioOnly = new(new string[] { "--audio-only" }, "仅下载音频") { IsHidden = true };
+        private readonly static Option<bool> VideoOnly = new(new string[] { "--video-only" }, "仅下载视频") { IsHidden = true };
+        private readonly static Option<bool> DanmakuOnly = new(new string[] { "--danmaku-only" }, "仅下载弹幕") { IsHidden = true };
+        private readonly static Option<bool> CoverOnly = new(new string[] { "--cover-only" }, "仅下载封面") { IsHidden = true };
+        private readonly static Option<bool> SubOnly = new(new string[] { "--sub-only" }, "仅下载字幕") { IsHidden = true };
+        private readonly static Option<bool> SkipSubtitle = new(new string[] { "--skip-subtitle" }, "跳过字幕下载") { IsHidden = true };
+        private readonly static Option<bool> SkipCover = new(new string[] { "--skip-cover" }, "跳过封面下载") { IsHidden = true };
 
         class MyOptionBinder : BinderBase<MyOption>
         {
@@ -93,17 +94,9 @@ namespace BBDown
                 if (bindingContext.ParseResult.HasOption(Interactive)) option.Interactive = bindingContext.ParseResult.GetValueForOption(Interactive)!;
                 if (bindingContext.ParseResult.HasOption(HideStreams)) option.HideStreams = bindingContext.ParseResult.GetValueForOption(HideStreams)!;
                 if (bindingContext.ParseResult.HasOption(MultiThread)) option.MultiThread = bindingContext.ParseResult.GetValueForOption(MultiThread)!;
-                if (bindingContext.ParseResult.HasOption(VideoOnly)) option.VideoOnly = bindingContext.ParseResult.GetValueForOption(VideoOnly)!;
-                if (bindingContext.ParseResult.HasOption(AudioOnly)) option.AudioOnly = bindingContext.ParseResult.GetValueForOption(AudioOnly)!;
-                if (bindingContext.ParseResult.HasOption(DanmakuOnly)) option.DanmakuOnly = bindingContext.ParseResult.GetValueForOption(DanmakuOnly)!;
-                if (bindingContext.ParseResult.HasOption(CoverOnly)) option.CoverOnly = bindingContext.ParseResult.GetValueForOption(CoverOnly)!;
-                if (bindingContext.ParseResult.HasOption(SubOnly)) option.SubOnly = bindingContext.ParseResult.GetValueForOption(SubOnly)!;
                 if (bindingContext.ParseResult.HasOption(Debug)) option.Debug = bindingContext.ParseResult.GetValueForOption(Debug)!;
                 if (bindingContext.ParseResult.HasOption(SkipMux)) option.SkipMux = bindingContext.ParseResult.GetValueForOption(SkipMux)!;
-                if (bindingContext.ParseResult.HasOption(SkipSubtitle)) option.SkipSubtitle = bindingContext.ParseResult.GetValueForOption(SkipSubtitle)!;
-                if (bindingContext.ParseResult.HasOption(SkipCover)) option.SkipCover = bindingContext.ParseResult.GetValueForOption(SkipCover)!;
                 if (bindingContext.ParseResult.HasOption(ForceHttp)) option.ForceHttp = bindingContext.ParseResult.GetValueForOption(ForceHttp)!;
-                if (bindingContext.ParseResult.HasOption(DownloadDanmaku)) option.DownloadDanmaku = bindingContext.ParseResult.GetValueForOption(DownloadDanmaku)!;
                 if (bindingContext.ParseResult.HasOption(SkipAi)) option.SkipAi = bindingContext.ParseResult.GetValueForOption(SkipAi)!;
                 if (bindingContext.ParseResult.HasOption(VideoAscending)) option.VideoAscending = bindingContext.ParseResult.GetValueForOption(VideoAscending)!;
                 if (bindingContext.ParseResult.HasOption(AudioAscending)) option.AudioAscending = bindingContext.ParseResult.GetValueForOption(AudioAscending)!;
@@ -129,6 +122,7 @@ namespace BBDown
                 if (bindingContext.ParseResult.HasOption(DemandDfn)) option.DemandDfn = bindingContext.ParseResult.GetValueForOption(DemandDfn);
                 if (bindingContext.ParseResult.HasOption(ForceItems)) option.ForceItems = ItemTypeHelper.ParseMultiAbbrString(bindingContext.ParseResult.GetValueForOption(ForceItems) ?? string.Empty);
                 if (bindingContext.ParseResult.HasOption(ConfigFile)) option.ConfigFile = bindingContext.ParseResult.GetValueForOption(ConfigFile)!;
+                // 下面是废弃参数
                 if (bindingContext.ParseResult.HasOption(Aria2cProxy)) option.Aria2cProxy = bindingContext.ParseResult.GetValueForOption(Aria2cProxy)!;
                 if (bindingContext.ParseResult.HasOption(OnlyHevc)) option.OnlyHevc = bindingContext.ParseResult.GetValueForOption(OnlyHevc)!;
                 if (bindingContext.ParseResult.HasOption(OnlyAvc)) option.OnlyAvc = bindingContext.ParseResult.GetValueForOption(OnlyAvc)!;
@@ -136,6 +130,16 @@ namespace BBDown
                 if (bindingContext.ParseResult.HasOption(AddDfnSubfix)) option.AddDfnSubfix = bindingContext.ParseResult.GetValueForOption(AddDfnSubfix)!;
                 if (bindingContext.ParseResult.HasOption(NoPaddingPageNum)) option.NoPaddingPageNum = bindingContext.ParseResult.GetValueForOption(NoPaddingPageNum)!;
                 if (bindingContext.ParseResult.HasOption(BandwithAscending)) option.BandwithAscending = bindingContext.ParseResult.GetValueForOption(BandwithAscending);
+                if (bindingContext.ParseResult.HasOption(VideoOnly)) option.DownloadItems = ItemType.Video | ItemType.Cover | ItemType.Subtitle;
+                if (bindingContext.ParseResult.HasOption(AudioOnly)) option.DownloadItems = ItemType.Audio | ItemType.Cover | ItemType.Subtitle;
+                if (bindingContext.ParseResult.HasOption(DanmakuOnly)) option.DownloadItems = ItemType.Danmaku;
+                if (bindingContext.ParseResult.HasOption(CoverOnly)) option.DownloadItems = ItemType.Cover;
+                if (bindingContext.ParseResult.HasOption(SubOnly)) option.DownloadItems = ItemType.Subtitle;
+                if (bindingContext.ParseResult.HasOption(DownloadDanmaku)) option.DownloadItems |= ItemType.Danmaku;
+                if (bindingContext.ParseResult.HasOption(SkipSubtitle)) option.DownloadItems &= ~ItemType.Subtitle;
+                if (bindingContext.ParseResult.HasOption(SkipCover)) option.DownloadItems &= ~ItemType.Cover;
+                // 放在最下面时为了保证不会被废弃参数覆盖
+                if (bindingContext.ParseResult.HasOption(DownloadItems)) option.DownloadItems = ItemTypeHelper.ParseMultiAbbrString(bindingContext.ParseResult.GetValueForOption(DownloadItems) ?? string.Empty);
                 return option;
             }
 
@@ -159,17 +163,9 @@ namespace BBDown
                 Interactive,
                 HideStreams,
                 MultiThread,
-                VideoOnly,
-                AudioOnly,
-                DanmakuOnly,
-                SubOnly,
-                CoverOnly,
                 Debug,
                 SkipMux,
-                SkipSubtitle,
-                SkipCover,
                 ForceHttp,
-                DownloadDanmaku,
                 SkipAi,
                 VideoAscending,
                 AudioAscending,
@@ -194,6 +190,7 @@ namespace BBDown
                 Area,
                 DemandDfn,
                 ForceItems,
+                DownloadItems,
                 ConfigFile,
                 Aria2cProxy,
                 OnlyHevc,
@@ -201,7 +198,15 @@ namespace BBDown
                 OnlyAv1,
                 AddDfnSubfix,
                 NoPaddingPageNum,
-                BandwithAscending
+                BandwithAscending,
+                VideoOnly,
+                AudioOnly,
+                DanmakuOnly,
+                SubOnly,
+                CoverOnly,
+                DownloadDanmaku,
+                SkipSubtitle,
+                SkipCover
             };
 
             rootCommand.SetHandler(async (myOption) => await action(myOption), new MyOptionBinder());
@@ -236,37 +241,24 @@ namespace BBDown
             var defaultOption = new MyOption();
             var parseOption = new MyOptionBinder().GetBoundValueExposed(context.BindingContext);
 
-            var hideStreams = CommandLineExtension.GetValueForOption(parseResult, HideStreams) ?? defaultOption.HideStreams;
-            var interactive = CommandLineExtension.GetValueForOption(parseResult, Interactive) ?? defaultOption.Interactive;
+            var hideStreams = parseResult.GetValueForOptionNullable(HideStreams) ?? defaultOption.HideStreams;
+            var interactive = parseResult.GetValueForOptionNullable(Interactive) ?? defaultOption.Interactive;
             if (hideStreams && interactive)
                 AppendConflictMessage(false, HideStreams, Interactive);
 
-            var videoOnly = CommandLineExtension.GetValueForOption(parseResult, VideoOnly) ?? defaultOption.VideoOnly;
-            var audioOnly = CommandLineExtension.GetValueForOption(parseResult, AudioOnly) ?? defaultOption.AudioOnly;
+            var videoOnly = parseResult.GetValueForOptionNullable(VideoOnly) ?? false;
+            var audioOnly = parseResult.GetValueForOptionNullable(AudioOnly) ?? false;
             if (videoOnly && audioOnly)
                 AppendConflictMessage(false, VideoOnly, AudioOnly);
 
-            var demandDfn = CommandLineExtension.GetValueForOption(parseResult, DemandDfn) ?? defaultOption.DemandDfn;
-            var dfnPriority = parseResult.GetValueForOption(DfnPriority);
+            var demandDfn = parseResult.GetValueForOptionNullable(DemandDfn) ?? defaultOption.DemandDfn;
+            var dfnPriority = parseResult.GetValueForOption(DfnPriority) ?? defaultOption.DfnPriority;
             if (demandDfn && dfnPriority == null)
                 AppendConflictMessage(true, DemandDfn, DfnPriority);
 
-            if ((parseOption.ForceItems & ItemType.Cover) == ItemType.Cover && parseOption.SkipCover)
-                (errorOutput ??= new StringBuilder()).AppendLine($"错误：参数冲突，不能同时使用 {SkipCover.Aliases.First()} 与 {ForceItems.Aliases.First()} c");
-            if ((parseOption.ForceItems & ItemType.Subtitle) == ItemType.Subtitle && parseOption.SkipSubtitle)
-                (errorOutput ??= new StringBuilder()).AppendLine($"错误：参数冲突，不能同时使用 {SkipSubtitle.Aliases.First()} 与 {ForceItems.Aliases.First()} s");
-            if ((parseOption.ForceItems & ItemType.Danmaku) == ItemType.Danmaku && !parseOption.DownloadDanmaku)
-                (errorOutput ??= new StringBuilder()).AppendLine($"错误：参数冲突，使用 {ForceItems.Aliases.First()} d 时必须同时使用 {DownloadDanmaku.Aliases.First()}");
-            if (parseOption.ForceItems is not ItemType.Audio or ItemType.None && parseOption.AudioOnly)
-                (errorOutput ??= new StringBuilder()).AppendLine($"错误：参数冲突，在使用 {AudioOnly.Aliases.First()} 时 {ForceItems.Aliases.First()} 参数只能包含 a");
-            if (parseOption.ForceItems is not ItemType.Video or ItemType.None && parseOption.VideoOnly)
-                (errorOutput ??= new StringBuilder()).AppendLine($"错误：参数冲突，在使用 {VideoOnly.Aliases.First()} 时 {ForceItems.Aliases.First()} 参数只能包含 v");
-            if (parseOption.ForceItems is not ItemType.Subtitle or ItemType.None && parseOption.SubOnly)
-                (errorOutput ??= new StringBuilder()).AppendLine($"错误：参数冲突，在使用 {SubOnly.Aliases.First()} 时 {ForceItems.Aliases.First()} 参数只能包含 s");
-            if (parseOption.ForceItems is not ItemType.Danmaku or ItemType.None && parseOption.DanmakuOnly)
-                (errorOutput ??= new StringBuilder()).AppendLine($"错误：参数冲突，在使用 {DanmakuOnly.Aliases.First()} 时 {ForceItems.Aliases.First()} 参数只能包含 d");
-            if (parseOption.ForceItems is not ItemType.Cover or ItemType.None && parseOption.CoverOnly)
-                (errorOutput ??= new StringBuilder()).AppendLine($"错误：参数冲突，在使用 {CoverOnly.Aliases.First()} 时 {ForceItems.Aliases.First()} 参数只能包含 c");
+            var conflictWithDownloadItemsOptions = new[] { AudioOnly, VideoOnly, DanmakuOnly, CoverOnly, SubOnly, DownloadDanmaku, SkipCover, SkipSubtitle };
+            if (conflictWithDownloadItemsOptions.Select(parseResult.HasOption).Count(v => v) > 0 && parseResult.HasOption(DownloadItems))
+                AppendConflictMessage(false, new[] { (Option)DownloadItems }.Concat(conflictWithDownloadItemsOptions).ToArray());
 
             if (errorOutput == null)
                 await next(context);

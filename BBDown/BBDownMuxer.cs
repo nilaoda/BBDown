@@ -80,10 +80,12 @@ namespace BBDown
             {
                 for (int i = 0; i < subs.Count; i++)
                 {
-                    if (File.Exists(subs[i].path) && File.ReadAllText(subs[i].path!) != "")
+                    if (subs[i].cachePath == null)
+                        continue;
+                    if (File.Exists(subs[i].cachePath) && new FileInfo(subs[i].cachePath).Length == 0)
                     {
                         nowId++;
-                        inputArg.Append($" -add \"{subs[i].path}#trackID=1:name=:hdlr=sbtl:lang={GetSubtitleCode(subs[i].lan).Item1}\" ");
+                        inputArg.Append($" -add \"{subs[i].cachePath}#trackID=1:name=:hdlr=sbtl:lang={GetSubtitleCode(subs[i].lan).Item1}\" ");
                         inputArg.Append($" -udta {nowId}:type=name:str=\"{GetSubtitleCode(subs[i].lan).Item2}\" ");
                     }
                 }
@@ -149,10 +151,12 @@ namespace BBDown
             {
                 for (int i = 0; i < subs.Count; i++)
                 {
-                    if(File.Exists(subs[i].path) && File.ReadAllText(subs[i].path!) != "")
+                    if (subs[i].cachePath == null)
+                        continue;
+                    if(File.Exists(subs[i].cachePath) && new FileInfo(subs[i].cachePath).Length == 0)
                     {
                         inputCount++;
-                        inputArg.Append($"-i \"{subs[i].path}\" ");
+                        inputArg.Append($"-i \"{subs[i].cachePath}\" ");
                         metaArg.Append($"-metadata:s:s:{i} title=\"{GetSubtitleCode(subs[i].lan).Item2}\" -metadata:s:s:{i} language={GetSubtitleCode(subs[i].lan).Item1} ");
                     }
                 }

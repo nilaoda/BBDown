@@ -578,6 +578,52 @@ namespace BBDown
             }
         }
 
+        public static string FormatSavePath(string savePathFormat, string title, Video? videoTrack, Audio? audioTrack, Page p, int pagesCount, string apiType, long pubTime, Subtitle? subtitle)
+        {
+            var result = savePathFormat.Replace('\\', '/');
+            var regex = InfoRegex();
+            foreach (Match m in regex.Matches(result).Cast<Match>())
+            {
+                var key = m.Groups[1].Value;
+                var v = key switch
+                {
+                    "videoTitle" => GetValidFileName(title, filterSlash: true).Trim().TrimEnd('.').Trim(),
+                    "pageNumber" => p.index.ToString(),
+                    "pageNumberWithZero" => p.index.ToString().PadLeft((int)Math.Log10(pagesCount) + 1, '0'),
+                    "pageTitle" => GetValidFileName(p.title, filterSlash: true).Trim().TrimEnd('.').Trim(),
+                    "bvid" => p.bvid,
+                    "aid" => p.aid,
+                    "cid" => p.cid,
+                    "ownerName" => p.ownerName == null ? "" : GetValidFileName(p.ownerName, filterSlash: true).Trim().TrimEnd('.').Trim(),
+                    "ownerMid" => p.ownerMid ?? "",
+                    "dfn" => videoTrack?.dfn ?? "",
+                    "res" => videoTrack?.res ?? "",
+                    "fps" => videoTrack?.fps ?? "",
+                    "videoCodecs" => videoTrack?.codecs ?? "",
+                    "videoBandwidth" => videoTrack?.bandwith.ToString() ?? "",
+                    "audioCodecs" => audioTrack?.codecs ?? "",
+                    "audioBandwidth" => audioTrack?.bandwith.ToString() ?? "",
+                    "publishDate" => FormatTimeStamp(pubTime, "yyyy-MM-dd_HH-mm-ss"),
+                    "videoDate" => FormatTimeStamp(p.pubTime, "yyyy-MM-dd_HH-mm-ss"),
+                    "apiType" => apiType,
+                    "subtitleType" => subtitle?.type ?? string.Empty,
+                    "subtitleLan" => subtitle?.lan ?? string.Empty,
+                    _ => $"<{key}>"
+                };
+                result = result.Replace(m.Value, v);
+            }
+            if (!result.EndsWith(".mp4")) { result += ".mp4"; }
+            return result;
+        }
+
+        public static string FormatTimeStamp(long ts, string format)
+        {
+            return ts == 0 ? "null" : DateTimeOffset.FromUnixTimeSeconds(ts).ToLocalTime().ToString(format);
+        }
+
+        [GeneratedRegex("<(\\w+?)>")]
+        private static partial Regex InfoRegex();
+
         [GeneratedRegex("av(\\d+)")]
         private static partial Regex AvRegex();
         [GeneratedRegex("[Bb][Vv](\\w+)")]
