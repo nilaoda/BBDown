@@ -9,7 +9,7 @@ namespace BBDown.Core.Util
     public partial class SubUtil
     {
         //https://i0.hdslb.com/bfs/subtitle/subtitle_lan.json
-        public static (string, string) GetSubtitleCode(string key)
+        public static (string lan, string display) GetSubtitleCode(string key)
         {
             //zh-hans => zh-Hans
             if (NonCapsRegex().Match(key) is { Success: true } result)

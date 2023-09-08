@@ -492,28 +492,6 @@ namespace BBDown
         }
 
         /// <summary>
-        /// 生成metadata文件, 用于ffmpeg混流章节信息
-        /// </summary>
-        /// <param name="points"></param>
-        /// <returns></returns>
-        public static string GetFFmpegMetaString(List<ViewPoint> points)
-        {
-            StringBuilder sb = new();
-            sb.AppendLine(";FFMETADATA");
-            foreach (var p in points)
-            {
-                var time = 1000; //固定 1000
-                sb.AppendLine("[CHAPTER]");
-                sb.AppendLine($"TIMEBASE=1/{time}");
-                sb.AppendLine($"START={p.start * time}");
-                sb.AppendLine($"END={p.end * time}");
-                sb.AppendLine($"title={p.title}");
-                sb.AppendLine();
-            }
-            return sb.ToString();
-        }
-
-        /// <summary>
         /// 生成metadata文件, 用于mp4box混流章节信息
         /// </summary>
         /// <param name="points"></param>
@@ -612,7 +590,6 @@ namespace BBDown
                 };
                 result = result.Replace(m.Value, v);
             }
-            if (!result.EndsWith(".mp4")) { result += ".mp4"; }
             return result;
         }
 

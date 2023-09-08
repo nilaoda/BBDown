@@ -7,6 +7,7 @@ using System.CommandLine.Binding;
 using System.CommandLine.Builder;
 using System.CommandLine.Invocation;
 using System.CommandLine.Parsing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -49,8 +50,8 @@ namespace BBDown
         private readonly static Option<string> UposHost = new(new string[] { "--upos-host" }, "自定义upos服务器");
         private readonly static Option<bool> ForceReplaceHost = new(new string[] { "--force-replace-host" }, "强制替换下载服务器host(默认开启)");
         private readonly static Option<string> DelayPerPage = new(new string[] { "--delay-per-page" }, "设置下载合集分P之间的下载间隔时间(单位: 秒, 默认无间隔)");
-        private readonly static Option<string> FilePattern = new(new string[] { "--file-pattern", "-F" }, $"使用内置变量自定义单P存储文件名:\r\n\r\n" + $"<videoTitle>: 视频主标题\r\n" + $"<pageNumber>: 视频分P序号\r\n" + $"<pageNumberWithZero>: 视频分P序号(前缀补零)\r\n" + $"<pageTitle>: 视频分P标题\r\n" + $"<bvid>: 视频BV号\r\n" + $"<aid>: 视频aid\r\n" + $"<cid>: 视频cid\r\n" + $"<dfn>: 视频清晰度\r\n" + $"<res>: 视频分辨率\r\n" + $"<fps>: 视频帧率\r\n" + $"<videoCodecs>: 视频编码\r\n" + $"<videoBandwidth>: 视频码率\r\n" + $"<audioCodecs>: 音频编码\r\n" + $"<audioBandwidth>: 音频码率\r\n" + $"<ownerName>: 上传者名称\r\n" + $"<ownerMid>: 上传者mid\r\n" + $"<publishDate>: 收藏夹/番剧/合集发布时间\r\n" + $"<videoDate>: 视频发布时间(分p视频发布时间与<publishDate>相同)\r\n" + $"<apiType>: API类型(TV/APP/INTL/WEB)\r\n\r\n" + $"默认为: {Program.SinglePageDefaultSavePath}\r\n");
-        private readonly static Option<string> MultiFilePattern = new(new string[] { "--multi-file-pattern", "-M" }, $"使用内置变量自定义多P存储文件名:\r\n\r\n默认为: {Program.MultiPageDefaultSavePath}\r\n");
+        private readonly static Option<string> FilePattern = new(new string[] { "--file-pattern", "-F" }, $"使用内置变量自定义单P存储文件名:\r\n\r\n" + $"<videoTitle>: 视频主标题\r\n" + $"<pageNumber>: 视频分P序号\r\n" + $"<pageNumberWithZero>: 视频分P序号(前缀补零)\r\n" + $"<pageTitle>: 视频分P标题\r\n" + $"<bvid>: 视频BV号\r\n" + $"<aid>: 视频aid\r\n" + $"<cid>: 视频cid\r\n" + $"<dfn>: 视频清晰度\r\n" + $"<res>: 视频分辨率\r\n" + $"<fps>: 视频帧率\r\n" + $"<videoCodecs>: 视频编码\r\n" + $"<videoBandwidth>: 视频码率\r\n" + $"<audioCodecs>: 音频编码\r\n" + $"<audioBandwidth>: 音频码率\r\n" + $"<ownerName>: 上传者名称\r\n" + $"<ownerMid>: 上传者mid\r\n" + $"<publishDate>: 收藏夹/番剧/合集发布时间\r\n" + $"<videoDate>: 视频发布时间(分p视频发布时间与<publishDate>相同)\r\n" + $"<apiType>: API类型(TV/APP/INTL/WEB)\r\n\r\n" + $"默认为: {new MyOption().FilePattern}\r\n");
+        private readonly static Option<string> MultiFilePattern = new(new string[] { "--multi-file-pattern", "-M" }, $"使用内置变量自定义多P存储文件名:\r\n\r\n默认为: {new MyOption().MultiFilePattern}\r\n");
         private readonly static Option<string> Host = new(new string[] { "--host" }, "指定BiliPlus host(使用BiliPlus需要access_token, 不需要cookie, 解析服务器能够获取你账号的大部分权限!)");
         private readonly static Option<string> EpHost = new(new string[] { "--ep-host" }, "指定BiliPlus EP host(用于代理api.bilibili.com/pgc/view/web/season, 大部分解析服务器不支持代理该接口)");
         private readonly static Option<string> Area = new(new string[] { "--area" }, "(hk|tw|th) 使用BiliPlus时必选, 指定BiliPlus area");
@@ -259,6 +260,15 @@ namespace BBDown
             var conflictWithDownloadItemsOptions = new[] { AudioOnly, VideoOnly, DanmakuOnly, CoverOnly, SubOnly, DownloadDanmaku, SkipCover, SkipSubtitle };
             if (conflictWithDownloadItemsOptions.Select(parseResult.HasOption).Count(v => v) > 0 && parseResult.HasOption(DownloadItems))
                 AppendConflictMessage(false, new[] { (Option)DownloadItems }.Concat(conflictWithDownloadItemsOptions).ToArray());
+
+            var isFileExtensionMp4 = parseResult.HasOption(FilePattern) ? parseOption.FilePattern.EndsWith(".mp4") : (parseResult.HasOption(MultiFilePattern) ? parseOption.MultiFilePattern.EndsWith(".mp4") : true);
+            if (!isFileExtensionMp4 && parseOption.UseMP4box)
+                (errorOutput ??= new()).AppendLine($"错误：参数冲突，在使用 {UseMP4box.Aliases.First()} 时，{FilePattern.Aliases.First()} 或 {MultiFilePattern.Aliases.First()} 必须以.mp4为后缀名");
+
+            var downloadItems = parseOption.DownloadItems;
+            var forceItems = parseOption.ForceItems;
+            if ((downloadItems & forceItems) != forceItems)
+                (errorOutput ??= new()).AppendLine($"错误：参数冲突，{DownloadItems.Aliases.First()} 必须包含所有的 {ForceItems.Aliases.First()} 参数");
 
             if (errorOutput == null)
                 await next(context);

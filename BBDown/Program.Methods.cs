@@ -1,5 +1,4 @@
-﻿
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
@@ -16,7 +15,6 @@ namespace BBDown
 {
     internal partial class Program
     {
-
         /// <summary>
         /// 兼容旧版本命令行参数并给出警告
         /// </summary>
@@ -28,9 +26,9 @@ namespace BBDown
                 LogWarn("--add-dfn-subfix 已被弃用, 建议使用 --file-pattern/-F 或 --multi-file-pattern/-M 来自定义输出文件名格式");
                 if (string.IsNullOrEmpty(myOption.FilePattern) && string.IsNullOrEmpty(myOption.MultiFilePattern))
                 {
-                    SinglePageDefaultSavePath += "[<dfn>]";
-                    MultiPageDefaultSavePath += "[<dfn>]";
-                    LogWarn($"已切换至 -F \"{SinglePageDefaultSavePath}\" -M \"{MultiPageDefaultSavePath}\"");
+                    myOption.FilePattern = Path.GetFileNameWithoutExtension(myOption.FilePattern) + "[<dfn>]" + Path.GetExtension(myOption.FilePattern);
+                    myOption.MultiFilePattern = Path.GetFileNameWithoutExtension(myOption.MultiFilePattern) + "[<dfn>]" + Path.GetExtension(myOption.MultiFilePattern);
+                    LogWarn($"已切换至 -F \"{myOption.FilePattern}\" -M \"{myOption.MultiFilePattern}\"");
                 }
             }
             if (myOption.Aria2cProxy != "")
@@ -58,8 +56,8 @@ namespace BBDown
                 LogWarn("--no-padding-page-num 已被弃用, 建议使用 --file-pattern/-F 或 --multi-file-pattern/-M 来自定义输出文件名格式");
                 if (string.IsNullOrEmpty(myOption.FilePattern) && string.IsNullOrEmpty(myOption.MultiFilePattern))
                 {
-                    MultiPageDefaultSavePath = MultiPageDefaultSavePath.Replace("<pageNumberWithZero>", "<pageNumber>");
-                    LogWarn($"已切换至 -M \"{MultiPageDefaultSavePath}\"");
+                    myOption.MultiFilePattern = myOption.MultiFilePattern.Replace("<pageNumberWithZero>", "<pageNumber>");
+                    LogWarn($"已切换至 -M \"{myOption.MultiFilePattern}\"");
                 }
             }
             if (myOption.BandwithAscending)
