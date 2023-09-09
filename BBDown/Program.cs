@@ -255,6 +255,8 @@ namespace BBDown
                 {
                     bool selected = false; //用户是否已经手动选择过了轨道
                     int retryCount = 0;
+                    var vIndex = 0;
+                    var aIndex = 0;
                 downloadPage:
                     try
                     {
@@ -449,9 +451,6 @@ namespace BBDown
                                 continue;
                             }
 
-                            int vIndex = 0; //用户手动选择的视频序号
-                            int aIndex = 0; //用户手动选择的音频序号
-
                             //选择轨道
                             if (myOption.Interactive && !selected)
                             {
@@ -600,7 +599,6 @@ namespace BBDown
                             //排序
                             parsedResult.VideoTracks = FilterAndSortVideoTracks(parsedResult.VideoTracks, dfnPriority, encodingPriority, myOption.VideoAscending, myOption.DemandDfn);
 
-                            int vIndex = 0;
                             if (myOption.Interactive && !flag && !selected)
                             {
                                 int i = 0;
