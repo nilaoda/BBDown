@@ -713,7 +713,7 @@ namespace BBDown
                 {
                     "videoTitle" => GetValidFileName(title, filterSlash: true).Trim().TrimEnd('.').Trim(),
                     "pageNumber" => p.index.ToString(),
-                    "pageNumberWithZero" => p.index.ToString().PadLeft((int)Math.Log10(pagesCount) + 1, '0'),
+                    "pageNumberWithZero" => p.index.ToString().PadLeft((int)Math.Ceiling(Math.Log10(pagesCount)) + 1, '0'),
                     "pageTitle" => GetValidFileName(p.title, filterSlash: true).Trim().TrimEnd('.').Trim(),
                     "bvid" => p.bvid,
                     "aid" => p.aid,
