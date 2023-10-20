@@ -180,7 +180,8 @@ namespace BBDown.Core.Entity
         {
             public required string lan;
             public required string url;
-            public required string path;
+            public required string type;
+            public string? cachePath;
         }
 
         public class Clip

@@ -9,7 +9,7 @@ namespace BBDown.Core.Util
     public partial class SubUtil
     {
         //https://i0.hdslb.com/bfs/subtitle/subtitle_lan.json
-        public static (string, string) GetSubtitleCode(string key)
+        public static (string lan, string display) GetSubtitleCode(string key)
         {
             //zh-hans => zh-Hans
             if (NonCapsRegex().Match(key) is { Success: true } result)
@@ -232,7 +232,7 @@ namespace BBDown.Core.Util
                     {
                         url = url,
                         lan = lan,
-                        path = $"{aid}/{aid}.{cid}.{lan}{(url.Contains(".json") ? ".srt" : ".ass")}"
+                        type = (url.Contains(".json") ? ".srt" : ".ass")
                     };
 
                     //有空的URL 不合法
@@ -268,7 +268,7 @@ namespace BBDown.Core.Util
                     {
                         url = url,
                         lan = lan,
-                        path = $"{aid}/{aid}.{cid}.{lan}{(url.Contains(".json") ? ".srt" : ".ass")}"
+                        type = url.Contains(".json") ? ".srt" : ".ass"
                     };
 
                     //有空的URL 不合法
@@ -301,7 +301,7 @@ namespace BBDown.Core.Util
                     {
                         url = sub.GetProperty("subtitle_url").ToString(),
                         lan = lan,
-                        path = $"{aid}/{aid}.{cid}.{lan}.srt"
+                        type = "srt"
                     };
                     subtitles.Add(subtitle);
                 }
@@ -339,7 +339,7 @@ namespace BBDown.Core.Util
                     {
                         url = sub.GetProperty("subtitle_url").ToString(),
                         lan = lan,
-                        path = $"{aid}/{aid}.{cid}.{lan}.srt"
+                        type = "srt"
                     };
                     subtitles.Add(subtitle);
                 }
@@ -393,7 +393,7 @@ namespace BBDown.Core.Util
                     {
                         url = m.Groups[2].Value,
                         lan = m.Groups[1].Value,
-                        path = $"{aid}/{aid}.{cid}.{m.Groups[1].Value}.srt"
+                        type = "srt"
                     };
                     subtitles.Add(subtitle);
                 }

@@ -15,7 +15,6 @@ namespace BBDown
 {
     internal partial class Program
     {
-
         /// <summary>
         /// 兼容旧版本命令行参数并给出警告
         /// </summary>
@@ -27,9 +26,9 @@ namespace BBDown
                 LogWarn("--add-dfn-subfix 已被弃用, 建议使用 --file-pattern/-F 或 --multi-file-pattern/-M 来自定义输出文件名格式");
                 if (string.IsNullOrEmpty(myOption.FilePattern) && string.IsNullOrEmpty(myOption.MultiFilePattern))
                 {
-                    SinglePageDefaultSavePath += "[<dfn>]";
-                    MultiPageDefaultSavePath += "[<dfn>]";
-                    LogWarn($"已切换至 -F \"{SinglePageDefaultSavePath}\" -M \"{MultiPageDefaultSavePath}\"");
+                    myOption.FilePattern = Path.GetFileNameWithoutExtension(myOption.FilePattern) + "[<dfn>]" + Path.GetExtension(myOption.FilePattern);
+                    myOption.MultiFilePattern = Path.GetFileNameWithoutExtension(myOption.MultiFilePattern) + "[<dfn>]" + Path.GetExtension(myOption.MultiFilePattern);
+                    LogWarn($"已切换至 -F \"{myOption.FilePattern}\" -M \"{myOption.MultiFilePattern}\"");
                 }
             }
             if (myOption.Aria2cProxy != "")
@@ -57,8 +56,8 @@ namespace BBDown
                 LogWarn("--no-padding-page-num 已被弃用, 建议使用 --file-pattern/-F 或 --multi-file-pattern/-M 来自定义输出文件名格式");
                 if (string.IsNullOrEmpty(myOption.FilePattern) && string.IsNullOrEmpty(myOption.MultiFilePattern))
                 {
-                    MultiPageDefaultSavePath = MultiPageDefaultSavePath.Replace("<pageNumberWithZero>", "<pageNumber>");
-                    LogWarn($"已切换至 -M \"{MultiPageDefaultSavePath}\"");
+                    myOption.MultiFilePattern = myOption.MultiFilePattern.Replace("<pageNumberWithZero>", "<pageNumber>");
+                    LogWarn($"已切换至 -M \"{myOption.MultiFilePattern}\"");
                 }
             }
             if (myOption.BandwithAscending)
@@ -74,14 +73,14 @@ namespace BBDown
         /// </summary>
         /// <param name="myOption"></param>
         /// <returns></returns>
-        private static Dictionary<string, byte> ParseEncodingPriority(MyOption myOption, out string firstEncoding)
+        private static Dictionary<string, int> ParseEncodingPriority(MyOption myOption, out string firstEncoding)
         {
-            var encodingPriority = new Dictionary<string, byte>();
+            var encodingPriority = new Dictionary<string, int>();
             firstEncoding = "";
             if (myOption.EncodingPriority != null)
             {
                 var encodingPriorityTemp = myOption.EncodingPriority.Replace("，", ",").Split(',').Select(s => s.ToUpper().Trim()).Where(s => !string.IsNullOrEmpty(s));
-                byte index = 0;
+                int index = 0;
                 firstEncoding = encodingPriorityTemp.First();
                 foreach (string encoding in encodingPriorityTemp)
                 {
@@ -169,29 +168,6 @@ namespace BBDown
                     BBDownAria2c.ARIA2C = binPath;
                 }
 
-            }
-        }
-
-        /// <summary>
-        /// 处理有冲突的选项
-        /// </summary>
-        /// <param name="myOption"></param>
-        private static void HandleConflictingOptions(MyOption myOption)
-        {
-            //手动选择时不能隐藏流
-            if (myOption.Interactive)
-            {
-                myOption.HideStreams = false;
-            }
-            //audioOnly和videoOnly同时开启则全部忽视
-            if (myOption.AudioOnly && myOption.VideoOnly)
-            {
-                myOption.AudioOnly = false;
-                myOption.VideoOnly = false;
-            }
-            if (myOption.SkipSubtitle)
-            {
-                myOption.SubOnly = false;
             }
         }
 
@@ -477,6 +453,27 @@ namespace BBDown
                 }
                 await DownloadFile(url, destPath, downloadConfig);
             }
+        }
+
+        /// <summary>
+        /// 过滤并排序视频轨道
+        /// </summary>
+        /// <returns>处理后的新的列表</returns>
+        private static List<Video> FilterAndSortVideoTracks(List<Video> videoTracks, Dictionary<string, int> dfnPriority, Dictionary<string, int> encodingPriority, bool videoAscending, bool demandDfn)
+        {
+            Func<Video, int> encodingSortKeySelector = v => encodingPriority.TryGetValue(v.codecs, out int i) ? i : 100;
+            Func<Video, int> dfnSortKeySelector = v => dfnPriority.TryGetValue(v.dfn, out int i) ? i : 100;
+            
+            //用户同时输入了自定义分辨率优先级和自定义编码优先级, 则根据输入顺序依次进行排序
+            var isEncodingFirst = dfnPriority.Any() && encodingPriority.Any() && Environment.CommandLine.IndexOf("--encoding-priority") < Environment.CommandLine.IndexOf("--dfn-priority");
+            (var firstOrderMethod, var secondOrderMethod) = isEncodingFirst ? (encodingSortKeySelector, dfnSortKeySelector) : (dfnSortKeySelector, encodingSortKeySelector);
+            return videoTracks
+                    .Where(v => !demandDfn || dfnPriority.Keys.Contains(v.dfn))
+                    .OrderBy(firstOrderMethod)
+                    .ThenBy(secondOrderMethod)
+                    .ThenByDescending(v => Convert.ToInt32(v.id))
+                    .ThenBy(v => videoAscending ? v.bandwith : -v.bandwith)
+                    .ToList();
         }
 
         [GeneratedRegex("://.*:\\d+/")]
