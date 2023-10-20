@@ -545,7 +545,7 @@ namespace BBDown
                                 (pagesCount > 1 || (bangumi && !vInfo.IsBangumiEnd)) ? p.title : "",
                                 File.Exists(coverPath) ? coverPath : "",
                                 lang,
-                                subtitleInfo, myOption.AudioOnly, myOption.VideoOnly, p.points, p.pubTime);
+                                subtitleInfo, myOption.AudioOnly, myOption.VideoOnly, p.points, p.pubTime, myOption.SimplyMux);
                             if (code != 0 || !File.Exists(savePath) || new FileInfo(savePath).Length == 0)
                             {
                                 LogError("合并失败"); continue;
@@ -634,7 +634,7 @@ namespace BBDown
                                 (pagesCount > 1 || (bangumi && !vInfo.IsBangumiEnd)) ? p.title : "",
                                 File.Exists(coverPath) ? coverPath : "",
                                 lang,
-                                subtitleInfo, myOption.AudioOnly, myOption.VideoOnly, p.points, p.pubTime);
+                                subtitleInfo, myOption.AudioOnly, myOption.VideoOnly, p.points, p.pubTime, myOption.SimplyMux);
                             if (code != 0 || !File.Exists(savePath) || new FileInfo(savePath).Length == 0)
                             {
                                 LogError("合并失败"); continue;

@@ -21,6 +21,7 @@ namespace BBDown
         public bool Interactive { get; set; }
         public bool HideStreams { get; set; }
         public bool MultiThread { get; set; } = true;
+        public bool SimplyMux {  get; set; } = false;
         public bool VideoOnly { get; set; }
         public bool AudioOnly { get; set; }
         public bool DanmakuOnly { get; set; }

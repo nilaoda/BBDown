@@ -95,7 +95,7 @@ namespace BBDown
             return RunExe(MP4BOX, arguments, MP4BOX != "mp4box");
         }
 
-        public static int MuxAV(bool useMp4box, string videoPath, string audioPath, List<AudioMaterial> audioMaterial, string outPath, string desc = "", string title = "", string author = "", string episodeId = "", string pic = "", string lang = "", List<Subtitle>? subs = null, bool audioOnly = false, bool videoOnly = false, List<ViewPoint>? points = null, long pubTime = 0)
+        public static int MuxAV(bool useMp4box, string videoPath, string audioPath, List<AudioMaterial> audioMaterial, string outPath, string desc = "", string title = "", string author = "", string episodeId = "", string pic = "", string lang = "", List<Subtitle>? subs = null, bool audioOnly = false, bool videoOnly = false, List<ViewPoint>? points = null, long pubTime = 0, bool simplyMux = false)
         {
             if (audioOnly && audioPath != "")
                 videoPath = "";
@@ -177,12 +177,14 @@ namespace BBDown
             argsBuilder.Append($"-loglevel {(Config.DEBUG_LOG ? "verbose" : "warning")} -y ");
             argsBuilder.Append(inputArg);
             argsBuilder.Append(metaArg);
-            argsBuilder.Append($"-metadata title=\"{(episodeId == "" ? title : episodeId)}\" ");
-            if (lang != "") argsBuilder.Append($"-metadata:s:a:0 language={lang} ");
-            if (!string.IsNullOrWhiteSpace(desc)) argsBuilder.Append($"-metadata description=\"{desc}\" ");
-            if (!string.IsNullOrEmpty(author)) argsBuilder.Append($"-metadata artist=\"{author}\" ");
-            if (episodeId != "") argsBuilder.Append($"-metadata album=\"{title}\" ");
-            if (pubTime != 0) argsBuilder.Append($"-metadata creation_time=\"{(DateTimeOffset.FromUnixTimeSeconds(pubTime).ToString("yyyy-MM-ddTHH:mm:ss.ffffffZ"))}\" ");
+            if (!simplyMux) {
+                argsBuilder.Append($"-metadata title=\"{(episodeId == "" ? title : episodeId)}\" ");
+                if (lang != "") argsBuilder.Append($"-metadata:s:a:0 language={lang} ");
+                if (!string.IsNullOrWhiteSpace(desc)) argsBuilder.Append($"-metadata description=\"{desc}\" ");
+                if (!string.IsNullOrEmpty(author)) argsBuilder.Append($"-metadata artist=\"{author}\" ");
+                if (episodeId != "") argsBuilder.Append($"-metadata album=\"{title}\" ");
+                if (pubTime != 0) argsBuilder.Append($"-metadata creation_time=\"{(DateTimeOffset.FromUnixTimeSeconds(pubTime).ToString("yyyy-MM-ddTHH:mm:ss.ffffffZ"))}\" ");
+            }
             argsBuilder.Append("-c copy ");
             if (audioOnly && audioPath == "") argsBuilder.Append("-vn ");
             if (subs != null) argsBuilder.Append("-c:s mov_text ");
