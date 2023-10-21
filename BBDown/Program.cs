@@ -32,7 +32,7 @@ namespace BBDown
         public static string SinglePageDefaultSavePath { get; set; } = "<videoTitle>";
         public static string MultiPageDefaultSavePath { get; set; } = "<videoTitle>/[P<pageNumberWithZero>]<pageTitle>";
 
-        public readonly static string APP_DIR = Path.GetDirectoryName(Environment.ProcessPath)!;
+        public readonly static string APP_DIR = Path.GetDirectoryName(System.AppContext.BaseDirectory)!;
 
         private static int Compare(Audio r1, Audio r2)
         {
@@ -109,12 +109,12 @@ namespace BBDown
                 return 1;
             }
 
-            if (commandLineResult.CommandResult.Command.Name.ToLower() != Path.GetFileNameWithoutExtension(Environment.ProcessPath)!.ToLower())
-            {
-                newArgsList.Add(commandLineResult.CommandResult.Command.Name);
-                return await parser.InvokeAsync(newArgsList.ToArray());
-            }
-
+            // if (commandLineResult.CommandResult.Command.Name.ToLower() != Path.GetFileNameWithoutExtension(Environment.ProcessPath)!.ToLower())
+            // {
+            //     newArgsList.Add(commandLineResult.CommandResult.Command.Name);
+            //     return await parser.InvokeAsync(newArgsList.ToArray());
+            // }
+            
             foreach (var item in commandLineResult.CommandResult.Children)
             {
                 if (item is ArgumentResult a)

@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Version>1.6.1</Version>
     <Description>BBDown是一个免费且便捷高效的哔哩哔哩下载/解析软件.</Description>
@@ -12,6 +12,7 @@
     <ToolCommandName>BBDown</ToolCommandName>
     <PackageOutputPath>./nupkg</PackageOutputPath>
     <Nullable>enable</Nullable>
+    <SelfContained>false</SelfContained>
   </PropertyGroup>
 
   <ItemGroup>
