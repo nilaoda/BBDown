@@ -21,6 +21,7 @@ namespace BBDown
             public string Aria2cArgs { get; set; } = string.Empty;
             public bool ForceHttp { get; set; } = false;
             public bool MultiThread { get; set; } = false;
+            public DownloadTask? RelatedTask { get; set; } = null;
         }
 
         private static async Task RangeDownloadToTmpAsync(int id, string url, string tmpName, long fromPosition, long? toPosition, Action<int, long, long> onProgress, bool failOnRangeNotSupported = false)
@@ -88,7 +89,7 @@ namespace BBDown
         reDown:
             try
             {
-                using var progress = new ProgressBar();
+                using var progress = new ProgressBar(config.RelatedTask);
                 await RangeDownloadToTmpAsync(0, url, tmpName, 0, null, (_, downloaded, total) => progress.Report((double)downloaded / total, downloaded));
                 File.Move(tmpName, path, true);
             }
@@ -125,7 +126,7 @@ namespace BBDown
             ConcurrentDictionary<int, long> clipProgress = new();
             foreach (var i in allClips) clipProgress[i.index] = 0;
 
-            using var progress = new ProgressBar();
+            using var progress = new ProgressBar(config.RelatedTask);
             progress.Report(0);
             await Parallel.ForEachAsync(allClips, async (clip, _) =>
             {
