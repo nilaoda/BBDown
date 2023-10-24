@@ -301,7 +301,7 @@ BBDown server -l http://0.0.0.0:12450
 
 API服务器不支持HTTPS配置，如果有需要请自行使用nginx等反向代理进行配置
 
-API详细请参考`json-api-doc.md`
+API详细请参考[json-api-doc.md](./json-api-doc.md)
 </details>
 
 # 演示
