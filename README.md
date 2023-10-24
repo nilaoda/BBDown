@@ -293,17 +293,12 @@ BBDown -p ALL "https://www.bilibili.com/bangumi/play/ss33073"
 <details>
 <summary>API服务器</summary>
 
-启动服务器（默认设置）：
-
-```shell
-BBDown server
-```
-
 启动服务器（自定义监听地址和端口）：
 
 ```shell
-BBDown server http://0.0.0.0:12450
+BBDown server -l http://0.0.0.0:12450
 ```
+
 API服务器不支持HTTPS配置，如果有需要请自行使用nginx等反向代理进行配置
 
 API详细请参考`json-api-doc.md`
