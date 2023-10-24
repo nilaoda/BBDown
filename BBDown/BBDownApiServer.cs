@@ -54,16 +54,16 @@ public class BBDownApiServer
             if (!bindingResult.IsValid)
             {
                 //var exception = bindingResult.Exception;
-                return Results.Problem("输入有误");
+                return Results.BadRequest("输入有误");
             }
             var req = bindingResult.Result;
             AddDownloadTask(req);
             return Results.Ok();
         });
         var finishedRemovalApi = app.MapGroup("remove-finished");
-        finishedRemovalApi.MapGet("/", () => finishedTasks.RemoveAll(t => true));
-        finishedRemovalApi.MapGet("/failed", () => finishedTasks.RemoveAll(t => !t.IsSuccessful));
-        finishedRemovalApi.MapGet("/{id}", (string id) => finishedTasks.RemoveAll(t => t.Aid == id));
+        finishedRemovalApi.MapGet("/", () => { finishedTasks.RemoveAll(t => true); return Results.Ok(); });
+        finishedRemovalApi.MapGet("/failed", () => { finishedTasks.RemoveAll(t => !t.IsSuccessful); return Results.Ok(); });
+        finishedRemovalApi.MapGet("/{id}", (string id) => { finishedTasks.RemoveAll(t => t.Aid == id); return Results.Ok(); });
     }
 
     public void Run(string url)
