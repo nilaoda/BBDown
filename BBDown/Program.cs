@@ -79,7 +79,7 @@ namespace BBDown
                 new[] { "--listen", "-l" },
                 description: "服务器监听url");
             Command runAsServerCommand = new(
-                "server",
+                "serve",
                 "以服务器模式运行")
             { serverUrlOpt };
             runAsServerCommand.SetHandler(StartServer, serverUrlOpt);
@@ -121,7 +121,7 @@ namespace BBDown
             if (commandLineResult.CommandResult.Command.Name.ToLower() != Path.GetFileNameWithoutExtension(Environment.ProcessPath)!.ToLower())
             {
                 // 服务器模式需要完整的arg列表
-                if (commandLineResult.CommandResult.Command.Name.ToLower() == "server")
+                if (commandLineResult.CommandResult.Command.Name.ToLower() == "serve")
                 {
                     return await parser.InvokeAsync(args.ToArray());
                 }
@@ -168,13 +168,14 @@ namespace BBDown
             return DoWorkAsync(myOption);
         }
 
-        private static void StartServer(string listenUrl)
+        private static void StartServer(string? listenUrl)
         {
+            var defaultListenUrl = "http://0.0.0.0:23333";
             //检测更新
             CheckUpdateAsync();
             var server = new BBDownApiServer();
             server.SetUpServer();
-            server.Run(listenUrl);
+            server.Run(string.IsNullOrEmpty(listenUrl) ? defaultListenUrl : listenUrl);
         }
 
         public static (Dictionary<string, byte>? encodingPriority, Dictionary<string, int>? dfnPriority, string? firstEncoding,

@@ -2,7 +2,6 @@
   "profiles": {
     "BBDown": {
       "commandName": "Project",
-      "commandLineArgs": "",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
@@ -10,8 +9,7 @@
     },
     "BBDown.Server": {
       "commandName": "Project",
-      "commandLineArgs": "server -l http://0.0.0.0:58682",
-      "launchBrowser": false,
+      "commandLineArgs": "serve",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
