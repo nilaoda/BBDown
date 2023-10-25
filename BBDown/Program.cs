@@ -219,7 +219,7 @@ namespace BBDown
             return (encodingPriority, dfnPriority, firstEncoding, downloadDanmaku, input, savePathFormat, lang, aidOri, delay);
         }
 
-        public static async Task<(string fetchedAid, VInfo vInfo, string apiType)> GetVideoInfo(MyOption myOption, string aidOri, string input)
+        public static async Task<(string fetchedAid, VInfo vInfo, string apiType)> GetVideoInfoAsync(MyOption myOption, string aidOri, string input)
         {
             //加载认证信息
             LoadCredentials(myOption);
@@ -274,7 +274,7 @@ namespace BBDown
             return (aidOri, vInfo, apiType);
         }
 
-        public static async Task DownloadPage(MyOption myOption, VInfo vInfo, Dictionary<string, byte>? encodingPriority, Dictionary<string, int>? dfnPriority,
+        public static async Task DownloadPageAsync(MyOption myOption, VInfo vInfo, Dictionary<string, byte>? encodingPriority, Dictionary<string, int>? dfnPriority,
             string? firstEncoding, bool downloadDanmaku, string input, string savePathFormat, string lang, string aidOri, int delay, string apiType, DownloadTask? relatedTask = null)
         {
             string title = vInfo.Title;
@@ -717,8 +717,8 @@ namespace BBDown
             {
                 var (encodingPriority, dfnPriority, firstEncoding, downloadDanmaku,
                     input, savePathFormat, lang, aidOri, delay) = SetUpWork(myOption);
-                var (fetchedAid, vInfo, apiType) = await GetVideoInfo(myOption, aidOri, input);
-                await DownloadPage(myOption, vInfo, encodingPriority, dfnPriority, firstEncoding, downloadDanmaku,
+                var (fetchedAid, vInfo, apiType) = await GetVideoInfoAsync(myOption, aidOri, input);
+                await DownloadPageAsync(myOption, vInfo, encodingPriority, dfnPriority, firstEncoding, downloadDanmaku,
                     input, savePathFormat, lang, fetchedAid, delay, apiType);
             }
             catch (Exception e)

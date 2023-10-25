@@ -57,7 +57,7 @@ public class BBDownApiServer
                 return Results.BadRequest("输入有误");
             }
             var req = bindingResult.Result;
-            AddDownloadTask(req);
+            AddDownloadTaskAsync(req);
             return Results.Ok();
         });
         var finishedRemovalApi = app.MapGroup("remove-finished");
@@ -85,7 +85,7 @@ public class BBDownApiServer
         app.Run(url);
     }
 
-    private async Task AddDownloadTask(MyOption option)
+    private async Task AddDownloadTaskAsync(MyOption option)
     {
         var aid = await BBDownUtil.GetAvIdAsync(option.Url);
         if (runningTasks.Any(task => task.Aid == aid)) return;
@@ -94,11 +94,11 @@ public class BBDownApiServer
         try
         {
             var (encodingPriority, dfnPriority, firstEncoding, downloadDanmaku, input, savePathFormat, lang, aidOri, delay) = Program.SetUpWork(option);
-            var (fetchedAid, vInfo, apiType) = await Program.GetVideoInfo(option, aidOri, input);
+            var (fetchedAid, vInfo, apiType) = await Program.GetVideoInfoAsync(option, aidOri, input);
             task.Title = vInfo.Title;
             task.Pic = vInfo.Pic;
             task.VideoPubTime = vInfo.PubTime;
-            await Program.DownloadPage(option, vInfo, encodingPriority, dfnPriority, firstEncoding, downloadDanmaku,
+            await Program.DownloadPageAsync(option, vInfo, encodingPriority, dfnPriority, firstEncoding, downloadDanmaku,
                         input, savePathFormat, lang, fetchedAid, delay, apiType, task);
             task.IsSuccessful = true;
         }
