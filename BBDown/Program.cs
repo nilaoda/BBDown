@@ -506,8 +506,9 @@ namespace BBDown
 
                         if (myOption.CoverOnly)
                         {
-                            var newCoverPath = savePath[..savePath.LastIndexOf('.')] + Path.GetExtension(pic);
-                            await DownloadFile((pic == "" ? p.cover! : pic), newCoverPath, downloadConfig);
+                            var coverUrl = pic == "" ? p.cover! : pic;
+                            var newCoverPath = savePath[..savePath.LastIndexOf('.')] + Path.GetExtension(coverUrl);
+                            await DownloadFile(coverUrl, newCoverPath, downloadConfig);
                             if (Directory.Exists(p.aid) && Directory.GetFiles(p.aid).Length == 0) Directory.Delete(p.aid, true);
                             continue;
                         }
