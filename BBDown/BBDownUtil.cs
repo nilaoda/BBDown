@@ -334,18 +334,6 @@ namespace BBDown
             return "";
         }
 
-        public static async Task<string> GetLoginStatusAsync(string oauthKey)
-        {
-            string queryUrl = "https://passport.bilibili.com/qrcode/getLoginInfo";
-            NameValueCollection postValues = new()
-            {
-                { "oauthKey", oauthKey },
-                { "gourl", "https%3A%2F%2Fwww.bilibili.com%2F" }
-            };
-            byte[] responseArray = await (await AppHttpClient.PostAsync(queryUrl, new FormUrlEncodedContent(postValues.ToDictionary()))).Content.ReadAsByteArrayAsync();
-            return Encoding.UTF8.GetString(responseArray);
-        }
-
         //https://s1.hdslb.com/bfs/static/player/main/video.9efc0c61.js
         public static string GetSession(string buvid3)
         {

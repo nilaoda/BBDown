@@ -13,14 +13,20 @@ namespace BBDown
 {
     internal class BBDownLoginUtil
     {
+        public static async Task<string> GetLoginStatusAsync(string qrcodeKey)
+        {
+            string queryUrl = $"https://passport.bilibili.com/x/passport-login/web/qrcode/poll?qrcode_key={qrcodeKey}&source=main-fe-header";
+            return await HTTPUtil.GetWebSourceAsync(queryUrl);
+        }
+
         public static async Task LoginWEB()
         {
             try
             {
                 Log("获取登录地址...");
-                string loginUrl = "https://passport.bilibili.com/qrcode/getLoginUrl";
+                string loginUrl = "https://passport.bilibili.com/x/passport-login/web/qrcode/generate?source=main-fe-header";
                 string url = JsonDocument.Parse(await HTTPUtil.GetWebSourceAsync(loginUrl)).RootElement.GetProperty("data").GetProperty("url").ToString();
-                string oauthKey = GetQueryString("oauthKey", url);
+                string qrcodeKey = GetQueryString("qrcode_key", url);
                 //Log(oauthKey);
                 //Log(url);
                 bool flag = false;
@@ -36,18 +42,18 @@ namespace BBDown
                 while (true)
                 {
                     await Task.Delay(1000);
-                    string w = await GetLoginStatusAsync(oauthKey);
-                    string data = JsonDocument.Parse(w).RootElement.GetProperty("data").ToString();
-                    if (data == "-2")
+                    string w = await GetLoginStatusAsync(qrcodeKey);
+                    int code = JsonDocument.Parse(w).RootElement.GetProperty("data").GetProperty("code").GetInt32();
+                    if (code == 86038)
                     {
                         LogColor("二维码已过期, 请重新执行登录指令.");
                         break;
                     }
-                    else if (data == "-4") //等待扫码
+                    else if (code == 86101) //等待扫码
                     {
                         continue;
                     }
-                    else if (data == "-5") //等待确认
+                    else if (code == 86090) //等待确认
                     {
                         if (!flag)
                         {
