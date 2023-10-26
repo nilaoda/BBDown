@@ -27,15 +27,21 @@ namespace BBDown
 		private string speedString = "";
         private readonly Timer speedTimer;
 
-        public ProgressBar()
+		//服务器模式使用，更新下载任务的进度
+		private DownloadTask? RelatedTask = null;
+
+        public ProgressBar(DownloadTask? task = null)
 		{
 			timer = new Timer(TimerHandler);
 			speedTimer = new Timer(SpeedTimerHandler);
-
+			if (task is not null) RelatedTask = task;
             // A progress bar is only for temporary display in a console window.
             // If the console output is redirected to a file, draw nothing.
             // Otherwise, we'll end up with a lot of garbage in the target file.
-            if (!Console.IsOutputRedirected)
+			// However, if this progressbar is for a server download task,
+			// we still need it to report progress no matter where stdout is redirected.
+			// The prevention of writing garbage should be controlled on the methods do the actual writing.
+            if (!Console.IsOutputRedirected || RelatedTask is not null)
 			{
 				ResetTimer();
 				ResetSpeedTimer();
@@ -66,8 +72,14 @@ namespace BBDown
 
                 if (downloadedBytes > 0 && downloadedBytes - lastDownloadedBytes > 0)
                 {
-                    speedString = " - " + BBDownUtil.FormatFileSize(downloadedBytes - lastDownloadedBytes) + "/s";
+					var delta = downloadedBytes - lastDownloadedBytes;
+                    speedString = " - " + BBDownUtil.FormatFileSize(delta) + "/s";
                     lastDownloadedBytes = downloadedBytes;
+					if (RelatedTask is not null) 
+					{
+						RelatedTask.DownloadSpeed = delta;
+						RelatedTask.TotalDownloadedBytes += delta;
+					}
                 }
 
 				ResetSpeedTimer();
@@ -88,6 +100,10 @@ namespace BBDown
 					animation[animationIndex++ % animation.Length],
                     speedString);
 				UpdateText(text);
+				if (RelatedTask is not null) 
+				{
+					RelatedTask.Progress = currentProgress;
+				}
 
 				ResetTimer();
 			}
@@ -95,6 +111,8 @@ namespace BBDown
 
 		private void UpdateText(string text)
 		{
+			// Write nothing when output is redirected
+			if (Console.IsOutputRedirected) return;
 			// Get length of common portion
 			int commonPrefixLength = 0;
 			int commonLength = Math.Min(currentText.Length, text.Length);
