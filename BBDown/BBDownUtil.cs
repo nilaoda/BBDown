@@ -143,7 +143,7 @@ namespace BBDown
             }
             else if (input.ToLower().StartsWith("bv"))
             {
-                avid = GetAidByBV(input[2..]);
+                avid = GetAidByBV(input[3..]);
             }
             else if (input.ToLower().StartsWith("av")) //av
             {
@@ -568,7 +568,7 @@ namespace BBDown
 
         [GeneratedRegex("av(\\d+)")]
         private static partial Regex AvRegex();
-        [GeneratedRegex("[Bb][Vv](\\w+)")]
+        [GeneratedRegex("[Bb][Vv]1(\\w+)")]
         private static partial Regex BVRegex();
         [GeneratedRegex("/ep(\\d+)")]
         private static partial Regex EpRegex();

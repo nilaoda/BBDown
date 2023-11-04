@@ -1,48 +1,76 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace BBDown.Core.Util
 {
-    //code from: https://www.zhihu.com/question/381784377/answer/1099438784
-    public class BilibiliBvConverter
+    //code from: https://github.com/Colerar/abv/blob/main/src/lib.rs
+    public static class BilibiliBvConverter
     {
-        private static string table = "fZodR9XQDSUm21yCkr6zBqiveYah8bt4xsWpHnJE7jL5VG3guMTKNPAwcF";
-        private static Dictionary<char, long> tr = new Dictionary<char, long>();
+        private const long XOR_CODE = 23442827791579L;
+        private const long MASK_CODE = (1L << 51) - 1;
+
+        private const long MAX_AID = MASK_CODE + 1;
+        private const long MIN_AID = 1L;
+
+        private const long BASE = 58L;
+        private const byte BV_LEN = 9;
+
+        private static readonly byte[] ALPHABET = Encoding.ASCII.GetBytes("FcwAPNKTMug3GV5Lj7EJnHpWsx4tb8haYeviqBz6rkCy12mUSDQX9RdoZf");
+
+        private static readonly Dictionary<byte, long> REV_ALPHABETA = new Dictionary<byte, long>();
 
         static BilibiliBvConverter()
         {
-            for (int i = 0; i < 58; i++)
+            for (byte i = 0; i < ALPHABET.Length; i++)
             {
-                tr[table[i]] = i;
+                REV_ALPHABETA[ALPHABET[i]] = i;
             }
         }
 
-        public static long Decode(string x)
+        public static string Encode(long avid)
         {
-            long r = 0;
-            for (int i = 0; i < 6; i++)
+            if (avid < MIN_AID)
             {
-                r += tr[x[s[i]]] * (long)Math.Pow(58, i);
+                throw new Exception($"Av {avid} is smaller than {MIN_AID}");
             }
-            return (r - add) ^ xor;
+            if (avid >= MAX_AID)
+            {
+                throw new Exception($"Av {avid} is bigger than {MAX_AID}");
+            }
+
+            var bvid = new byte[BV_LEN];
+            long tmp = (MAX_AID | avid) ^ XOR_CODE;
+
+            for (byte i = BV_LEN - 1; i >= 0; i--)
+            {
+                bvid[i] = ALPHABET[tmp % BASE];
+                tmp /= BASE;
+            }
+
+            (bvid[0], bvid[6]) = (bvid[6], bvid[0]);
+            (bvid[1], bvid[4]) = (bvid[4], bvid[1]);
+
+            return "BV1" + Encoding.ASCII.GetString(bvid);
         }
 
-        public static string Encode(long x)
+        public static long Decode(string bvid_str)
         {
-            x = (x ^ xor) + add;
-            char[] r = "1  4 1 7  ".ToCharArray();
-            for (int i = 0; i < 6; i++)
+            if (bvid_str.Length != BV_LEN)
             {
-                r[s[i]] = table[(int)(x / (long)Math.Pow(58, i) % 58)];
+                throw new Exception($"Bv BV1{bvid_str} must to be 12 char");
             }
-            return "BV" + new string(r);
-        }
 
-        private static byte[] s = { 9, 8, 1, 6, 2, 4 };
-        private static long xor = 177451812;
-        private static long add = 8728348608;
+            byte[] bvid = Encoding.ASCII.GetBytes(bvid_str);
+            (bvid[0], bvid[6]) = (bvid[6], bvid[0]);
+            (bvid[1], bvid[4]) = (bvid[4], bvid[1]);
+
+            long avid = 0;
+            foreach (byte b in bvid)
+            {
+                avid = avid * BASE + REV_ALPHABETA[b];
+            }
+
+            return (avid & MASK_CODE) ^ XOR_CODE;
+        }
     }
 }
