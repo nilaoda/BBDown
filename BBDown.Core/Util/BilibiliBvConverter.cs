@@ -41,7 +41,7 @@ namespace BBDown.Core.Util
             var bvid = new byte[BV_LEN];
             long tmp = (MAX_AID | avid) ^ XOR_CODE;
 
-            for (byte i = BV_LEN - 1; i >= 0; i--)
+            for (byte i = BV_LEN - 1; tmp != 0; i--)
             {
                 bvid[i] = ALPHABET[tmp % BASE];
                 tmp /= BASE;
