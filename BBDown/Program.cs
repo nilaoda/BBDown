@@ -41,7 +41,15 @@ namespace BBDown
 
         private static string FormatTimeStamp(long ts, string format)
         {
-            return ts == 0 ? "null" : DateTimeOffset.FromUnixTimeSeconds(ts).ToLocalTime().ToString(format);
+            try
+            {
+                return ts == 0 ? "null" : DateTimeOffset.FromUnixTimeSeconds(ts).ToLocalTime().ToString(format);
+            }
+            catch (Exception ex)
+            {
+                LogError($"格式化日期出错: {ex.Message}");
+                return ts.ToString();
+            }
         }
 
         [JsonSerializable(typeof(MyOption))]
@@ -760,6 +768,20 @@ namespace BBDown
             foreach (Match m in regex.Matches(result).Cast<Match>())
             {
                 var key = m.Groups[1].Value;
+
+                //解析自定义日期格式
+                var defaultDateFormat = "yyyy-MM-dd_HH-mm-ss";
+                string[] prefixes = { "publishDate:", "videoDate:" };
+                foreach (var prefix in prefixes)
+                {
+                    if (key.StartsWith(prefix))
+                    {
+                        defaultDateFormat = key.Substring(key.IndexOf(':') + 1);
+                        key = prefix.Replace(":", "");
+                        break;
+                    }
+                }
+
                 var v = key switch
                 {
                     "videoTitle" => GetValidFileName(title, filterSlash: true).Trim().TrimEnd('.').Trim(),
@@ -778,8 +800,8 @@ namespace BBDown
                     "videoBandwidth" => videoTrack == null ? "" : videoTrack.bandwith.ToString(),
                     "audioCodecs" => audioTrack == null ? "" : audioTrack.codecs,
                     "audioBandwidth" => audioTrack == null ? "" : audioTrack.bandwith.ToString(),
-                    "publishDate" => FormatTimeStamp(pubTime, "yyyy-MM-dd_HH-mm-ss"),
-                    "videoDate" => FormatTimeStamp(p.pubTime, "yyyy-MM-dd_HH-mm-ss"),
+                    "publishDate" => FormatTimeStamp(pubTime, defaultDateFormat),
+                    "videoDate" => FormatTimeStamp(p.pubTime, defaultDateFormat),
                     "apiType" => apiType,
                     _ => $"<{key}>"
                 };
@@ -789,7 +811,7 @@ namespace BBDown
             return result;
         }
 
-        [GeneratedRegex("<(\\w+?)>")]
+        [GeneratedRegex("<([\\w:]+?)>")]
         private static partial Regex InfoRegex();
     }
 }
