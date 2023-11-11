@@ -366,7 +366,7 @@ namespace BBDown
                                         if (!Directory.Exists(_outSubPath.Split('/').First()))
                                             Directory.CreateDirectory(_outSubPath.Split('/').First());
                                     }
-                                    _outSubPath = _outSubPath[.._outSubPath.LastIndexOf('.')] + $".{s.lan}.srt";
+                                    _outSubPath = Path.ChangeExtension(_outSubPath, $".{s.lan}.srt");
                                     File.Move(s.path, _outSubPath, true);
                                 }
                             }
@@ -478,8 +478,8 @@ namespace BBDown
 
                         if (downloadDanmaku)
                         {
-                            var danmakuXmlPath = savePath[..savePath.LastIndexOf('.')] + ".xml";
-                            var danmakuAssPath = savePath[..savePath.LastIndexOf('.')] + ".ass";
+                            var danmakuXmlPath = Path.ChangeExtension(savePath, ".xml");
+                            var danmakuAssPath = Path.ChangeExtension(savePath, ".ass");
                             Log("正在下载弹幕Xml文件");
                             string danmakuUrl = $"https://comment.bilibili.com/{p.cid}.xml";
                             await DownloadFile(danmakuUrl, danmakuXmlPath, downloadConfig);
@@ -507,7 +507,7 @@ namespace BBDown
                         if (myOption.CoverOnly)
                         {
                             var coverUrl = pic == "" ? p.cover! : pic;
-                            var newCoverPath = savePath[..savePath.LastIndexOf('.')] + Path.GetExtension(coverUrl);
+                            var newCoverPath = Path.ChangeExtension(savePath, Path.GetExtension(coverUrl));
                             await DownloadFile(coverUrl, newCoverPath, downloadConfig);
                             if (Directory.Exists(p.aid) && Directory.GetFiles(p.aid).Length == 0) Directory.Delete(p.aid, true);
                             continue;
