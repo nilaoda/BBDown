@@ -517,7 +517,7 @@ namespace BBDown
                         PrintSelectedTrackInfo(selectedVideo, selectedAudio, p.dur);
 
                         //用户开启了强制替换
-                        if (myOption.ForceReplaceHost)
+                        if (myOption.ForceReplaceHost && string.IsNullOrEmpty(myOption.UposHost))
                         {
                             myOption.UposHost = BACKUP_HOST;
                         }
