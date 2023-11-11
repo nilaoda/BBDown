@@ -109,7 +109,7 @@ public class BBDownApiServer
             task.Title = vInfo.Title;
             task.Pic = vInfo.Pic;
             task.VideoPubTime = vInfo.PubTime;
-            await Program.DownloadPageAsync(option, vInfo, encodingPriority, dfnPriority, firstEncoding, downloadDanmaku,
+            await Program.DownloadPagesAsync(option, vInfo, encodingPriority, dfnPriority, firstEncoding, downloadDanmaku,
                         input, savePathFormat, lang, fetchedAid, delay, apiType, task);
             task.IsSuccessful = true;
         }

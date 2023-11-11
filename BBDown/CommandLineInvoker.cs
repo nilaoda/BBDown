@@ -52,6 +52,7 @@ namespace BBDown
         private readonly static Option<string> Aria2cPath = new(new string[] { "--aria2c-path" }, "设置aria2c的路径");
         private readonly static Option<string> UposHost = new(new string[] { "--upos-host" }, "自定义upos服务器");
         private readonly static Option<bool> ForceReplaceHost = new(new string[] { "--force-replace-host" }, "强制替换下载服务器host(默认开启)");
+        private readonly static Option<bool> SaveArchivesToFile = new(new string[] { "--save-archives-to-file" }, "将下载过的视频记录到本地文件中, 用于后续跳过下载同个视频");
         private readonly static Option<string> DelayPerPage = new(new string[] { "--delay-per-page" }, "设置下载合集分P之间的下载间隔时间(单位: 秒, 默认无间隔)");
         private readonly static Option<string> FilePattern = new(new string[] { "--file-pattern", "-F" }, 
             $"使用内置变量自定义单P存储文件名:\r\n\r\n" + 
@@ -140,6 +141,7 @@ namespace BBDown
                 if (bindingContext.ParseResult.HasOption(Aria2cPath)) option.Aria2cPath = bindingContext.ParseResult.GetValueForOption(Aria2cPath)!;
                 if (bindingContext.ParseResult.HasOption(UposHost)) option.UposHost = bindingContext.ParseResult.GetValueForOption(UposHost)!;
                 if (bindingContext.ParseResult.HasOption(ForceReplaceHost)) option.ForceReplaceHost = bindingContext.ParseResult.GetValueForOption(ForceReplaceHost)!;
+                if (bindingContext.ParseResult.HasOption(SaveArchivesToFile)) option.SaveArchivesToFile = bindingContext.ParseResult.GetValueForOption(SaveArchivesToFile)!;
                 if (bindingContext.ParseResult.HasOption(DelayPerPage)) option.DelayPerPage = bindingContext.ParseResult.GetValueForOption(DelayPerPage)!;
                 if (bindingContext.ParseResult.HasOption(Host)) option.Host = bindingContext.ParseResult.GetValueForOption(Host)!;
                 if (bindingContext.ParseResult.HasOption(EpHost)) option.EpHost = bindingContext.ParseResult.GetValueForOption(EpHost)!;
@@ -202,6 +204,7 @@ namespace BBDown
                 Aria2cPath,
                 UposHost,
                 ForceReplaceHost,
+                SaveArchivesToFile,
                 DelayPerPage,
                 Host,
                 EpHost,

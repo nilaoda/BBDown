@@ -244,6 +244,29 @@ namespace BBDown
             }
         }
 
+        private static object fileLock = new object();
+        public static void SaveAidToFile(string aid)
+        {
+            lock (fileLock)
+            {
+                string filePath = Path.Combine(APP_DIR, "BBDown.archives");
+                LogDebug("文件路径：{0}", filePath);
+                File.AppendAllText(filePath, $"{aid}|");
+            }
+        }
+
+        public static bool CheckAidFromFile(string aid)
+        {
+            lock (fileLock)
+            {
+                string filePath = Path.Combine(APP_DIR, "BBDown.archives");
+                if (!File.Exists(filePath)) return false;
+                LogDebug("文件路径：{0}", filePath);
+                var text = File.ReadAllText(filePath);
+                return text.Split('|').Any(item => item == aid);
+            }
+        }
+
         /// <summary>
         /// 获取选中的分P列表
         /// </summary>
