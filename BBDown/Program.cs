@@ -259,6 +259,11 @@ namespace BBDown
             long pubTime = vInfo.PubTime;
             LogColor("视频标题: " + title);
             Log("发布时间: " + FormatTimeStamp(pubTime, "yyyy-MM-dd HH:mm:ss zzz"));
+            var mid = vInfo.PagesInfo.First(p => !string.IsNullOrEmpty(p.ownerMid))?.ownerMid;
+            if (!string.IsNullOrEmpty(mid))
+            {
+                Log($"UP主页: https://space.bilibili.com/{mid}");
+            }
             string apiType = myOption.UseTvApi ? "TV" : (myOption.UseAppApi ? "APP" : (myOption.UseIntlApi ? "INTL" : "WEB"));
 
             //打印分P信息
