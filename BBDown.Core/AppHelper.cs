@@ -58,16 +58,18 @@ namespace BBDown.Core
 
             var headers = GetHeader(appkey);
             LogDebug("App-Req-Headers: {0}", JsonSerializer.Serialize(headers, JsonContext.Default.DictionaryStringString));
-            byte[] body, data;
+            byte[] data;
             // 只有pgc接口才有配音和片头尾信息
             if (bangumi)
             {
-                body = GetPayload(Convert.ToInt64(epId), Convert.ToInt64(cid), Convert.ToInt64(qn), GetVideoCodeType(encoding));
+                if (!(string.IsNullOrEmpty(encoding) || encoding == "HEVC"))
+                    LogWarn("APP的番剧不支持 HEVC 以外的编码");
+                var body = GetPayload(Convert.ToInt64(epId), Convert.ToInt64(cid), Convert.ToInt64(qn), PlayViewReq.Types.CodeType.Code265);
                 data = await GetPostResponseAsync(API2, body, headers);
             }
             else
             {
-                body = GetPayload(Convert.ToInt64(aid), Convert.ToInt64(cid), Convert.ToInt64(qn), GetVideoCodeType(encoding));
+                var body = GetPayload(Convert.ToInt64(aid), Convert.ToInt64(cid), Convert.ToInt64(qn), GetVideoCodeType(encoding));
                 data = await GetPostResponseAsync(API, body, headers);
             }
             var resp = new MessageParser<PlayViewReply>(() => new PlayViewReply()).ParseFrom(ReadMessage(data));
