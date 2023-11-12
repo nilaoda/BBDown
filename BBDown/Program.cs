@@ -255,7 +255,10 @@ namespace BBDown
             string title = vInfo.Title;
             long pubTime = vInfo.PubTime;
             LogColor("视频标题: " + title);
-            Log("发布时间: " + FormatTimeStamp(pubTime, "yyyy-MM-dd HH:mm:ss zzz"));
+            if (pubTime != 0)
+            {
+                Log("发布时间: " + FormatTimeStamp(pubTime, "yyyy-MM-dd HH:mm:ss zzz"));
+            }
             var mid = vInfo.PagesInfo.FirstOrDefault(p => !string.IsNullOrEmpty(p.ownerMid))?.ownerMid;
             if (!string.IsNullOrEmpty(mid))
             {
