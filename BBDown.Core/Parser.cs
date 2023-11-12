@@ -84,7 +84,7 @@ namespace BBDown.Core
 
         private static async Task<string> GetPlayJsonAsync(string aid, string cid, string epId, string qn, string code = "0")
         {
-            bool isBiliPlus = Config.HOST == "api.bilibili.com";
+            bool isBiliPlus = Config.HOST != "api.bilibili.com";
             string api = $"https://{(isBiliPlus ? Config.HOST : "api.biliintl.com")}/intl/gateway/v2/ogv/playurl?";
 
             StringBuilder paramBuilder = new();
