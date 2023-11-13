@@ -13,10 +13,10 @@ jobs:
     
     steps:
       
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v1
 
       - name: Set up dotnet
-        uses: actions/setup-dotnet@v1
+        uses: actions/setup-dotnet@v3
         with:
           dotnet-version: ${{ env.DOTNET_SDK_VERSION }}
           include-prerelease: true
@@ -25,13 +25,13 @@ jobs:
       - run: dotnet publish BBDown -r win-arm64 -c Release -o artifact-arm64
 
       - name: Upload Artifact[win-x64]
-        uses: actions/upload-artifact@v1.0.0
+        uses: actions/upload-artifact@v3.1.3
         with:
           name: BBDown_win-x64
           path: artifact-x64\BBDown.exe
 
       - name: Upload Artifact[win-arm64]
-        uses: actions/upload-artifact@v1.0.0
+        uses: actions/upload-artifact@v3.1.3
         with:
           name: BBDown_win-arm64
           path: artifact-arm64\BBDown.exe
@@ -46,9 +46,9 @@ jobs:
       
       - run: apt-get update
       - run: apt-get install -y curl wget
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v1
       - name: Set up dotnet
-        uses: actions/setup-dotnet@v1
+        uses: actions/setup-dotnet@v3
         with:
           dotnet-version: ${{ env.DOTNET_SDK_VERSION }}
           include-prerelease: true
@@ -56,7 +56,7 @@ jobs:
       - run: dotnet publish BBDown -r linux-x64 -c Release -o artifact
       
       - name: Upload Artifact[linux-x64]
-        uses: actions/upload-artifact@v1.0.0
+        uses: actions/upload-artifact@v3.1.3
         with:
           name: BBDown_linux-x64
           path: artifact/BBDown
@@ -68,16 +68,16 @@ jobs:
     
     steps:
       
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v1
       - name: Set up dotnet
-        uses: actions/setup-dotnet@v1
+        uses: actions/setup-dotnet@v3
         with:
           dotnet-version: ${{ env.DOTNET_SDK_VERSION }}
           include-prerelease: true
       - run: dotnet publish BBDown -r linux-arm64 -c Release -p:StripSymbols=true -p:CppCompilerAndLinker=clang-9 -p:SysRoot=/crossrootfs/arm64 -o artifact
       
       - name: Upload Artifact[linux-arm64]
-        uses: actions/upload-artifact@v1.0.0
+        uses: actions/upload-artifact@v3.1.3
         with:
           name: BBDown_linux-arm64
           path: artifact/BBDown
@@ -88,10 +88,10 @@ jobs:
     
     steps:
       
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v1
       
       - name: Set up dotnet
-        uses: actions/setup-dotnet@v1
+        uses: actions/setup-dotnet@v3
         with:
           dotnet-version: ${{ env.DOTNET_SDK_VERSION }}
           include-prerelease: true
@@ -100,13 +100,13 @@ jobs:
 
       
       - name: Upload Artifact[osx-x64]
-        uses: actions/upload-artifact@v1.0.0
+        uses: actions/upload-artifact@v3.1.3
         with:
           name: BBDown_osx-x64
           path: artifact-x64/BBDown
           
       - name: Upload Artifact[osx-arm64]
-        uses: actions/upload-artifact@v1.0.0
+        uses: actions/upload-artifact@v3.1.3
         with:
           name: BBDown_osx-arm64
           path: artifact-arm64/BBDown
