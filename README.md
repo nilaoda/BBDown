@@ -9,6 +9,17 @@
 * 普通视频：[ffmpeg](https://www.gyan.dev/ffmpeg/builds/) ，或 [mp4box](https://gpac.wp.imt.fr/downloads/)
 * 杜比视界：ffmpeg5.0以上或新版mp4box.
 
+---
+* ffmpeg 5.0 在Ubuntu上的安装流程
+```
+sudo add-apt-repository ppa:savoury1/ffmpeg5 
+sudo add-apt-repository ppa:savoury1/ffmpeg4 
+sudo apt update 
+sudo apt-get install aptitude -y
+sudo aptitude install ffmpeg -y
+```
+---
+
 # 快速开始
 本软件已经以 [Dotnet Tool](https://www.nuget.org/packages/BBDown/) 形式发布  
 
