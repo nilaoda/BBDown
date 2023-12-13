@@ -29,7 +29,7 @@ namespace BBDown.Core
 
             if (appApi) return await AppHelper.DoReqAsync(aid, cid, epId, qn, bangumi, encoding, Config.TOKEN);
 
-            string prefix = tvApi ? bangumi ? "api.snm0516.aisee.tv/pgc/player/api/playurltv" : "api.snm0516.aisee.tv/x/tv/ugc/playurl"
+            string prefix = tvApi ? bangumi ? "api.snm0516.aisee.tv/pgc/player/api/playurltv" : "api.snm0516.aisee.tv/x/tv/playurl"
                         : bangumi ? $"{Config.HOST}/pgc/player/web/playurl" : "api.bilibili.com/x/player/wbi/playurl";
             prefix = $"https://{prefix}?";
 
@@ -45,17 +45,21 @@ namespace BBDown.Core
                     $"&qn={qn}&ts={GetTimeStamp(true)}";
                 api = prefix + api + $"&sign={GetSign(api, false)}";
             }
+            if (tvApi)
+            {
+                api = (Config.TOKEN != "" ? $"access_key={Config.TOKEN}&" : "") +
+                    $"object_id={aid}&appkey=4409e2ce8ffd12b8&build=106500" +
+                    $"&cid={cid}&device=android&fnval=4048&fnver=0&fourk=1" +
+                    $"&mid=0&mobi_app=android_tv_yst" +
+                    $"&playurl_type=1&platform=android&qn={qn}";
+                api = prefix + api;
+            }
             else
             {
                 // 尝试提高可读性
                 StringBuilder apiBuilder = new();
                 apiBuilder.Append($"avid={aid}&cid={cid}&fnval=4048&fnver=0&fourk=1");
                 if (Config.AREA != "") apiBuilder.Append($"&access_key={Config.TOKEN}&area={Config.AREA}");
-                if (tvApi)
-                {
-                    apiBuilder.Append("&device=android&platform=android&mobi_app=android_tv_yst&npcybs=0&force_host=2&build=102801");
-                    if(Config.TOKEN != "") apiBuilder.Append($"&access_key={Config.TOKEN}");
-                }
                 apiBuilder.Append($"&otype=json&qn={qn}");
                 if (bangumi) apiBuilder.Append($"&module=bangumi&ep_id={epId}&session=");
                 else if (!tvApi)
