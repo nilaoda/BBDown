@@ -197,7 +197,7 @@ namespace BBDown
                         string value = GetValueForReplacement(key, myOption.FfmpegMetadata);
                         if (!string.IsNullOrEmpty(value))
                         {
-                            argsBuilder.Replace($"{key}={match.Groups[2].Value}", $"{key}={value} ");
+                            argsBuilder.Replace($"{key}={match.Groups[2].Value}", $"{key}=\"{value}\" ");
                         }
                     }
                 }
