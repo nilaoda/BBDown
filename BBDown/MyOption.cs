@@ -52,6 +52,7 @@ namespace BBDown
         public string Mp4boxPath { get; set; } = "";
         public string Aria2cPath { get; set; } = "";
         public string UposHost { get; set; } = "";
+        public string FfmpegMetadata { get; set; } = "";
         public string DelayPerPage { get; set; } = "0";
         public string Host { get; set; } = "api.bilibili.com";
         public string EpHost { get; set; } = "api.bilibili.com";

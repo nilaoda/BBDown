@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using static BBDown.Core.Entity.Entity;
 using static BBDown.BBDownUtil;
 using static BBDown.Core.Util.SubUtil;
@@ -95,7 +96,7 @@ namespace BBDown
             return RunExe(MP4BOX, arguments, MP4BOX != "mp4box");
         }
 
-        public static int MuxAV(bool useMp4box, string videoPath, string audioPath, List<AudioMaterial> audioMaterial, string outPath, string desc = "", string title = "", string author = "", string episodeId = "", string pic = "", string lang = "", List<Subtitle>? subs = null, bool audioOnly = false, bool videoOnly = false, List<ViewPoint>? points = null, long pubTime = 0, bool simplyMux = false)
+        public static int MuxAV(bool useMp4box, string videoPath, string audioPath, List<AudioMaterial> audioMaterial, string outPath, string desc = "", string title = "", string author = "", string episodeId = "", string pic = "", string lang = "", List<Subtitle>? subs = null, bool audioOnly = false, bool videoOnly = false, List<ViewPoint>? points = null, long pubTime = 0, bool simplyMux = false, MyOption myOption = null)
         {
             if (audioOnly && audioPath != "")
                 videoPath = "";
@@ -185,6 +186,22 @@ namespace BBDown
                 if (episodeId != "") argsBuilder.Append($"-metadata album=\"{title}\" ");
                 if (pubTime != 0) argsBuilder.Append($"-metadata creation_time=\"{(DateTimeOffset.FromUnixTimeSeconds(pubTime).ToString("yyyy-MM-ddTHH:mm:ss.ffffffZ"))}\" ");
             }
+            if (myOption.FfmpegMetadata != "") {
+                Regex regex = new Regex(@"-metadata (\w+)=(.*?)(?=-metadata|$)", RegexOptions.Singleline);
+                MatchCollection matches = regex.Matches(argsBuilder.ToString());
+                foreach (Match match in matches)
+                {
+                    if (match.Success)
+                    {
+                        string key = match.Groups[1].Value;
+                        string value = GetValueForReplacement(key, myOption.FfmpegMetadata);
+                        if (!string.IsNullOrEmpty(value))
+                        {
+                            argsBuilder.Replace($"{key}={match.Groups[2].Value}", $"{key}={value} ");
+                        }
+                    }
+                }
+            }
             argsBuilder.Append("-c copy ");
             if (audioOnly && audioPath == "") argsBuilder.Append("-vn ");
             if (subs != null) argsBuilder.Append("-c:s mov_text ");
@@ -215,6 +232,21 @@ namespace BBDown
                 var f = GetFiles(Path.GetDirectoryName(files[0])!, ".ts");
                 CombineMultipleFilesIntoSingleFile(f, outPath);
                 foreach (var s in f) File.Delete(s);
+            }
+        }
+
+        private static string GetValueForReplacement(string key, string input)
+        {
+            Regex regex = new Regex($"{key}=([^,]+)");
+            Match match = regex.Match(input);
+
+            if (match.Success)
+            {
+                return match.Groups[1].Value;
+            }
+            else
+            {
+                return string.Empty;
             }
         }
     }

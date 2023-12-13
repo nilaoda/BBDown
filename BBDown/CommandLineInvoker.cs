@@ -53,6 +53,7 @@ namespace BBDown
         private readonly static Option<string> UposHost = new(new string[] { "--upos-host" }, "自定义upos服务器");
         private readonly static Option<bool> ForceReplaceHost = new(new string[] { "--force-replace-host" }, "强制替换下载服务器host(默认开启)");
         private readonly static Option<bool> SaveArchivesToFile = new(new string[] { "--save-archives-to-file" }, "将下载过的视频记录到本地文件中, 用于后续跳过下载同个视频");
+        private readonly static Option<string> FfmpegMetadata = new(new string[] { "--ffmpeg-metadata","-fdata" }, "自定义ffmepg当中的metadata数据: (-fdata title=标题,album=专辑,description=简介)");
         private readonly static Option<string> DelayPerPage = new(new string[] { "--delay-per-page" }, "设置下载合集分P之间的下载间隔时间(单位: 秒, 默认无间隔)");
         private readonly static Option<string> FilePattern = new(new string[] { "--file-pattern", "-F" }, 
             $"使用内置变量自定义单P存储文件名:\r\n\r\n" + 
@@ -154,6 +155,7 @@ namespace BBDown
                 if (bindingContext.ParseResult.HasOption(AddDfnSubfix)) option.AddDfnSubfix = bindingContext.ParseResult.GetValueForOption(AddDfnSubfix)!;
                 if (bindingContext.ParseResult.HasOption(NoPaddingPageNum)) option.NoPaddingPageNum = bindingContext.ParseResult.GetValueForOption(NoPaddingPageNum)!;
                 if (bindingContext.ParseResult.HasOption(BandwithAscending)) option.BandwithAscending = bindingContext.ParseResult.GetValueForOption(BandwithAscending)!;
+                if (bindingContext.ParseResult.HasOption(FfmpegMetadata)) option.FfmpegMetadata = bindingContext.ParseResult.GetValueForOption(FfmpegMetadata)!;
                 return option;
             }
         }
@@ -216,7 +218,8 @@ namespace BBDown
                 OnlyAv1,
                 AddDfnSubfix,
                 NoPaddingPageNum,
-                BandwithAscending
+                BandwithAscending,
+                FfmpegMetadata
             };
 
             rootCommand.SetHandler(async (myOption) => await action(myOption), new MyOptionBinder());
