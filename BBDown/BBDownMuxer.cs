@@ -189,16 +189,29 @@ namespace BBDown
             if (myOption.FfmpegMetadata != "") {
                 Regex regex = new Regex(@"-metadata (\w+)=(.*?)(?=-metadata|$)", RegexOptions.Singleline);
                 MatchCollection matches = regex.Matches(argsBuilder.ToString());
+                string metadata = myOption.FfmpegMetadata;
                 foreach (Match match in matches)
                 {
                     if (match.Success)
                     {
                         string key = match.Groups[1].Value;
-                        string value = GetValueForReplacement(key, myOption.FfmpegMetadata);
+                        string value = GetValueForReplacement(key, metadata);
                         if (!string.IsNullOrEmpty(value))
                         {
                             argsBuilder.Replace($"{key}={match.Groups[2].Value}", $"{key}=\"{value}\" ");
+                            metadata = metadata.Replace($"{key}={value}","");
                         }
+                    }
+                }
+                string[] keyValuePairs = metadata.Split(',');
+                foreach (var keyValuePair in keyValuePairs)
+                {
+                    string[] parts = keyValuePair.Split('=');
+                    if (parts.Length == 2)
+                    {
+                        string key = parts[0];
+                        string value = parts[1];
+                        argsBuilder.Append($"-metadata {key}=\"{value}\" ");
                     }
                 }
             }
