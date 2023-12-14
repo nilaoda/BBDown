@@ -626,7 +626,8 @@ namespace BBDown
                         (pagesCount > 1 || (bangumi && !vInfo.IsBangumiEnd)) ? p.title : "",
                         File.Exists(coverPath) ? coverPath : "",
                         lang,
-                        subtitleInfo, myOption.AudioOnly, myOption.VideoOnly, p.points, p.pubTime, myOption.SimplyMux);
+                        subtitleInfo, myOption.AudioOnly, myOption.VideoOnly, p.points, 
+                        p.pubTime, myOption.SimplyMux, myOption, p, pagesCount);
                     if (code != 0 || !File.Exists(savePath) || new FileInfo(savePath).Length == 0)
                     {
                         LogError("合并失败"); return;
@@ -715,7 +716,8 @@ namespace BBDown
                         (pagesCount > 1 || (bangumi && !vInfo.IsBangumiEnd)) ? p.title : "",
                         File.Exists(coverPath) ? coverPath : "",
                         lang,
-                        subtitleInfo, myOption.AudioOnly, myOption.VideoOnly, p.points, p.pubTime, myOption.SimplyMux);
+                        subtitleInfo, myOption.AudioOnly, myOption.VideoOnly, p.points, p.pubTime, 
+                        myOption.SimplyMux, myOption, p, pagesCount);
                     if (code != 0 || !File.Exists(savePath) || new FileInfo(savePath).Length == 0)
                     {
                         LogError("合并失败"); return;
@@ -843,6 +845,6 @@ namespace BBDown
         }
 
         [GeneratedRegex("<([\\w:]+?)>")]
-        private static partial Regex InfoRegex();
+        public static partial Regex InfoRegex();
     }
 }
