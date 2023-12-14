@@ -96,7 +96,10 @@ namespace BBDown
             return RunExe(MP4BOX, arguments, MP4BOX != "mp4box");
         }
 
-        public static int MuxAV(bool useMp4box, string videoPath, string audioPath, List<AudioMaterial> audioMaterial, string outPath, string desc = "", string title = "", string author = "", string episodeId = "", string pic = "", string lang = "", List<Subtitle>? subs = null, bool audioOnly = false, bool videoOnly = false, List<ViewPoint>? points = null, long pubTime = 0, bool simplyMux = false, MyOption myOption = null)
+        public static int MuxAV(bool useMp4box, string videoPath, string audioPath, List<AudioMaterial> audioMaterial, string outPath, 
+            string desc = "", string title = "", string author = "", string episodeId = "", string pic = "", string lang = "", List<Subtitle>? subs = null, 
+            bool audioOnly = false, bool videoOnly = false, List<ViewPoint>? points = null, 
+            long pubTime = 0, bool simplyMux = false, MyOption myOption = null,Page p = null,int pagesCount = 0)
         {
             if (audioOnly && audioPath != "")
                 videoPath = "";
@@ -195,7 +198,7 @@ namespace BBDown
                     if (match.Success)
                     {
                         string key = match.Groups[1].Value;
-                        string value = GetValueForReplacement(key, metadata);
+                        string value = FormatValue(GetValueForReplacement(key, metadata),title,p,pagesCount);
                         if (!string.IsNullOrEmpty(value))
                         {
                             argsBuilder.Replace($"{key}={match.Groups[2].Value}", $"{key}=\"{value}\" ");
@@ -207,10 +210,10 @@ namespace BBDown
                 foreach (var keyValuePair in keyValuePairs)
                 {
                     string[] parts = keyValuePair.Split('=');
-                    if (parts.Length == 2)
+                    if (parts.Length == 2) 
                     {
                         string key = parts[0];
-                        string value = parts[1];
+                        string value = FormatValue(parts[1], title, p, pagesCount);
                         argsBuilder.Append($"-metadata {key}=\"{value}\" ");
                     }
                 }
@@ -261,6 +264,29 @@ namespace BBDown
             {
                 return string.Empty;
             }
+        }
+
+        private static string FormatValue(string value,string title,Page p,int pagesCount) {
+            var regex = Program.InfoRegex();
+            foreach (Match m in regex.Matches(value).Cast<Match>()) 
+            {
+                var key = m.Groups[1].Value;
+                var v = key switch 
+                {
+                    "videoTitle" => BBDownUtil.GetValidFileName(title, filterSlash: true).Trim().TrimEnd('.').Trim(),
+                    "pageNumber" => p.index.ToString(),
+                    "pageNumberWithZero" => p.index.ToString().PadLeft(pagesCount.ToString().Length, '0'),
+                    "pageTitle" => BBDownUtil.GetValidFileName(p.title, filterSlash: true).Trim().TrimEnd('.').Trim(),
+                    "bvid" => p.bvid,
+                    "aid" => p.aid,
+                    "cid" => p.cid,
+                    "ownerName" => p.ownerName == null ? "" : BBDownUtil.GetValidFileName(p.ownerName, filterSlash: true).Trim().TrimEnd('.').Trim(),
+                    "ownerMid" => p.ownerMid ?? "",
+                    _ => $"<{key}>"
+                };
+                value = value.Replace(m.Value, v);
+            }
+            return value;
         }
     }
 }
