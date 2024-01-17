@@ -1,4 +1,6 @@
-﻿using System.Text;
+﻿using BBDown.Core.Protobuf;
+using Google.Protobuf;
+using System.Text;
 using static BBDown.Core.Entity.Entity;
 using static BBDown.Core.Util.HTTPUtil;
 using System.Text.RegularExpressions;
@@ -356,6 +358,18 @@ namespace BBDown.Core.Util
             }
         }
 
+        private static byte[] GetPayload(long aid, long cid)
+        {
+            var obj = new DmViewReq
+            {
+                Pid = aid,
+                Oid = cid,
+                Type = 1,
+                Spmid = "main.ugc-video-detail.0.0",
+            };
+            return AppHelper.PackMessage(obj.ToByteArray());
+        }
+
         private static async Task<List<Subtitle>?> GetSubtitlesFromApi3Async(string aid, string cid, string epId, int index)
         {
             try
@@ -363,41 +377,20 @@ namespace BBDown.Core.Util
                 List<Subtitle> subtitles = new();
                 //grpc调用接口 protobuf
                 string api = "https://app.biliapi.net/bilibili.community.service.dm.v1.DM/DmView";
-                int _aid = Convert.ToInt32(aid);
-                int _cid = Convert.ToInt32(cid);
-                int _type = 1;
-                byte[] data = new byte[18];
-                data[0] = 0x0; data[1] = 0x0; data[2] = 0x0; data[3] = 0x0; data[4] = 0xD; //先固定死了
-                int i = 5;
-                data[i++] = Convert.ToByte((1 << 3) | 0); // index=1
-                while ((_aid & -128) != 0)
-                {
-                    data[i++] = Convert.ToByte((_aid & 127) | 128);
-                    _aid >>= 7;
-                }
-                data[i++] = Convert.ToByte(_aid);
-                data[i++] = Convert.ToByte((2 << 3) | 0); // index=2
-                while ((_cid & -128) != 0)
-                {
-                    data[i++] = Convert.ToByte((_cid & 127) | 128);
-                    _cid >>= 7;
-                }
-                data[i++] = Convert.ToByte(_cid);
-                data[i++] = Convert.ToByte((3 << 3) | 0); // index=3
-                data[i++] = Convert.ToByte(_type);
-                string t = await GetPostResponseAsync(api, data);
-                Regex reg = CnJsonRegex();
-                foreach (Match m in reg.Matches(t).Cast<Match>())
-                {
-                    Subtitle subtitle = new()
-                    {
-                        url = m.Groups[2].Value,
-                        lan = m.Groups[1].Value,
-                        path = $"{aid}/{aid}.{cid}.{m.Groups[1].Value}.srt"
-                    };
-                    subtitles.Add(subtitle);
-                }
 
+                var data = GetPayload(Convert.ToInt64(aid), Convert.ToInt64(cid));
+
+                var t = AppHelper.ReadMessage(await GetPostResponseAsync(api, data));
+                var resp = new MessageParser<DmViewReply>(() => new DmViewReply()).ParseFrom(t);
+
+                if (resp.Subtitle != null && resp.Subtitle.Subtitles != null)
+                {
+                    subtitles.AddRange(resp.Subtitle.Subtitles.Select(item => new Subtitle() {
+                        url = item.SubtitleUrl,
+                        lan = item.Lan,
+                        path = $"{aid}/{aid}.{cid}.{item.Lan}.srt"
+                    }));
+                }
                 //有空的URL 不合法
                 if (subtitles.Any(s => string.IsNullOrEmpty(s.url)))
                     throw new Exception("Bad url");
@@ -421,9 +414,17 @@ namespace BBDown.Core.Util
             }
             else
             {
-                subtitles = await GetSubtitlesFromApi2Async(aid, cid, epId, index)
-                    ?? await GetSubtitlesFromApi1Async(aid, cid, epId, index)
-                    ?? await GetSubtitlesFromApi3Async(aid, cid, epId, index);
+                if (Config.COOKIE == "")
+                {
+                    subtitles = await GetSubtitlesFromApi3Async(aid, cid, epId, index); // 未登录只有APP可以拿到字幕了
+                }
+                else
+                {
+                    subtitles = await GetSubtitlesFromApi2Async(aid, cid, epId, index)
+                        ?? await GetSubtitlesFromApi1Async(aid, cid, epId, index)
+                        ?? await GetSubtitlesFromApi3Async(aid, cid, epId, index);
+                }
+
             }
 
             if (subtitles == null)
@@ -480,7 +481,5 @@ namespace BBDown.Core.Util
 
         [GeneratedRegex("-[a-z]")]
         private static partial Regex NonCapsRegex();
-        [GeneratedRegex("(zh-Han[st]).*?(http.*?\\.json)")]
-        private static partial Regex CnJsonRegex();
     }
 }

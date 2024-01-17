@@ -26,7 +26,7 @@ message VideoMask {
 message VideoSubtitle {
     optional string lan = 1;
     optional string lanDoc = 2;
-    optional SubtitleItem subtitles = 3;
+    repeated SubtitleItem subtitles = 3;
 
 }
 
