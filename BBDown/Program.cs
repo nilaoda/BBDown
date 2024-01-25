@@ -842,7 +842,7 @@ namespace BBDown
             return result;
         }
 
-        [GeneratedRegex("<([\\w:]+?)>")]
+        [GeneratedRegex("<([\\w:\\-.]+?)>")]
         private static partial Regex InfoRegex();
     }
 }
