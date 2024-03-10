@@ -28,8 +28,8 @@ namespace BBDown
             {
                 var ver = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version!;
                 string nowVer = $"{ver.Major}.{ver.Minor}.{ver.Build}";
-                string redirctUrl = await GetWebLocationAsync("https://github.com/nilaoda/BBDown/releases/latest");
-                string latestVer = redirctUrl.Replace("https://github.com/nilaoda/BBDown/releases/tag/", "");
+                string redirctUrl = await GetWebLocationAsync("https://github.com/kemi-20/BBDown/releases/latest");
+                string latestVer = redirctUrl.Replace("https://github.com/kemi-20/BBDown/releases/tag/", "");
                 if (nowVer != latestVer && !latestVer.StartsWith("https"))
                 {
                     Console.Title = $"发现新版本：{latestVer}";
