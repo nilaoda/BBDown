@@ -1,4 +1,4 @@
-[![img](https://img.shields.io/github/stars/nilaoda/BBDown?label=%E7%82%B9%E8%B5%9E)](https://github.com/nilaoda/BBDown)  [![img](https://img.shields.io/github/last-commit/nilaoda/BBDown?label=%E6%9C%80%E8%BF%91%E6%8F%90%E4%BA%A4)](https://github.com/nilaoda/BBDown)  [![img](https://img.shields.io/github/release/nilaoda/BBDown?label=%E6%9C%80%E6%96%B0%E7%89%88%E6%9C%AC)](https://github.com/nilaoda/BBDown/releases)  [![img](https://img.shields.io/github/license/nilaoda/BBDown?label=%E8%AE%B8%E5%8F%AF%E8%AF%81)](https://github.com/nilaoda/BBDown)  [![Build Latest](https://github.com/nilaoda/BBDown/actions/workflows/build_latest.yml/badge.svg)](https://github.com/nilaoda/BBDown/actions/workflows/build_latest.yml)
+[![img](https://img.shields.io/github/stars/kemi-20/BBDown?label=%E7%82%B9%E8%B5%9E)](https://github.com/kemi-20/BBDown)  [![img](https://img.shields.io/github/last-commit/kemi-20/BBDown?label=%E6%9C%80%E8%BF%91%E6%8F%90%E4%BA%A4)](https://github.com/kemi-20/BBDown)  [![img](https://img.shields.io/github/release/kemi-20/BBDown?label=%E6%9C%80%E6%96%B0%E7%89%88%E6%9C%AC)](https://github.com/kemi-20/BBDown/releases)  [![img](https://img.shields.io/github/license/kemi-20/BBDown?label=%E8%AE%B8%E5%8F%AF%E8%AF%81)](https://github.com/kemi-20/BBDown)  [![Build Latest](https://github.com/kemi-20/BBDown/actions/workflows/build_latest.yml/badge.svg)](https://github.com/kemi-20/BBDown/actions/workflows/build_latest.yml)
 
 # BBDown
 一款命令行式哔哩哔哩下载器. Bilibili Downloader.
@@ -9,23 +9,10 @@
 * 普通视频：[ffmpeg](https://www.gyan.dev/ffmpeg/builds/) ，或 [mp4box](https://gpac.wp.imt.fr/downloads/)
 * 杜比视界：ffmpeg5.0以上或新版mp4box.
 
-# 快速开始
-本软件已经以 [Dotnet Tool](https://www.nuget.org/packages/BBDown/) 形式发布  
-
-如果你本地有dotnet环境，使用如下命令即可安装使用
-```
-dotnet tool install --global BBDown
-```
-
-如果需要更新bbdown，使用如下命令
-```
-dotnet tool update --global BBDown
-```
-
 # 下载
-Release版本：https://github.com/nilaoda/BBDown/releases
+Release版本：https://github.com/kemi-20/BBDown/releases
 
-自动构建的测试版本：https://github.com/nilaoda/BBDown/actions
+自动构建的测试版本：https://github.com/kemi-20/BBDown/actions
 
 # 开始使用
 目前命令行参数支持情况
@@ -138,6 +125,7 @@ Commands:
 
 # TODO
 - [ ] 自动刷新cookie
+- [ ] 视频格式选择
 - [ ] 支持更多自定义选项
 
 # 使用教程
@@ -313,6 +301,7 @@ API详细请参考[json-api-doc.md](./json-api-doc.md)
 
 # 致谢
 
+* https://github.com/nilaoda/BBDown
 * https://github.com/codebude/QRCoder
 * https://github.com/icsharpcode/SharpZipLib
 * https://github.com/protocolbuffers/protobuf
