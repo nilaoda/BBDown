@@ -4,7 +4,7 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <Version>1.6.1</Version>
+    <Version>1.6.2</Version>
     <Description>BBDown是一个免费且便捷高效的哔哩哔哩下载/解析软件.</Description>
     <PackageProjectUrl>https://github.com/nilaoda/BBDown</PackageProjectUrl>
     <StartupObject></StartupObject>
