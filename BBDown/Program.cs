@@ -123,7 +123,7 @@ namespace BBDown
                 return 1;
             }
 
-            if (commandLineResult.CommandResult.Command.Name.ToLower() != Path.GetFileNameWithoutExtension(Environment.ProcessPath)!.ToLower())
+            if (commandLineResult.CommandResult.Command.Name.ToLower() != Path.GetFileNameWithoutExtension(Environment.ProcessPath)!.ToLower() && Path.GetFileNameWithoutExtension(Environment.ProcessPath)!.ToLower() != "dotnet")
             {
                 // 服务器模式需要完整的arg列表
                 if (commandLineResult.CommandResult.Command.Name.ToLower() == "serve")
@@ -332,7 +332,7 @@ namespace BBDown
                     }
                 }
 
-                await DownloadPageAsync(p, myOption, vInfo, encodingPriority, dfnPriority, firstEncoding,
+                await DownloadPageAsync(p, myOption, vInfo, pagesInfo, encodingPriority, dfnPriority, firstEncoding,
                     downloadDanmaku, input, savePathFormat, lang, aidOri, apiType, relatedTask);
 
                 if (myOption.SaveArchivesToFile)
@@ -344,13 +344,12 @@ namespace BBDown
             Log("任务完成");
         }
 
-        private static async Task DownloadPageAsync(Page p, MyOption myOption, VInfo vInfo, Dictionary<string, byte> encodingPriority, Dictionary<string, int> dfnPriority,
+        private static async Task DownloadPageAsync(Page p, MyOption myOption, VInfo vInfo, List<Page> selectedPagesInfo, Dictionary<string, byte> encodingPriority, Dictionary<string, int> dfnPriority,
             string? firstEncoding, bool downloadDanmaku, string input, string savePathFormat, string lang, string aidOri, string apiType, DownloadTask? relatedTask = null)
         {
-            List<Page> pagesInfo = vInfo.PagesInfo;
             string desc = string.IsNullOrEmpty(p.desc) ? vInfo.Desc : p.desc;
             bool bangumi = vInfo.IsBangumi;
-            var pagesCount = pagesInfo.Count;
+            var pagesCount = selectedPagesInfo.Count;
             List<Subtitle> subtitleInfo = new();
             string title = vInfo.Title;
             string pic = vInfo.Pic;
@@ -448,13 +447,13 @@ namespace BBDown
                 {
                     if (parsedResult.VideoTracks.Count == 0)
                     {
-                        LogError("没有找到符合要求的视频流");
-                        if (!myOption.AudioOnly) return;
+                        LogWarn("没有找到符合要求的视频流");
+                        if (myOption.VideoOnly) return;
                     }
                     if (parsedResult.AudioTracks.Count == 0)
                     {
-                        LogError("没有找到符合要求的音频流");
-                        if (!myOption.VideoOnly) return;
+                        LogWarn("没有找到符合要求的音频流");
+                        if (myOption.AudioOnly) return;
                     }
 
                     if (myOption.AudioOnly)
@@ -638,7 +637,7 @@ namespace BBDown
                     if (p.points.Any()) File.Delete(Path.Combine(Path.GetDirectoryName(string.IsNullOrEmpty(videoPath) ? audioPath : videoPath)!, "chapters"));
                     foreach (var s in subtitleInfo) File.Delete(s.path);
                     foreach (var a in audioMaterial) File.Delete(a.path);
-                    if (pagesInfo.Count == 1 || p.index == pagesInfo.Last().index || p.aid != pagesInfo.Last().aid)
+                    if (selectedPagesInfo.Count == 1 || p.index == selectedPagesInfo.Last().index || p.aid != selectedPagesInfo.Last().aid)
                         File.Delete(coverPath);
                     if (Directory.Exists(p.aid) && Directory.GetFiles(p.aid).Length == 0) Directory.Delete(p.aid, true);
                 }
@@ -685,7 +684,7 @@ namespace BBDown
                     if (File.Exists(savePath) && new FileInfo(savePath).Length != 0)
                     {
                         Log($"{savePath}已存在, 跳过下载...");
-                        if (pagesInfo.Count == 1 && Directory.Exists(p.aid))
+                        if (selectedPagesInfo.Count == 1 && Directory.Exists(p.aid))
                         {
                             Directory.Delete(p.aid, true);
                         }
@@ -726,7 +725,7 @@ namespace BBDown
                     foreach (var s in subtitleInfo) File.Delete(s.path);
                     foreach (var a in audioMaterial) File.Delete(a.path);
                     if (p.points.Any()) File.Delete(Path.Combine(Path.GetDirectoryName(string.IsNullOrEmpty(videoPath) ? audioPath : videoPath)!, "chapters"));
-                    if (pagesInfo.Count == 1 || p.index == pagesInfo.Last().index || p.aid != pagesInfo.Last().aid)
+                    if (selectedPagesInfo.Count == 1 || p.index == selectedPagesInfo.Last().index || p.aid != selectedPagesInfo.Last().aid)
                         File.Delete(coverPath);
                     if (Directory.Exists(p.aid) && Directory.GetFiles(p.aid).Length == 0) Directory.Delete(p.aid, true);
                 }
