@@ -70,18 +70,36 @@ namespace BBDown.Core.Util
             return location;
         }
 
-        public static async Task<string> GetPostResponseAsync(string Url, byte[] postData)
+        public static async Task<byte[]> GetPostResponseAsync(string Url, byte[] postData, Dictionary<string, string> headers = null)
         {
             LogDebug("Post to: {0}, data: {1}", Url, Convert.ToBase64String(postData));
-            using HttpRequestMessage request = new(HttpMethod.Post, Url);
-            request.Headers.TryAddWithoutValidation("Content-Type", "application/grpc");
-            request.Headers.TryAddWithoutValidation("Content-Length", postData.Length.ToString());
-            request.Headers.TryAddWithoutValidation("User-Agent", "Dalvik/2.1.0 (Linux; U; Android 6.0.1; oneplus a5010 Build/V417IR) 6.10.0 os/android model/oneplus a5010 mobi_app/android build/6100500 channel/bili innerVer/6100500 osVer/6.0.1 network/2");
-            request.Headers.TryAddWithoutValidation("Cookie", Config.COOKIE);
-            request.Content = new ByteArrayContent(postData);
-            var webResponse = await AppHttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
-            string htmlCode = await webResponse.Content.ReadAsStringAsync();
-            return htmlCode;
+
+            ByteArrayContent content = new(postData);
+            content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/grpc");
+
+            HttpRequestMessage request = new()
+            {
+                RequestUri = new Uri(Url),
+                Method = HttpMethod.Post,
+                Content = content,
+                //Version = HttpVersion.Version20
+            };
+
+            if (headers != null)
+            {
+                foreach (KeyValuePair<string, string> header in headers)
+                    request.Headers.TryAddWithoutValidation(header.Key, header.Value);
+            }
+            else
+            {
+                request.Headers.TryAddWithoutValidation("User-Agent", "Dalvik/2.1.0 (Linux; U; Android 6.0.1; oneplus a5010 Build/V417IR) 6.10.0 os/android model/oneplus a5010 mobi_app/android build/6100500 channel/bili innerVer/6100500 osVer/6.0.1 network/2");
+                request.Headers.TryAddWithoutValidation("grpc-encoding", "gzip");
+            }
+
+            HttpResponseMessage response = await AppHttpClient.SendAsync(request);
+            byte[] bytes = await response.Content.ReadAsByteArrayAsync();
+
+            return bytes;
         }
     }
 }

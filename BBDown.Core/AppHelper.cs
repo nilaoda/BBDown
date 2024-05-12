@@ -3,9 +3,9 @@ using Google.Protobuf;
 using System.Buffers.Binary;
 using System.IO.Compression;
 using System.Linq;
-using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using static BBDown.Core.Util.HTTPUtil;
 using static BBDown.Core.Logger;
 
 namespace BBDown.Core
@@ -322,7 +322,7 @@ namespace BBDown.Core
         /// </summary>
         /// <param name="data"></param>
         /// <returns>字节流</returns>
-        private static byte[] ReadMessage(byte[] data)
+        public static byte[] ReadMessage(byte[] data)
         {
             byte first;
             int size;
@@ -348,7 +348,7 @@ namespace BBDown.Core
         /// </summary>
         /// <param name="input"></param>
         /// <returns></returns>
-        private static byte[] PackMessage(byte[] input)
+        public static byte[] PackMessage(byte[] input)
         {
             using var stream = new MemoryStream();
             using (var writer = new BinaryWriter(stream))
@@ -392,31 +392,6 @@ namespace BBDown.Core
                 decomp.CopyTo(output);
             }
             return output.ToArray();
-        }
-
-        public static async Task<byte[]> GetPostResponseAsync(string Url, byte[] postData, Dictionary<string, string> headers)
-        {
-            LogDebug("Post to: {0}, data: {1}", Url, Convert.ToBase64String(postData));
-
-            ByteArrayContent content = new(postData);
-            content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/grpc");
-
-            HttpRequestMessage request = new()
-            {
-                RequestUri = new Uri(Url),
-                Method = HttpMethod.Post,
-                Content = content,
-                //Version = HttpVersion.Version20
-            };
-
-            if (headers != null)
-                foreach (KeyValuePair<string, string> header in headers)
-                    request.Headers.TryAddWithoutValidation(header.Key, header.Value);
-
-            HttpResponseMessage response = await Util.HTTPUtil.AppHttpClient.SendAsync(request);
-            byte[] bytes = await response.Content.ReadAsByteArrayAsync();
-
-            return bytes;
         }
     }
 
