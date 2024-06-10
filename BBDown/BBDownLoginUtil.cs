@@ -65,8 +65,8 @@ namespace BBDown
                     {
                         string cc = JsonDocument.Parse(w).RootElement.GetProperty("data").GetProperty("url").ToString();
                         Log("登录成功: SESSDATA=" + GetQueryString("SESSDATA", cc));
-                        //导出cookie
-                        File.WriteAllText(Path.Combine(Program.APP_DIR, "BBDown.data"), cc[(cc.IndexOf('?') + 1)..].Replace("&", ";"));
+                        //导出cookie, 转义英文逗号 否则部分场景会出问题
+                        File.WriteAllText(Path.Combine(Program.APP_DIR, "BBDown.data"), cc[(cc.IndexOf('?') + 1)..].Replace("&", ";").Replace(",", "%2C"));
                         File.Delete("qrcode.png");
                         break;
                     }
