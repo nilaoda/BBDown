@@ -64,6 +64,8 @@ namespace BBDown
                     else
                     {
                         string cc = JsonDocument.Parse(w).RootElement.GetProperty("data").GetProperty("url").ToString();
+                        // 转义英文逗号 否则部分场景会出问题
+                        cc = System.Web.HttpUtility.UrlEncode(cc);
                         Log("登录成功: SESSDATA=" + GetQueryString("SESSDATA", cc));
                         //导出cookie
                         File.WriteAllText(Path.Combine(Program.APP_DIR, "BBDown.data"), cc[(cc.IndexOf('?') + 1)..].Replace("&", ";"));
