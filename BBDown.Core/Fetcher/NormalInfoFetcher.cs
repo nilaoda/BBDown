@@ -66,24 +66,29 @@ namespace BBDown.Core.Fetcher
                     var edgeInfoApi = $"https://api.bilibili.com/x/stein/edgeinfo_v2?graph_version={graphVersion}&bvid={bvid}";
                     var edgeInfoJson = await GetWebSourceAsync(edgeInfoApi);
                     var edgeInfoData = JsonDocument.Parse(edgeInfoJson).RootElement.GetProperty("data");
-                    var choices = edgeInfoData.GetProperty("edges").GetProperty("questions").GetProperty("choices").EnumerateArray().ToList();
-                    var index = 2;
-                    foreach (var page in choices)
+                    var questions = edgeInfoData.GetProperty("edges").GetProperty("questions").EnumerateArray()
+                        .ToList();
+                    var index = 2; // 互动视频分P索引从2开始
+                    foreach (var question in questions)
                     {
-                        Page p = new(index++,
-                            id,
-                            page.GetProperty("cid").ToString(),
-                            "", //epid
-                            page.GetProperty("option").ToString().Trim(),
-                            -1,
-                            "",
-                            pubTime, //分p视频没有发布时间
-                            "",
-                            "",
-                            ownerName,
-                            ownerMid
-                        );
-                        pagesInfo.Add(p);
+                        var choices = question.GetProperty("choices").EnumerateArray().ToList();
+                        foreach (var page in choices)
+                        {
+                            Page p = new(index++,
+                                id,
+                                page.GetProperty("cid").ToString(),
+                                "", //epid
+                                page.GetProperty("option").ToString().Trim(),
+                                -1,
+                                "",
+                                pubTime, //分p视频没有发布时间
+                                "",
+                                "",
+                                ownerName,
+                                ownerMid
+                            );
+                            pagesInfo.Add(p);
+                        }
                     }
                 }
                 else
