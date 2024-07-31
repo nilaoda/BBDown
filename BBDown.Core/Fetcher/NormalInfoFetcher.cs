@@ -55,7 +55,7 @@ namespace BBDown.Core.Fetcher
                 var playerSoApi = $"https://api.bilibili.com/x/player.so?bvid={bvid}&id=cid:{cid}";
                 var playerSoText = await GetWebSourceAsync(playerSoApi);
                 var playerSoXml = new XmlDocument();
-                playerSoXml.LoadXml(playerSoText);
+                playerSoXml.LoadXml($"<root>{playerSoText}</root>");
                 
                 var interactionNode = playerSoXml.SelectSingleNode("//interaction");
 
@@ -66,7 +66,7 @@ namespace BBDown.Core.Fetcher
                     var edgeInfoApi = $"https://api.bilibili.com/x/stein/edgeinfo_v2?graph_version={graphVersion}&bvid={bvid}";
                     var edgeInfoJson = await GetWebSourceAsync(edgeInfoApi);
                     var edgeInfoData = JsonDocument.Parse(edgeInfoJson).RootElement.GetProperty("data");
-                    var choices = edgeInfoData.GetProperty("deges").GetProperty("questions").GetProperty("choices").EnumerateArray().ToList();
+                    var choices = edgeInfoData.GetProperty("edges").GetProperty("questions").GetProperty("choices").EnumerateArray().ToList();
                     var index = 2;
                     foreach (var page in choices)
                     {
