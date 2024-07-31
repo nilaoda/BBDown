@@ -79,7 +79,7 @@ namespace BBDown.Core.Fetcher
                                 page.GetProperty("cid").ToString(),
                                 "", //epid
                                 page.GetProperty("option").ToString().Trim(),
-                                -1,
+                                0,
                                 "",
                                 pubTime, //分p视频没有发布时间
                                 "",
