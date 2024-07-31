@@ -264,7 +264,8 @@ namespace BBDown
             {
                 Log($"UP主页: https://space.bilibili.com/{mid}");
             }
-            string apiType = myOption.UseTvApi ? "TV" : (myOption.UseAppApi ? "APP" : (myOption.UseIntlApi ? "INTL" : "WEB"));
+            string apiType = myOption.UseTvApi && !vInfo.IsSteinGate ? // 互动视频不能使用TV接口
+                "TV" : (myOption.UseAppApi ? "APP" : (myOption.UseIntlApi ? "INTL" : "WEB"));
 
             //打印分P信息
             List<Page> pagesInfo = vInfo.PagesInfo;

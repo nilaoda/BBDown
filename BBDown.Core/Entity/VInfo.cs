@@ -40,5 +40,10 @@ namespace BBDown.Core.Entity
         /// 视频分P信息
         /// </summary>
         public required List<Page> PagesInfo { get; set; }
+
+        /// <summary>
+        /// 是否为互动视频
+        /// </summary>
+        public bool IsSteinGate { get; set; }
     }
 }
