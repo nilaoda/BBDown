@@ -44,6 +44,15 @@ namespace BBDown.Core
                 apiBuilder.Append($"&object_id={aid}&platform=android&playurl_type=1&qn={qn}&ts={GetTimeStamp(true)}");
                 api = $"{prefix}{apiBuilder}&sign={GetSign(apiBuilder.ToString(), false)}";
             }
+            if (tvApi)
+            {
+                api = (Config.TOKEN != "" ? $"access_key={Config.TOKEN}&" : "") +
+                    $"object_id={aid}&appkey=4409e2ce8ffd12b8&build=106500" +
+                    $"&cid={cid}&device=android&fnval=4048&fnver=0&fourk=1" +
+                    $"&mid=0&mobi_app=android_tv_yst" +
+                    $"&playurl_type=1&platform=android&qn={qn}";
+                api = prefix + api;
+            }
             else
             {
                 // 尝试提高可读性
