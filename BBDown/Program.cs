@@ -264,6 +264,12 @@ namespace BBDown
             {
                 Log($"UP主页: https://space.bilibili.com/{mid}");
             }
+
+            if (vInfo.IsSteinGate && myOption.UseTvApi)
+            {
+                Log("视频为互动视频，暂时不支持tv下载，修改为默认下载");
+                myOption.UseTvApi = false;
+            }
             string apiType = myOption.UseTvApi ? "TV" : (myOption.UseAppApi ? "APP" : (myOption.UseIntlApi ? "INTL" : "WEB"));
 
             //打印分P信息

@@ -1,6 +1,7 @@
 ﻿using BBDown.Core.Entity;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using System.Xml;
 using static BBDown.Core.Entity.Entity;
 using static BBDown.Core.Util.HTTPUtil;
 
@@ -22,9 +23,15 @@ namespace BBDown.Core.Fetcher
             string ownerName = owner.GetProperty("name").ToString();
             long pubTime = data.GetProperty("pubdate").GetInt64();
             bool bangumi = false;
+            var bvid = data.GetProperty("bvid").ToString();
+            var cid = data.GetProperty("cid").GetInt64();
 
-            var pages = data.GetProperty("pages").EnumerateArray().ToList();
+            // 互动视频 1:是 0:否
+            var isSteinGate = data.GetProperty("rights").GetProperty("is_stein_gate").GetInt16();
+
+            // 分p信息
             List<Page> pagesInfo = new();
+            var pages = data.GetProperty("pages").EnumerateArray().ToList();
             foreach (var page in pages)
             {
                 Page p = new(page.GetProperty("page").GetInt32(),
@@ -39,8 +46,55 @@ namespace BBDown.Core.Fetcher
                     "",
                     ownerName,
                     ownerMid
-                    );
+                );
                 pagesInfo.Add(p);
+            }
+
+            if (isSteinGate == 1) // 互动视频获取分P信息
+            {
+                var playerSoApi = $"https://api.bilibili.com/x/player.so?bvid={bvid}&id=cid:{cid}";
+                var playerSoText = await GetWebSourceAsync(playerSoApi);
+                var playerSoXml = new XmlDocument();
+                playerSoXml.LoadXml($"<root>{playerSoText}</root>");
+                
+                var interactionNode = playerSoXml.SelectSingleNode("//interaction");
+
+                if (interactionNode is { InnerText.Length: > 0 })
+                {
+                    var graphVersion = JsonDocument.Parse(interactionNode.InnerText).RootElement
+                        .GetProperty("graph_version").GetInt64();
+                    var edgeInfoApi = $"https://api.bilibili.com/x/stein/edgeinfo_v2?graph_version={graphVersion}&bvid={bvid}";
+                    var edgeInfoJson = await GetWebSourceAsync(edgeInfoApi);
+                    var edgeInfoData = JsonDocument.Parse(edgeInfoJson).RootElement.GetProperty("data");
+                    var questions = edgeInfoData.GetProperty("edges").GetProperty("questions").EnumerateArray()
+                        .ToList();
+                    var index = 2; // 互动视频分P索引从2开始
+                    foreach (var question in questions)
+                    {
+                        var choices = question.GetProperty("choices").EnumerateArray().ToList();
+                        foreach (var page in choices)
+                        {
+                            Page p = new(index++,
+                                id,
+                                page.GetProperty("cid").ToString(),
+                                "", //epid
+                                page.GetProperty("option").ToString().Trim(),
+                                0,
+                                "",
+                                pubTime, //分p视频没有发布时间
+                                "",
+                                "",
+                                ownerName,
+                                ownerMid
+                            );
+                            pagesInfo.Add(p);
+                        }
+                    }
+                }
+                else
+                {
+                    throw new Exception("互动视频获取分P信息失败");
+                }
             }
 
             try
@@ -65,7 +119,8 @@ namespace BBDown.Core.Fetcher
                 Pic = pic,
                 PubTime = pubTime,
                 PagesInfo = pagesInfo,
-                IsBangumi = bangumi
+                IsBangumi = bangumi,
+                IsSteinGate = isSteinGate == 1
             };
 
             return info;
