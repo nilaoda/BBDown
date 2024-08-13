@@ -149,7 +149,7 @@ namespace BBDown
             {
                 avid = input.ToLower()[2..];
             }
-            else if (input.StartsWith("cheese/")) // cheese/(ep|ss)\d+ 格式
+            else if (input.StartsWith("cheese/")) // ^cheese/(ep|ss)\d+ 格式
             {
                 string epId = "";
                 if (input.Contains("/ep"))

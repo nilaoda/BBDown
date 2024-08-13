@@ -226,13 +226,13 @@ namespace BBDown
 
         public static async Task<(string fetchedAid, VInfo vInfo, string apiType)> GetVideoInfoAsync(MyOption myOption, string aidOri, string input)
         {
-			Log("检测账号登录...");
+            Log("检测账号登录...");
 
             // 加载认证信息
             LoadCredentials(myOption);
 
-			// 检测是否登录了账号
-			bool is_login = await CheckLogin(Config.COOKIE);
+            // 检测是否登录了账号
+            bool is_login = await CheckLogin(Config.COOKIE);
             if (!myOption.UseIntlApi && !myOption.UseTvApi && Config.AREA == "")
             {
                 if (!is_login)
@@ -240,7 +240,7 @@ namespace BBDown
                     LogWarn("你尚未登录B站账号, 解析可能受到限制");
                 }
             }
-            
+
             Log("获取aid...");
             aidOri = await GetAvIdAsync(input);
             Log("获取aid结束: " + aidOri);
@@ -267,16 +267,17 @@ namespace BBDown
                 LogWarn("未找到此 EP/SS 对应番剧信息, 正在尝试按课程查找。");
 
                 aidOri = aidOri.Replace("ep", "cheese");
-				Log("新的 aid: " + aidOri);
+                Log("新的 aid: " + aidOri);
 
-				if (string.IsNullOrEmpty(aidOri)) {
-					throw new Exception("输入有误");
-				}
+                if (string.IsNullOrEmpty(aidOri))
+                {
+                    throw new Exception("输入有误");
+                }
 
-				Log("获取视频信息...");
-				fetcher = FetcherFactory.CreateFetcher(aidOri, myOption.UseIntlApi);
-				vInfo = await fetcher.FetchAsync(aidOri);
-			}
+                Log("获取视频信息...");
+                fetcher = FetcherFactory.CreateFetcher(aidOri, myOption.UseIntlApi);
+                vInfo = await fetcher.FetchAsync(aidOri);
+            }
 
             string title = vInfo.Title;
             long pubTime = vInfo.PubTime;
