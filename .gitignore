@@ -16,6 +16,12 @@
 # Mono auto generated files
 mono_crash.*
 
+# Rider
+.idea
+
+# macOS shit
+.DS_Store
+
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/
