@@ -84,12 +84,12 @@ namespace BBDown
                     string epId = await GetEpIdByBangumiSSIdAsync(SsRegex().Match(input).Groups[1].Value);
                     avid = $"ep:{epId}";
                 }
-                else if (input.Contains("/medialist/") && input.Contains("business_id=") && input.Contains("business=space_collection")) //列表类型是合集
+                else if (input.Contains("/medialist/") && input.Contains("business_id=") && input.Contains("business=space_collection")) // 列表类型是合集
                 {
                     string bizId = GetQueryString("business_id", input);
                     avid = $"listBizId:{bizId}";
                 }
-                else if (input.Contains("/medialist/") && input.Contains("business_id=") && input.Contains("business=space_series")) //列表类型是系列
+                else if (input.Contains("/medialist/") && input.Contains("business_id=") && input.Contains("business=space_series")) // 列表类型是系列
                 {
                     string bizId = GetQueryString("business_id", input);
                     avid = $"seriesBizId:{bizId}";
@@ -145,9 +145,22 @@ namespace BBDown
             {
                 avid = GetAidByBV(input[3..]);
             }
-            else if (input.ToLower().StartsWith("av")) //av
+            else if (input.ToLower().StartsWith("av")) // av
             {
                 avid = input.ToLower()[2..];
+            }
+            else if (input.StartsWith("cheese/")) // ^cheese/(ep|ss)\d+ 格式
+            {
+                string epId = "";
+                if (input.Contains("/ep"))
+                {
+                    epId = EpRegex().Match(input).Groups[1].Value;
+                }
+                else if (input.Contains("/ss"))
+                {
+                    epId = await GetEpidBySSIdAsync(SsRegex().Match(input).Groups[1].Value);
+                }
+                avid = $"cheese:{epId}";
             }
             else if (input.StartsWith("ep"))
             {
