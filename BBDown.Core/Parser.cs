@@ -166,8 +166,10 @@ namespace BBDown.Core
                 nodeName = "result";
 
                 // v2
-                if (parsedResult.WebJsonString.Contains("\"video_info\":{")) nodeName = "video_info";
-            };
+                if (parsedResult.WebJsonString.Contains("\"video_info\":{")) {
+                    nodeName = "video_info";
+                }
+            }
             else if (parsedResult.WebJsonString.Contains("\"data\":{")) nodeName = "data";
             var root = nodeName == null ? data : data.GetProperty(nodeName);
 
