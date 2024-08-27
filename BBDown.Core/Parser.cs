@@ -100,6 +100,8 @@ namespace BBDown.Core
             //调用解析
             parsedResult.WebJsonString = await GetPlayJsonAsync(encoding, aidOri, aid, cid, epId, tvApi, intlApi, appApi, qn);
 
+            Log(parsedResult.WebJsonString);
+            
         startParsing:
             var respJson = JsonDocument.Parse(parsedResult.WebJsonString);
             var data = respJson.RootElement;
