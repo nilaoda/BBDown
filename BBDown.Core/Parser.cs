@@ -100,7 +100,7 @@ namespace BBDown.Core
             //调用解析
             parsedResult.WebJsonString = await GetPlayJsonAsync(encoding, aidOri, aid, cid, epId, tvApi, intlApi, appApi, qn);
 
-            Log(parsedResult.WebJsonString);
+            LogDebug(parsedResult.WebJsonString);
             
         startParsing:
             var respJson = JsonDocument.Parse(parsedResult.WebJsonString);
@@ -162,7 +162,12 @@ namespace BBDown.Core
             }
             // data节点一次性判断完
             string nodeName = null;
-            if (parsedResult.WebJsonString.Contains("\"result\":{")) nodeName = "result";
+            if (parsedResult.WebJsonString.Contains("\"result\":{")) {
+                nodeName = "result";
+
+                // v2
+                if (parsedResult.WebJsonString.Contains("\"video_info\":{")) nodeName = "video_info";
+            };
             else if (parsedResult.WebJsonString.Contains("\"data\":{")) nodeName = "data";
             var root = nodeName == null ? data : data.GetProperty(nodeName);
 
