@@ -8,7 +8,7 @@ env:
 
 jobs:
 
-  build-win-x64-arm64:
+  build-win-x64:
     
     runs-on: windows-latest
     
@@ -22,88 +22,9 @@ jobs:
           dotnet-version: ${{ env.DOTNET_SDK_VERSION }}
 
       - run: dotnet publish BBDown -r win-x64 -c Release -o artifact-x64
-      - run: dotnet publish BBDown -r win-arm64 -c Release -o artifact-arm64
 
       - name: Upload Artifact[win-x64]
         uses: actions/upload-artifact@v3.1.3
         with:
           name: BBDown_win-x64
           path: artifact-x64\BBDown.exe
-
-      - name: Upload Artifact[win-arm64]
-        uses: actions/upload-artifact@v3.1.3
-        with:
-          name: BBDown_win-arm64
-          path: artifact-arm64\BBDown.exe
-  
-
-  build-linux-x64:
-    
-    runs-on: ubuntu-latest
-    container: ubuntu:18.04
-    
-    steps:
-      
-      - run: apt-get update
-      - run: apt-get install -y curl wget
-      - uses: actions/checkout@v1
-      - name: Set up dotnet
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: ${{ env.DOTNET_SDK_VERSION }}
-      - run: apt-get install -y libicu-dev libcurl4-openssl-dev zlib1g-dev libkrb5-dev
-      - run: dotnet publish BBDown -r linux-x64 -c Release -o artifact
-      
-      - name: Upload Artifact[linux-x64]
-        uses: actions/upload-artifact@v3.1.3
-        with:
-          name: BBDown_linux-x64
-          path: artifact/BBDown
-
-  build-linux-arm64:
-    
-    runs-on: ubuntu-latest
-    container: mcr.microsoft.com/dotnet-buildtools/prereqs:ubuntu-18.04-cross-arm64-20220312201346-b2c2436
-    
-    steps:
-      
-      - uses: actions/checkout@v1
-      - name: Set up dotnet
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: ${{ env.DOTNET_SDK_VERSION }}
-      - run: dotnet publish BBDown -r linux-arm64 -c Release -p:StripSymbols=true -p:CppCompilerAndLinker=clang-9 -p:SysRoot=/crossrootfs/arm64 -o artifact
-      
-      - name: Upload Artifact[linux-arm64]
-        uses: actions/upload-artifact@v3.1.3
-        with:
-          name: BBDown_linux-arm64
-          path: artifact/BBDown
-          
-  build-mac-x64-arm64:
-    
-    runs-on: macOS-latest
-    
-    steps:
-      
-      - uses: actions/checkout@v1
-      
-      - name: Set up dotnet
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: ${{ env.DOTNET_SDK_VERSION }}
-      - run: dotnet publish BBDown -r osx-arm64 -c Release -o artifact-arm64
-      - run: dotnet publish BBDown -r osx-x64 -c Release -o artifact-x64
-
-      
-      - name: Upload Artifact[osx-x64]
-        uses: actions/upload-artifact@v3.1.3
-        with:
-          name: BBDown_osx-x64
-          path: artifact-x64/BBDown
-          
-      - name: Upload Artifact[osx-arm64]
-        uses: actions/upload-artifact@v3.1.3
-        with:
-          name: BBDown_osx-arm64
-          path: artifact-arm64/BBDown
