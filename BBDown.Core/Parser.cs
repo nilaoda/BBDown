@@ -30,7 +30,7 @@ namespace BBDown.Core
             if (appApi) return await AppHelper.DoReqAsync(aid, cid, epId, qn, bangumi, encoding, Config.TOKEN);
 
             string prefix = tvApi ? bangumi ? "api.snm0516.aisee.tv/pgc/player/api/playurltv" : "api.snm0516.aisee.tv/x/tv/playurl"
-                        : bangumi ? $"{Config.HOST}/pgc/player/web/playurl" : "api.bilibili.com/x/player/wbi/playurl";
+                        : bangumi ? $"{Config.HOST}/pgc/player/web/v2/playurl" : "api.bilibili.com/x/player/wbi/playurl";
             prefix = $"https://{prefix}?";
 
             string api;
@@ -48,7 +48,7 @@ namespace BBDown.Core
             {
                 // 尝试提高可读性
                 StringBuilder apiBuilder = new();
-                apiBuilder.Append($"avid={aid}&cid={cid}&fnval=4048&fnver=0&fourk=1");
+                apiBuilder.Append($"support_multi_audio=true&avid={aid}&cid={cid}&fnval=4048&fnver=0&fourk=1");
                 if (Config.AREA != "") apiBuilder.Append($"&access_key={Config.TOKEN}&area={Config.AREA}");
                 apiBuilder.Append($"&otype=json&qn={qn}");
                 if (bangumi) apiBuilder.Append($"&module=bangumi&ep_id={epId}&session=");
