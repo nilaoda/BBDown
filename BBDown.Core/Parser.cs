@@ -173,7 +173,7 @@ namespace BBDown.Core
                 }
             }
             else if (parsedResult.WebJsonString.Contains("\"data\":{")) nodeName = "data";
-            var root = nodeName == null ? data : data.GetProperty(nodeName);
+            var root = nodeName == null ? data : nodeName == "video_info" ? data.GetProperty("result").GetProperty(nodeName) : data.GetProperty(nodeName);
 
             bool bangumi = aidOri.StartsWith("ep:");
 
@@ -195,7 +195,7 @@ namespace BBDown.Core
                     parsedResult.WebJsonString = await GetPlayJsonAsync(encoding, aidOri, aid, cid, epId, tvApi, intlApi, appApi, GetMaxQn());
                     respJson = JsonDocument.Parse(parsedResult.WebJsonString);
                     data = respJson.RootElement;
-                    root = nodeName == null ? data : data.GetProperty(nodeName);
+                    root = nodeName == null ? data : nodeName == "video_info" ? data.GetProperty("result").GetProperty(nodeName) : data.GetProperty(nodeName);
                 }
                 try { video = root.GetProperty("dash").GetProperty("video").EnumerateArray().ToList(); } catch { }
                 try { audio = root.GetProperty("dash").GetProperty("audio").EnumerateArray().ToList(); } catch { }
