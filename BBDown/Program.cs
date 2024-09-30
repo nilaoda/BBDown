@@ -13,6 +13,7 @@ using static BBDown.BBDownDownloadUtil;
 using static BBDown.Core.Parser;
 using static BBDown.Core.Logger;
 using System.Linq;
+using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using BBDown.Core;
@@ -68,6 +69,8 @@ namespace BBDown
 
         public static async Task<int> Main(params string[] args)
         {
+            // Set the console output encoding to UTF-8
+            Console.OutputEncoding = Encoding.UTF8;
             Console.CancelKeyPress += Console_CancelKeyPress;
             ServicePointManager.DefaultConnectionLimit = 2048;
 
