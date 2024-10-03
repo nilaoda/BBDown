@@ -723,6 +723,27 @@ namespace BBDown
                         }
                         return;
                     }
+                    if (myOption.DanmakuOnly)
+                    {
+                        var danmakuXmlPath = Path.ChangeExtension(savePath, ".xml");
+                        var danmakuAssPath = Path.ChangeExtension(savePath, ".ass");
+                        Log("正在下载弹幕Xml文件");
+                        string danmakuUrl = $"https://comment.bilibili.com/{p.cid}.xml";
+                        await DownloadFile(danmakuUrl, danmakuXmlPath, downloadConfig);
+                        var danmakus = DanmakuUtil.ParseXml(danmakuXmlPath);
+                        if (danmakus != null)
+                        {
+                            Log("正在保存弹幕Ass文件...");
+                            await DanmakuUtil.SaveAsAssAsync(danmakus, danmakuAssPath);
+                        }
+                        else
+                        {
+                            Log("弹幕Xml解析失败, 删除Xml...");
+                            File.Delete(danmakuXmlPath);
+                        }
+                        return;
+                    }
+
                     var pad = string.Empty.PadRight(clips.Count.ToString().Length, '0');
                     for (int i = 0; i < clips.Count; i++)
                     {
