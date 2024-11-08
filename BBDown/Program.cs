@@ -184,7 +184,7 @@ namespace BBDown
         }
 
         public static (Dictionary<string, byte> encodingPriority, Dictionary<string, int> dfnPriority, string? firstEncoding,
-            bool downloadDanmaku, string input, string savePathFormat, string lang, string aidOri, int delay)
+            bool downloadDanmaku, string[] downloadDanmakuFormats, string input, string savePathFormat, string lang, string aidOri, int delay)
         SetUpWork(MyOption myOption)
         {
             //处理废弃选项
@@ -207,6 +207,7 @@ namespace BBDown
             HTTPUtil.UserAgent = string.IsNullOrEmpty(myOption.UserAgent) ? HTTPUtil.UserAgent : myOption.UserAgent;
 
             bool downloadDanmaku = myOption.DownloadDanmaku || myOption.DanmakuOnly;
+            string[] downloadDanmakuFormats = ParseDownloadDanmakuFormat(myOption);
             string input = myOption.Url;
             string savePathFormat = myOption.FilePattern;
             string lang = myOption.Language;
@@ -221,7 +222,7 @@ namespace BBDown
 
             LogDebug("AppDirectory: {0}", APP_DIR);
             LogDebug("运行参数：{0}", JsonSerializer.Serialize(myOption, MyOptionJsonContext.Default.MyOption));
-            return (encodingPriority, dfnPriority, firstEncoding, downloadDanmaku, input, savePathFormat, lang, aidOri, delay);
+            return (encodingPriority, dfnPriority, firstEncoding, downloadDanmaku, downloadDanmakuFormats, input, savePathFormat, lang, aidOri, delay);
         }
 
         public static async Task<(string fetchedAid, VInfo vInfo, string apiType)> GetVideoInfoAsync(MyOption myOption, string aidOri, string input)
@@ -321,7 +322,7 @@ namespace BBDown
         }
 
         public static async Task DownloadPagesAsync(MyOption myOption, VInfo vInfo, Dictionary<string, byte> encodingPriority, Dictionary<string, int> dfnPriority,
-            string? firstEncoding, bool downloadDanmaku, string input, string savePathFormat, string lang, string aidOri, int delay, string apiType, DownloadTask? relatedTask = null)
+            string? firstEncoding, bool downloadDanmaku, string[] downloadDanmakuFormats, string input, string savePathFormat, string lang, string aidOri, int delay, string apiType, DownloadTask? relatedTask = null)
         {
             List<Page> pagesInfo = vInfo.PagesInfo;
             bool bangumi = vInfo.IsBangumi;
@@ -366,7 +367,7 @@ namespace BBDown
                 }
 
                 await DownloadPageAsync(p, myOption, vInfo, pagesInfo, encodingPriority, dfnPriority, firstEncoding,
-                    downloadDanmaku, input, savePathFormat, lang, aidOri, apiType, relatedTask);
+                    downloadDanmaku, downloadDanmakuFormats, input, savePathFormat, lang, aidOri, apiType, relatedTask);
 
                 if (myOption.SaveArchivesToFile)
                 {
@@ -378,7 +379,7 @@ namespace BBDown
         }
 
         private static async Task DownloadPageAsync(Page p, MyOption myOption, VInfo vInfo, List<Page> selectedPagesInfo, Dictionary<string, byte> encodingPriority, Dictionary<string, int> dfnPriority,
-            string? firstEncoding, bool downloadDanmaku, string input, string savePathFormat, string lang, string aidOri, string apiType, DownloadTask? relatedTask = null)
+            string? firstEncoding, bool downloadDanmaku, string[] downloadDanmakuFormats, string input, string savePathFormat, string lang, string aidOri, string apiType, DownloadTask? relatedTask = null)
         {
             string desc = string.IsNullOrEmpty(p.desc) ? vInfo.Desc : p.desc;
             bool bangumi = vInfo.IsBangumi;
@@ -556,16 +557,28 @@ namespace BBDown
                         string danmakuUrl = $"https://comment.bilibili.com/{p.cid}.xml";
                         await DownloadFile(danmakuUrl, danmakuXmlPath, downloadConfig);
                         var danmakus = DanmakuUtil.ParseXml(danmakuXmlPath);
-                        if (danmakus != null)
-                        {
-                            Log("正在保存弹幕Ass文件...");
-                            await DanmakuUtil.SaveAsAssAsync(danmakus, danmakuAssPath);
-                        }
-                        else
+                        if (danmakus == null)
                         {
                             Log("弹幕Xml解析失败, 删除Xml...");
                             File.Delete(danmakuXmlPath);
                         }
+                        else if (danmakus.Length == 0)
+                        {
+                            Log("当前视频没有弹幕, 删除Xml...");
+                            File.Delete(danmakuXmlPath);
+                        }
+                        else if (downloadDanmakuFormats.Contains("ass"))
+                        {
+                            Log("正在保存弹幕Ass文件...");
+                            await DanmakuUtil.SaveAsAssAsync(danmakus, danmakuAssPath);
+                        }
+
+                        // delete xml if possible
+                        if (!downloadDanmakuFormats.Contains("xml") && File.Exists(danmakuXmlPath)) 
+                        {
+                            File.Delete(danmakuXmlPath);
+                        }
+
                         if (myOption.DanmakuOnly)
                         {
                             if (Directory.Exists(p.aid))
@@ -787,10 +800,10 @@ namespace BBDown
         {
             try
             {
-                var (encodingPriority, dfnPriority, firstEncoding, downloadDanmaku,
+                var (encodingPriority, dfnPriority, firstEncoding, downloadDanmaku, downloadDanmakuFormats,
                     input, savePathFormat, lang, aidOri, delay) = SetUpWork(myOption);
                 var (fetchedAid, vInfo, apiType) = await GetVideoInfoAsync(myOption, aidOri, input);
-                await DownloadPagesAsync(myOption, vInfo, encodingPriority, dfnPriority, firstEncoding, downloadDanmaku,
+                await DownloadPagesAsync(myOption, vInfo, encodingPriority, dfnPriority, firstEncoding, downloadDanmaku, downloadDanmakuFormats,
                     input, savePathFormat, lang, fetchedAid, delay, apiType);
             }
             catch (Exception e)

@@ -93,6 +93,20 @@ namespace BBDown
             return encodingPriority;
         }
 
+        private static string[] ParseDownloadDanmakuFormat(MyOption myOption)
+        {
+            string[] defaultFormats = ["xml", "ass"];
+            if (string.IsNullOrEmpty(myOption.DownloadDanmakuFormat)) return defaultFormats;
+
+            var formats =  myOption.DownloadDanmakuFormat.Replace("，", ",").Split(',').Select(s => s.Trim()).Where(s => !string.IsNullOrEmpty(s)).ToArray();
+            if (formats.Any(format => format != "xml" && format != "ass"))
+            {
+                LogError($"不支持的下载弹幕格式：{myOption.DownloadDanmakuFormat}");
+                return defaultFormats;
+            }
+            return formats;
+        }
+
         /// <summary>
         /// 解析用户输入的清晰度规格优先级
         /// </summary>
