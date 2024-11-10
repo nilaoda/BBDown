@@ -27,7 +27,7 @@ internal class MyOption
     public bool SkipCover { get; set; }
     public bool ForceHttp { get; set; } = true;
     public bool DownloadDanmaku { get; set; } = false;
-    public string? DownloadDanmakuFormat { get; set; }
+    public string? DownloadDanmakuFormats { get; set; }
     public bool SkipAi { get; set; } = true;
     public bool VideoAscending { get; set; } = false;
     public bool AudioAscending { get; set; } = false;

@@ -93,28 +93,18 @@ internal partial class Program
         return encodingPriority;
     }
 
-    private static BBDownDanmakuFormat[] ParseDownloadDanmakuFormat(MyOption myOption)
+    private static BBDownDanmakuFormat[] ParseDownloadDanmakuFormats(MyOption myOption)
     {
-        BBDownDanmakuFormat[] defaultFormats = [BBDownDanmakuFormat.Xml, BBDownDanmakuFormat.Ass];
-        string[] defaultFormatNames = defaultFormats.Select(f => f.ToString().ToLower()).ToArray();
-    
-        if (string.IsNullOrEmpty(myOption.DownloadDanmakuFormat)) return defaultFormats;
+        if (string.IsNullOrEmpty(myOption.DownloadDanmakuFormats)) return BBDownDanmakuFormatInfo.DefaultFormats;
 
-        var formats = myOption.DownloadDanmakuFormat.Replace("，", ",").ToLower().Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-        if (formats.Any(format => !defaultFormatNames.Contains(format)))
+        var formats = myOption.DownloadDanmakuFormats.Replace("，", ",").ToLower().Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        if (formats.Any(format => !BBDownDanmakuFormatInfo.AllFormatNames.Contains(format)))
         {
-            LogError($"包含不支持的下载弹幕格式：{myOption.DownloadDanmakuFormat}");
-            return defaultFormats;
+            LogError($"包含不支持的下载弹幕格式：{myOption.DownloadDanmakuFormats}");
+            return BBDownDanmakuFormatInfo.DefaultFormats;
         }
-        return formats.Select((format) => 
-        {
-            return format switch
-            {
-                "xml" => BBDownDanmakuFormat.Xml,
-                "ass" => BBDownDanmakuFormat.Ass,
-                _ => BBDownDanmakuFormat.Xml,
-            };
-        }).ToArray();
+        
+        return formats.Select(BBDownDanmakuFormatInfo.FromFormatName).ToArray();
     }
 
     /// <summary>
