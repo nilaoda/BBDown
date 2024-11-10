@@ -22,6 +22,19 @@ dotnet tool install --global BBDown
 dotnet tool update --global BBDown
 ```
 
+<details>
+<summary>New: 使用Docker一键下载视频 (NEW)</summary> 
+
+```
+# 第一步打包镜像
+docker build -t bbdown .
+# 第二步下载视频 (例如BV1LSSHYXEtv)
+docker run --rm -v $(pwd)/downloads:/downloads bbdown BV1LSSHYXEtv --use-app-api --work-dir /downloads
+```
+
+</details>
+
+
 # 下载
 Release版本：https://github.com/nilaoda/BBDown/releases
 
