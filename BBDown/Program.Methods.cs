@@ -96,7 +96,7 @@ internal partial class Program
     private static BBDownDanmakuFormat[] ParseDownloadDanmakuFormat(MyOption myOption)
     {
         BBDownDanmakuFormat[] defaultFormats = [BBDownDanmakuFormat.Xml, BBDownDanmakuFormat.Ass];
-        string[] defaultFormatNames = ["xml", "ass"];
+        string[] defaultFormatNames = defaultFormats.Select(f => f.ToString().ToLower()).ToArray();
     
         if (string.IsNullOrEmpty(myOption.DownloadDanmakuFormat)) return defaultFormats;
 
