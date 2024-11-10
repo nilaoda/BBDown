@@ -1,7 +1,7 @@
 [![img](https://img.shields.io/github/stars/nilaoda/BBDown?label=%E7%82%B9%E8%B5%9E)](https://github.com/nilaoda/BBDown)  [![img](https://img.shields.io/github/last-commit/nilaoda/BBDown?label=%E6%9C%80%E8%BF%91%E6%8F%90%E4%BA%A4)](https://github.com/nilaoda/BBDown)  [![img](https://img.shields.io/github/release/nilaoda/BBDown?label=%E6%9C%80%E6%96%B0%E7%89%88%E6%9C%AC)](https://github.com/nilaoda/BBDown/releases)  [![img](https://img.shields.io/github/license/nilaoda/BBDown?label=%E8%AE%B8%E5%8F%AF%E8%AF%81)](https://github.com/nilaoda/BBDown)  [![Build Latest](https://github.com/nilaoda/BBDown/actions/workflows/build_latest.yml/badge.svg)](https://github.com/nilaoda/BBDown/actions/workflows/build_latest.yml)
 
 # BBDown
-一款命令行式哔哩哔哩下载器. Bilibili Downloader.
+一个命令行式哔哩哔哩下载器. Bilibili Downloader.
 
 # 注意
 本软件混流时需要外部程序：

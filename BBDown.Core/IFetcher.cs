@@ -1,7 +1,6 @@
-﻿namespace BBDown.Core
+﻿namespace BBDown.Core;
+
+public interface IFetcher
 {
-    public interface IFetcher
-    {
-        Task<Entity.VInfo> FetchAsync(string id);
-    }
+    Task<Entity.VInfo> FetchAsync(string id);
 }
