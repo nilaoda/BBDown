@@ -206,7 +206,8 @@ partial class Program
         HTTPUtil.UserAgent = string.IsNullOrEmpty(myOption.UserAgent) ? HTTPUtil.UserAgent : myOption.UserAgent;
 
         bool downloadDanmaku = myOption.DownloadDanmaku || myOption.DanmakuOnly;
-            BBDownDanmakuFormat[] downloadDanmakuFormats = ParseDownloadDanmakuFormat(myOption);
+        BBDownDanmakuFormat[] downloadDanmakuFormats = ParseDownloadDanmakuFormat(myOption);
+
         string input = myOption.Url;
         string savePathFormat = myOption.FilePattern;
         string lang = myOption.Language;
