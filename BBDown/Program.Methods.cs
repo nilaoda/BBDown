@@ -100,7 +100,7 @@ internal partial class Program
     
         if (string.IsNullOrEmpty(myOption.DownloadDanmakuFormat)) return defaultFormats;
 
-        var formats = myOption.DownloadDanmakuFormat.Replace("，", ",").ToLower().Split(',', StringSplitOptions.TrimEntries & StringSplitOptions.RemoveEmptyEntries);
+        var formats = myOption.DownloadDanmakuFormat.Replace("，", ",").ToLower().Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
         if (formats.Any(format => !defaultFormatNames.Contains(format)))
         {
             LogError($"包含不支持的下载弹幕格式：{myOption.DownloadDanmakuFormat}");
