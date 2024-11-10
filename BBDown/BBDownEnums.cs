@@ -17,7 +17,8 @@ public static class BBDownDanmakuFormatInfo
     // 可选项
     public static string[] AllFormatNames = Enum.GetNames(typeof(BBDownDanmakuFormat)).Select(f => f.ToLower()).ToArray();
 
-    public static BBDownDanmakuFormat FromFormatName(string formatName) {
+    public static BBDownDanmakuFormat FromFormatName(string formatName)
+    {
         return formatName switch
         {
             "xml" => BBDownDanmakuFormat.Xml,
