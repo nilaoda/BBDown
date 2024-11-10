@@ -93,18 +93,28 @@ namespace BBDown
             return encodingPriority;
         }
 
-        private static string[] ParseDownloadDanmakuFormat(MyOption myOption)
+        private static BBDownDanmakuFormat[] ParseDownloadDanmakuFormat(MyOption myOption)
         {
-            string[] defaultFormats = ["xml", "ass"];
+            BBDownDanmakuFormat[] defaultFormats = [BBDownDanmakuFormat.Xml, BBDownDanmakuFormat.Ass];
+            string[] defaultFormatNames = ["xml", "ass"];
+        
             if (string.IsNullOrEmpty(myOption.DownloadDanmakuFormat)) return defaultFormats;
 
-            var formats =  myOption.DownloadDanmakuFormat.Replace("，", ",").Split(',').Select(s => s.Trim()).Where(s => !string.IsNullOrEmpty(s)).ToArray();
-            if (formats.Any(format => format != "xml" && format != "ass"))
+            var formats = myOption.DownloadDanmakuFormat.Replace("，", ",").ToLower().Split(',', StringSplitOptions.TrimEntries & StringSplitOptions.RemoveEmptyEntries);
+            if (formats.Any(format => !defaultFormatNames.Contains(format)))
             {
-                LogError($"不支持的下载弹幕格式：{myOption.DownloadDanmakuFormat}");
+                LogError($"包含不支持的下载弹幕格式：{myOption.DownloadDanmakuFormat}");
                 return defaultFormats;
             }
-            return formats;
+            return formats.Select((format) => 
+            {
+                return format switch
+                {
+                    "xml" => BBDownDanmakuFormat.Xml,
+                    "ass" => BBDownDanmakuFormat.Ass,
+                    _ => BBDownDanmakuFormat.Xml,
+                };
+            }).ToArray();
         }
 
         /// <summary>
