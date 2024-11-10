@@ -3,46 +3,46 @@ using System.Text.Json;
 using static BBDown.Core.Entity.Entity;
 using static BBDown.Core.Util.HTTPUtil;
 
-namespace BBDown.Core.Fetcher
-{
-    /// <summary>
-    /// 合集解析
-    /// https://space.bilibili.com/23630128/channel/collectiondetail?sid=2045
-    /// https://www.bilibili.com/medialist/play/23630128?business=space_collection&business_id=2045 (无法从该链接打开合集)
-    /// </summary>
-    public class MediaListFetcher : IFetcher
-    {
-        public async Task<VInfo> FetchAsync(string id)
-        {
-            id = id[10..];
-            var api = $"https://api.bilibili.com/x/v1/medialist/info?type=8&biz_id={id}&tid=0";
-            var json = await GetWebSourceAsync(api);
-            using var infoJson = JsonDocument.Parse(json);
-            var data = infoJson.RootElement.GetProperty("data");
-            var listTitle = data.GetProperty("title").GetString()!;
-            var intro = data.GetProperty("intro").GetString()!;
-            long pubTime = data.GetProperty("ctime").GetInt64()!;
+namespace BBDown.Core.Fetcher;
 
-            List<Page> pagesInfo = new();
-            bool hasMore = true;
-            var oid = "";
-            int index = 1;
-            while (hasMore)
+/// <summary>
+/// 合集解析
+/// https://space.bilibili.com/23630128/channel/collectiondetail?sid=2045
+/// https://www.bilibili.com/medialist/play/23630128?business=space_collection&business_id=2045 (无法从该链接打开合集)
+/// </summary>
+public class MediaListFetcher : IFetcher
+{
+    public async Task<VInfo> FetchAsync(string id)
+    {
+        id = id[10..];
+        var api = $"https://api.bilibili.com/x/v1/medialist/info?type=8&biz_id={id}&tid=0";
+        var json = await GetWebSourceAsync(api);
+        using var infoJson = JsonDocument.Parse(json);
+        var data = infoJson.RootElement.GetProperty("data");
+        var listTitle = data.GetProperty("title").GetString()!;
+        var intro = data.GetProperty("intro").GetString()!;
+        long pubTime = data.GetProperty("ctime").GetInt64()!;
+
+        List<Page> pagesInfo = new();
+        bool hasMore = true;
+        var oid = "";
+        int index = 1;
+        while (hasMore)
+        {
+            var listApi = $"https://api.bilibili.com/x/v2/medialist/resource/list?type=8&oid={oid}&otype=2&biz_id={id}&with_current=true&mobi_app=web&ps=20&direction=false&sort_field=1&tid=0&desc=false";
+            json = await GetWebSourceAsync(listApi);
+            using var listJson = JsonDocument.Parse(json);
+            data = listJson.RootElement.GetProperty("data");
+            hasMore = data.GetProperty("has_more").GetBoolean();
+            foreach (var m in data.GetProperty("media_list").EnumerateArray())
             {
-                var listApi = $"https://api.bilibili.com/x/v2/medialist/resource/list?type=8&oid={oid}&otype=2&biz_id={id}&with_current=true&mobi_app=web&ps=20&direction=false&sort_field=1&tid=0&desc=false";
-                json = await GetWebSourceAsync(listApi);
-                using var listJson = JsonDocument.Parse(json);
-                data = listJson.RootElement.GetProperty("data");
-                hasMore = data.GetProperty("has_more").GetBoolean();
-                foreach (var m in data.GetProperty("media_list").EnumerateArray())
+                var pageCount = m.GetProperty("page").GetInt32();
+                var desc = m.GetProperty("intro").GetString()!;
+                var ownerName = m.GetProperty("upper").GetProperty("name").ToString();
+                var ownerMid = m.GetProperty("upper").GetProperty("mid").ToString();
+                foreach (var page in m.GetProperty("pages").EnumerateArray())
                 {
-                    var pageCount = m.GetProperty("page").GetInt32();
-                    var desc = m.GetProperty("intro").GetString()!;
-                    var ownerName = m.GetProperty("upper").GetProperty("name").ToString();
-                    var ownerMid = m.GetProperty("upper").GetProperty("mid").ToString();
-                    foreach (var page in m.GetProperty("pages").EnumerateArray())
-                    {
-                        Page p = new(index++,
+                    Page p = new(index++,
                         m.GetProperty("id").ToString(),
                         page.GetProperty("id").ToString(),
                         "", //epid
@@ -54,24 +54,23 @@ namespace BBDown.Core.Fetcher
                         desc,
                         ownerName,
                         ownerMid);
-                        if (!pagesInfo.Contains(p)) pagesInfo.Add(p);
-                        else index--;
-                    }
-                    oid = m.GetProperty("id").ToString();
+                    if (!pagesInfo.Contains(p)) pagesInfo.Add(p);
+                    else index--;
                 }
+                oid = m.GetProperty("id").ToString();
             }
-
-            var info = new VInfo
-            {
-                Title = listTitle.Trim(),
-                Desc = intro.Trim(),
-                Pic = "",
-                PubTime = pubTime,
-                PagesInfo = pagesInfo,
-                IsBangumi = false
-            };
-
-            return info;
         }
+
+        var info = new VInfo
+        {
+            Title = listTitle.Trim(),
+            Desc = intro.Trim(),
+            Pic = "",
+            PubTime = pubTime,
+            PagesInfo = pagesInfo,
+            IsBangumi = false
+        };
+
+        return info;
     }
 }
