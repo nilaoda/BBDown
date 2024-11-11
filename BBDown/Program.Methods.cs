@@ -93,6 +93,20 @@ internal partial class Program
         return encodingPriority;
     }
 
+    private static BBDownDanmakuFormat[] ParseDownloadDanmakuFormats(MyOption myOption)
+    {
+        if (string.IsNullOrEmpty(myOption.DownloadDanmakuFormats)) return BBDownDanmakuFormatInfo.DefaultFormats;
+
+        var formats = myOption.DownloadDanmakuFormats.Replace("，", ",").ToLower().Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        if (formats.Any(format => !BBDownDanmakuFormatInfo.AllFormatNames.Contains(format)))
+        {
+            LogError($"包含不支持的下载弹幕格式：{myOption.DownloadDanmakuFormats}");
+            return BBDownDanmakuFormatInfo.DefaultFormats;
+        }
+        
+        return formats.Select(BBDownDanmakuFormatInfo.FromFormatName).ToArray();
+    }
+
     /// <summary>
     /// 解析用户输入的清晰度规格优先级
     /// </summary>
