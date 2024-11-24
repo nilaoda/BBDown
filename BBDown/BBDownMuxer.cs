@@ -44,7 +44,7 @@ static partial class BBDownMuxer
         return string.IsNullOrEmpty(str) ? str : str.Replace("\"", "'").Replace("\\", "\\\\");
     }
 
-    private static int MuxByMp4box(string videoPath, string audioPath, string outPath, string desc, string title, string author, string episodeId, string pic, string lang, List<Subtitle>? subs, bool audioOnly, bool videoOnly, List<ViewPoint>? points)
+    private static int MuxByMp4box(string url, string videoPath, string audioPath, string outPath, string desc, string title, string author, string episodeId, string pic, string lang, List<Subtitle>? subs, bool audioOnly, bool videoOnly, List<ViewPoint>? points)
     {
         StringBuilder inputArg = new();
         StringBuilder metaArg = new();
@@ -73,7 +73,8 @@ static partial class BBDownMuxer
             metaArg.Append($":album=\"{title}\":title=\"{episodeId}\"");
         else
             metaArg.Append($":title=\"{title}\"");
-        metaArg.Append($":comment=\"{desc}\"");
+        metaArg.Append($":sdesc=\"{desc}\"");
+        metaArg.Append($":comment=\"{url}\"");
         metaArg.Append($":artist=\"{author}\"");
 
         if (subs != null)
@@ -90,12 +91,12 @@ static partial class BBDownMuxer
         }
 
         //----分析完毕
-        var arguments = (Config.DEBUG_LOG ? " -v " : "") + inputArg + (metaArg.ToString() == "" ? "" : " -itags tool=" + metaArg.ToString()) + $" -new -- \"{outPath}\"";
+        var arguments = (Config.DEBUG_LOG ? " -v " : "") + inputArg + (metaArg.ToString() == "" ? "" : " -itags tool=" + metaArg) + $" -new -- \"{outPath}\"";
         LogDebug("mp4box命令: {0}", arguments);
         return RunExe(MP4BOX, arguments, MP4BOX != "mp4box");
     }
 
-    public static int MuxAV(bool useMp4box, string videoPath, string audioPath, List<AudioMaterial> audioMaterial, string outPath, string desc = "", string title = "", string author = "", string episodeId = "", string pic = "", string lang = "", List<Subtitle>? subs = null, bool audioOnly = false, bool videoOnly = false, List<ViewPoint>? points = null, long pubTime = 0, bool simplyMux = false)
+    public static int MuxAV(bool useMp4box, string bvid, string videoPath, string audioPath, List<AudioMaterial> audioMaterial, string outPath, string desc = "", string title = "", string author = "", string episodeId = "", string pic = "", string lang = "", List<Subtitle>? subs = null, bool audioOnly = false, bool videoOnly = false, List<ViewPoint>? points = null, long pubTime = 0, bool simplyMux = false)
     {
         if (audioOnly && audioPath != "")
             videoPath = "";
@@ -104,10 +105,11 @@ static partial class BBDownMuxer
         desc = EscapeString(desc);
         title = EscapeString(title);
         episodeId = EscapeString(episodeId);
+        var url = $"https://www.bilibili.com/video/{bvid}/";
 
         if (useMp4box)
         {
-            return MuxByMp4box(videoPath, audioPath, outPath, desc, title, author, episodeId, pic, lang, subs, audioOnly, videoOnly, points);
+            return MuxByMp4box(url, videoPath, audioPath, outPath, desc, title, author, episodeId, pic, lang, subs, audioOnly, videoOnly, points);
         }
 
         if (outPath.Contains('/') && ! Directory.Exists(Path.GetDirectoryName(outPath)))
@@ -179,6 +181,7 @@ static partial class BBDownMuxer
         argsBuilder.Append(metaArg);
         if (!simplyMux) {
             argsBuilder.Append($"-metadata title=\"{(episodeId == "" ? title : episodeId)}\" ");
+            argsBuilder.Append($"-metadata comment=\"{url}\" ");
             if (lang != "") argsBuilder.Append($"-metadata:s:a:0 language={lang} ");
             if (!string.IsNullOrWhiteSpace(desc)) argsBuilder.Append($"-metadata description=\"{desc}\" ");
             if (!string.IsNullOrEmpty(author)) argsBuilder.Append($"-metadata artist=\"{author}\" ");
