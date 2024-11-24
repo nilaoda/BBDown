@@ -244,7 +244,7 @@ partial class Program
 
         Log("获取aid...");
         aidOri = await GetAvIdAsync(input);
-        Log("获取aid结束: " + aidOri);
+        Log($"获取aid结束: {aidOri}");
 
         if (string.IsNullOrEmpty(aidOri))
         {
@@ -286,6 +286,11 @@ partial class Program
         if (pubTime != 0)
         {
             Log("发布时间: " + FormatTimeStamp(pubTime, "yyyy-MM-dd HH:mm:ss zzz"));
+        }
+        var bvid = vInfo.PagesInfo.FirstOrDefault()?.bvid;
+        if (!string.IsNullOrEmpty(bvid))
+        {
+            Log($"视频URL: https://www.bilibili.com/video/{bvid}/");
         }
         var mid = vInfo.PagesInfo.FirstOrDefault(p => !string.IsNullOrEmpty(p.ownerMid))?.ownerMid;
         if (!string.IsNullOrEmpty(mid))
@@ -664,7 +669,7 @@ partial class Program
                 Log($"开始合并音视频{(subtitleInfo.Any() ? "和字幕" : "")}...");
                 if (myOption.AudioOnly)
                     savePath = savePath[..^4] + ".m4a";
-                int code = BBDownMuxer.MuxAV(myOption.UseMP4box, videoPath, audioPath, audioMaterial, savePath,
+                int code = BBDownMuxer.MuxAV(myOption.UseMP4box, p.bvid, videoPath, audioPath, audioMaterial, savePath,
                     desc,
                     title,
                     p.ownerName ?? "",
@@ -753,7 +758,7 @@ partial class Program
                 Log($"开始混流视频{(subtitleInfo.Any() ? "和字幕" : "")}...");
                 if (myOption.AudioOnly)
                     savePath = savePath[..^4] + ".m4a";
-                int code = BBDownMuxer.MuxAV(false, videoPath, "", audioMaterial, savePath,
+                int code = BBDownMuxer.MuxAV(false, p.bvid, videoPath, "", audioMaterial, savePath,
                     desc,
                     title,
                     p.ownerName ?? "",
