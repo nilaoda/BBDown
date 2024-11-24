@@ -90,7 +90,7 @@ static partial class BBDownMuxer
         }
 
         //----分析完毕
-        var arguments = (Config.DEBUG_LOG ? " -verbose " : "") + inputArg.ToString() + (metaArg.ToString() == "" ? "" : " -itags tool=" + metaArg.ToString()) + $" -new -- \"{outPath}\"";
+        var arguments = (Config.DEBUG_LOG ? " -v " : "") + inputArg + (metaArg.ToString() == "" ? "" : " -itags tool=" + metaArg.ToString()) + $" -new -- \"{outPath}\"";
         LogDebug("mp4box命令: {0}", arguments);
         return RunExe(MP4BOX, arguments, MP4BOX != "mp4box");
     }
