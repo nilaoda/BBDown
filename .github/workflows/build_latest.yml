@@ -55,14 +55,24 @@ jobs:
           name: BBDown_win-arm64
           path: BBDown_${{ needs.set-date.outputs.date }}_win-arm64.zip
 
-  build-linux-x64:
+  build-linux-x64-arm64:
     runs-on: ubuntu-latest
-    container: ubuntu:18.04
     needs: set-date
 
     steps:
-      - run: apt-get update
-      - run: apt-get install -y curl wget libicu-dev libcurl4-openssl-dev zlib1g-dev libkrb5-dev zip
+      # https://learn.microsoft.com/zh-cn/dotnet/core/deploying/native-aot/cross-compile
+      - run: |
+          sudo dpkg --add-architecture arm64
+          sudo bash -c 'cat > /etc/apt/sources.list.d/arm64.list <<EOF
+          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy main restricted
+          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy-updates main restricted
+          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy-backports main restricted universe multiverse
+          EOF'
+          sudo sed -i -e 's/deb http/deb [arch=amd64] http/g' /etc/apt/sources.list
+          sudo sed -i -e 's/deb mirror/deb [arch=amd64] mirror/g' /etc/apt/sources.list
+          sudo apt-get update
+          sudo apt-get install -y curl wget libicu-dev libcurl4-openssl-dev zlib1g-dev libkrb5-dev clang llvm binutils-aarch64-linux-gnu gcc-aarch64-linux-gnu zlib1g-dev:arm64
+      
       - uses: actions/checkout@v1
 
       - name: Set up dotnet
@@ -70,39 +80,23 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_SDK_VERSION }}
 
-      - name: Publish [linux-x64]
-        run: dotnet publish BBDown -r linux-x64 -c Release -o artifact
+      - name: Publish [linux]
+        run: |
+          dotnet publish BBDown -r linux-x64 -c Release -o artifact
+          dotnet publish BBDown -r linux-arm64 -c Release -o artifact-arm64
 
-      - name: Package [linux-x64]
+      - name: Package [linux]
         run: |
           cd artifact
           zip ../BBDown_${{ needs.set-date.outputs.date }}_linux-x64.zip BBDown
+          cd ../artifact-arm64
+          zip ../BBDown_${{ needs.set-date.outputs.date }}_linux-arm64.zip BBDown
 
       - name: Upload Artifact [linux-x64]
         uses: actions/upload-artifact@v3.1.3
         with:
           name: BBDown_linux-x64
           path: BBDown_${{ needs.set-date.outputs.date }}_linux-x64.zip
-
-  build-linux-arm64:
-    runs-on: ubuntu-latest
-    container: mcr.microsoft.com/dotnet-buildtools/prereqs:ubuntu-18.04-cross-arm64-20220312201346-b2c2436
-    needs: set-date
-
-    steps:
-      - uses: actions/checkout@v1
-      - name: Set up dotnet
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: ${{ env.DOTNET_SDK_VERSION }}
-
-      - name: Publish [linux-arm64]
-        run: dotnet publish BBDown -r linux-arm64 -c Release -p:ObjCopyName=aarch64-linux-gnu-objcopy -p:CppCompilerAndLinker=clang-9 -p:SysRoot=/crossrootfs/arm64 -o artifact
-
-      - name: Package [linux-arm64]
-        run: |
-          cd artifact
-          zip ../BBDown_${{ needs.set-date.outputs.date }}_linux-arm64.zip BBDown
 
       - name: Upload Artifact[linux-arm64]
         uses: actions/upload-artifact@v3.1.3
