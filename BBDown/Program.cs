@@ -669,6 +669,8 @@ partial class Program
                 Log($"开始合并音视频{(subtitleInfo.Any() ? "和字幕" : "")}...");
                 if (myOption.AudioOnly)
                     savePath = savePath[..^4] + ".m4a";
+
+                var isHevc = selectedVideo?.codecs == "HEVC";
                 int code = BBDownMuxer.MuxAV(myOption.UseMP4box, p.bvid, videoPath, audioPath, audioMaterial, savePath,
                     desc,
                     title,
@@ -676,7 +678,7 @@ partial class Program
                     (pagesCount > 1 || (bangumi && !vInfo.IsBangumiEnd)) ? p.title : "",
                     File.Exists(coverPath) ? coverPath : "",
                     lang,
-                    subtitleInfo, myOption.AudioOnly, myOption.VideoOnly, p.points, p.pubTime, myOption.SimplyMux);
+                    subtitleInfo, myOption.AudioOnly, myOption.VideoOnly, p.points, p.pubTime, myOption.SimplyMux, isHevc);
                 if (code != 0 || !File.Exists(savePath) || new FileInfo(savePath).Length == 0)
                 {
                     LogError("合并失败"); return;
