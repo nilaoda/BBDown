@@ -9,6 +9,7 @@ using static BBDown.Core.Util.SubUtil;
 using static BBDown.Core.Logger;
 using System.IO;
 using BBDown.Core;
+using System.Runtime.InteropServices;
 
 namespace BBDown;
 
@@ -96,7 +97,7 @@ static partial class BBDownMuxer
         return RunExe(MP4BOX, arguments, MP4BOX != "mp4box");
     }
 
-    public static int MuxAV(bool useMp4box, string bvid, string videoPath, string audioPath, List<AudioMaterial> audioMaterial, string outPath, string desc = "", string title = "", string author = "", string episodeId = "", string pic = "", string lang = "", List<Subtitle>? subs = null, bool audioOnly = false, bool videoOnly = false, List<ViewPoint>? points = null, long pubTime = 0, bool simplyMux = false)
+    public static int MuxAV(bool useMp4box, string bvid, string videoPath, string audioPath, List<AudioMaterial> audioMaterial, string outPath, string desc = "", string title = "", string author = "", string episodeId = "", string pic = "", string lang = "", List<Subtitle>? subs = null, bool audioOnly = false, bool videoOnly = false, List<ViewPoint>? points = null, long pubTime = 0, bool simplyMux = false, bool isHevc = false)
     {
         if (audioOnly && audioPath != "")
             videoPath = "";
@@ -191,6 +192,8 @@ static partial class BBDownMuxer
         argsBuilder.Append("-c copy ");
         if (audioOnly && audioPath == "") argsBuilder.Append("-vn ");
         if (subs != null) argsBuilder.Append("-c:s mov_text ");
+        // fix macOS hev1, see https://discussions.apple.com/thread/253081863?sortBy=rank
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX) && isHevc) argsBuilder.Append("-tag:v:0 hvc1 ");
         argsBuilder.Append($"-movflags faststart -strict unofficial -strict -2 -f mp4 -- \"{outPath}\"");
 
         string arguments = argsBuilder.ToString();
