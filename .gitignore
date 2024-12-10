@@ -366,3 +366,11 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# debug log
+debug_*.json
+
+# dotnet run in `BBDown/` sub folder
+/BBDown/*.mp4
+/BBDown/*.xml
+/BBDown/*.ass
