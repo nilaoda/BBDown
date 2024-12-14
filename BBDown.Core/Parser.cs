@@ -85,6 +85,7 @@ public static partial class Parser
         paramBuilder.Append($"&cid={cid}&ep_id={epId}&platform=android&prefer_code_type={code}&qn={qn}");
         if (isBiliPlus) paramBuilder.Append($"&ts={GetTimeStamp(true)}");
 
+        paramBuilder.Append("&s_locale=zh_SG");
         string param = paramBuilder.ToString();
         api += (isBiliPlus ? $"{param}&sign={GetSign(param, true)}" : param);
 

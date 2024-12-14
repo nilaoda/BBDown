@@ -582,13 +582,13 @@ static partial class BBDownUtil
     private static partial Regex EpRegex();
     [GeneratedRegex("/ss(\\d+)")]
     private static partial Regex SsRegex();
-    [GeneratedRegex("space\\.bilibili\\.com/(\\d+)")]
+    [GeneratedRegex(@"space\.bilibili\.com/(\d+)")]
     private static partial Regex UidRegex();
-    [GeneratedRegex("global\\.bilibili\\.com/play/\\d+/(\\d+)")]
+    [GeneratedRegex(@"\.bilibili\.tv\/\w+\/play\/\d+\/(\d+)")]
     private static partial Regex GlobalEpRegex();
     [GeneratedRegex("bangumi/media/(md\\d+)")]
     private static partial Regex BangumiMdRegex();
-    [GeneratedRegex("window.__INITIAL_STATE__=([\\s\\S].*?);\\(function\\(\\)")]
+    [GeneratedRegex(@"window.__INITIAL_STATE__=([\s\S].*?);\(function\(\)")]
     private static partial Regex StateRegex();
     [GeneratedRegex("md(\\d+)")]
     private static partial Regex MdRegex();
