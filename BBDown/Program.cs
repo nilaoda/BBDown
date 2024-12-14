@@ -227,16 +227,14 @@ partial class Program
 
     public static async Task<(string fetchedAid, VInfo vInfo, string apiType)> GetVideoInfoAsync(MyOption myOption, string aidOri, string input)
     {
-        Log("检测账号登录...");
-
         // 加载认证信息
         LoadCredentials(myOption);
 
         // 检测是否登录了账号
-        bool is_login = await CheckLogin(Config.COOKIE);
-        if (!myOption.UseIntlApi && !myOption.UseTvApi && Config.AREA == "")
+        if (myOption is { UseIntlApi: false, UseTvApi: false } && Config.AREA == "")
         {
-            if (!is_login)
+            Log("检测账号登录...");
+            if (!await CheckLogin(Config.COOKIE))
             {
                 LogWarn("你尚未登录B站账号, 解析可能受到限制");
             }
@@ -288,7 +286,7 @@ partial class Program
             Log("发布时间: " + FormatTimeStamp(pubTime, "yyyy-MM-dd HH:mm:ss zzz"));
         }
         var bvid = vInfo.PagesInfo.FirstOrDefault()?.bvid;
-        if (!string.IsNullOrEmpty(bvid))
+        if (!string.IsNullOrEmpty(bvid) && !myOption.UseIntlApi)
         {
             Log($"视频URL: https://www.bilibili.com/video/{bvid}/");
         }

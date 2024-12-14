@@ -189,7 +189,7 @@ static partial class BBDownMuxer
             if (episodeId != "") argsBuilder.Append($"-metadata album=\"{title}\" ");
             if (pubTime != 0) argsBuilder.Append($"-metadata creation_time=\"{(DateTimeOffset.FromUnixTimeSeconds(pubTime).ToString("yyyy-MM-ddTHH:mm:ss.ffffffZ"))}\" ");
         }
-        argsBuilder.Append("-c copy ");
+        argsBuilder.Append("-c:v copy -c:a copy ");
         if (audioOnly && audioPath == "") argsBuilder.Append("-vn ");
         if (subs != null) argsBuilder.Append("-c:s mov_text ");
         // fix macOS hev1, see https://discussions.apple.com/thread/253081863?sortBy=rank
