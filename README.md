@@ -309,6 +309,41 @@ API服务器不支持HTTPS配置，如果有需要请自行使用nginx等反向�
 API详细请参考[json-api-doc.md](./json-api-doc.md)
 </details>
 
+<details>
+<summary>Docker运行</summary>
+
+启动服务器
+1. 拉取镜像
+    ```bash
+    docker pull nilaoda/bbdown:1.6.3
+    ```
+
+2. 运行
+    ```bash
+    docker run -dit \
+      --name bbdown-serve \
+      --restart=always \
+      -v ${PWD}/downloads:/downloads \
+      -p 23333:23333 \
+      nilaoda/bbdown:1.6.3
+   
+    # 带Cookie运行服务器
+    docker run -dit \
+      --name bbdown-serve \
+      --restart=always \
+      -v ${PWD}/BBDown.data:/BBDown.data \
+      -v ${PWD}/downloads:/downloads \
+      -p 23333:23333 \
+      nilaoda/bbdown:1.6.3
+    ```
+
+3. 查看日志
+    ```bash
+    docker logs -f --tail=200 bbdown-serve
+    ```
+   
+</details>
+
 # 演示
 ![1](https://user-images.githubusercontent.com/20772925/88686407-a2001480-d129-11ea-8aac-97a0c71af115.gif)
 
