@@ -18,7 +18,8 @@ COPY --from=builder /BBDown /BBDown
 RUN apt-get -y update \
     && apt-get -y upgrade \
     && apt-get install -y --no-install-recommends ffmpeg \
-    && apt-get clean
+    && apt-get clean \
+    && chmod +x /BBDown
 
 EXPOSE 23333
 
