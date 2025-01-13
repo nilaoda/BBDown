@@ -25,7 +25,7 @@ jobs:
         with:
           # 指定tag下载已构建完成的制品
           version: 'tags/${{ github.event.inputs.release || github.event.release.tag_name }}'
-          file: 'BBDown_linux-.*.zip'
+          file: 'BBDown_.*_linux-.*.zip'
           regex: true
           target: 'artifact/'
           token: ${{ secrets.GITHUB_TOKEN }}
