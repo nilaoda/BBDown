@@ -31,10 +31,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Show Artifact
-        run: pwd;ls;ls -l ./artifact/
-
-      - name: echo env
-        run: echo ${RELEASE};echo ${DOCKER_LOGIN};echo ${WORKDIR}
+        run: pwd;ls -l ./artifact/
 
       - name: Docker login
         uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567  # v3.3.0
