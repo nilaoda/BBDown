@@ -468,7 +468,7 @@ static partial class BBDownUtil
         var ponints = new List<ViewPoint>();
         try
         {
-            string api = $"https://api.bilibili.com/x/player/v2?cid={cid}&aid={aid}";
+            string api = $"https://api.bilibili.com/x/player/wbi/v2?cid={cid}&aid={aid}";
             string json = await GetWebSourceAsync(api);
             using var infoJson = JsonDocument.Parse(json);
             if (infoJson.RootElement.GetProperty("data").TryGetProperty("view_points", out JsonElement vPoint))

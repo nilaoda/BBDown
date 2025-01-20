@@ -330,7 +330,7 @@ public static partial class SubUtil
         try
         {
             List<Subtitle> subtitles = new();
-            string api = $"https://api.bilibili.com/x/player/v2?cid={cid}&aid={aid}";
+            string api = $"https://api.bilibili.com/x/player/wbi/v2?cid={cid}&aid={aid}";
             string json = await GetWebSourceAsync(api);
             using var infoJson = JsonDocument.Parse(json);
             var subs = infoJson.RootElement.GetProperty("data").GetProperty("subtitle").GetProperty("subtitles").EnumerateArray();
