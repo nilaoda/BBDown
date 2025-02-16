@@ -44,13 +44,13 @@ jobs:
           zip ../BBDown_${{ needs.set-date.outputs.date }}_win-arm64.zip BBDown.exe
 
       - name: Upload Artifact [win-x64]
-        uses: actions/upload-artifact@v3.1.3
+        uses: actions/upload-artifact@v4
         with:
           name: BBDown_win-x64
           path: BBDown_${{ needs.set-date.outputs.date }}_win-x64.zip
 
       - name: Upload Artifact [win-arm64]
-        uses: actions/upload-artifact@v3.1.3
+        uses: actions/upload-artifact@v4
         with:
           name: BBDown_win-arm64
           path: BBDown_${{ needs.set-date.outputs.date }}_win-arm64.zip
@@ -133,13 +133,13 @@ jobs:
           zip ../BBDown_${{ needs.set-date.outputs.date }}_linux-arm64.zip BBDown
 
       - name: Upload Artifact [linux-x64]
-        uses: actions/upload-artifact@v3.1.3
+        uses: actions/upload-artifact@v4
         with:
           name: BBDown_linux-x64
           path: BBDown_${{ needs.set-date.outputs.date }}_linux-x64.zip
 
       - name: Upload Artifact[linux-arm64]
-        uses: actions/upload-artifact@v3.1.3
+        uses: actions/upload-artifact@v4
         with:
           name: BBDown_linux-arm64
           path: BBDown_${{ needs.set-date.outputs.date }}_linux-arm64.zip
@@ -169,13 +169,13 @@ jobs:
           zip ../BBDown_${{ needs.set-date.outputs.date }}_osx-arm64.zip BBDown
 
       - name: Upload Artifact [osx-x64]
-        uses: actions/upload-artifact@v3.1.3
+        uses: actions/upload-artifact@v4
         with:
           name: BBDown_osx-x64
           path: BBDown_${{ needs.set-date.outputs.date }}_osx-x64.zip
 
       - name: Upload Artifact [osx-arm64]
-        uses: actions/upload-artifact@v3.1.3
+        uses: actions/upload-artifact@v4
         with:
           name: BBDown_osx-arm64
           path: BBDown_${{ needs.set-date.outputs.date }}_osx-arm64.zip
