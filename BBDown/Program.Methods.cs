@@ -512,7 +512,7 @@ internal partial class Program
                 LogWarn("检测到cmcc域名cdn, 已经禁用多线程");
                 downloadConfig.ForceHttp = false;
             }
-            await DownloadFile(url, destPath, downloadConfig);
+            await DownloadFileAsync(url, destPath, downloadConfig);
         }
     }
 

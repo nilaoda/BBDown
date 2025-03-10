@@ -68,7 +68,7 @@ internal static class BBDownDownloadUtil
             throw new Exception("Retry...");
     }
 
-    public static async Task DownloadFile(string url, string path, DownloadConfig config)
+    public static async Task DownloadFileAsync(string url, string path, DownloadConfig config)
     {
         if (string.IsNullOrEmpty(url)) return;
         if (config.ForceHttp) url = ReplaceUrl(url);

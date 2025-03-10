@@ -417,7 +417,7 @@ partial class Program
                 }
                 if (!myOption.SkipCover && !myOption.SubOnly && !File.Exists(coverPath) && !myOption.DanmakuOnly && !myOption.CoverOnly)
                 {
-                    await DownloadFile((pic == "" ? p.cover! : pic), coverPath, new DownloadConfig());
+                    await DownloadFileAsync((pic == "" ? p.cover! : pic), coverPath, new DownloadConfig());
                 }
 
                 if (!myOption.SkipSubtitle && !myOption.DanmakuOnly && !myOption.CoverOnly)
@@ -557,8 +557,8 @@ partial class Program
                     var danmakuXmlPath = Path.ChangeExtension(savePath, ".xml");
                     var danmakuAssPath = Path.ChangeExtension(savePath, ".ass");
                     Log("正在下载弹幕Xml文件");
-                    string danmakuUrl = $"https://comment.bilibili.com/{p.cid}.xml";
-                    await DownloadFile(danmakuUrl, danmakuXmlPath, downloadConfig);
+                    var danmakuUrl = $"https://comment.bilibili.com/{p.cid}.xml";
+                    await DownloadFileAsync(danmakuUrl, danmakuXmlPath, downloadConfig);
                     var danmakus = DanmakuUtil.ParseXml(danmakuXmlPath);
                     if (danmakus == null)
                     {
@@ -596,7 +596,7 @@ partial class Program
                 {
                     var coverUrl = pic == "" ? p.cover! : pic;
                     var newCoverPath = Path.ChangeExtension(savePath, Path.GetExtension(coverUrl));
-                    await DownloadFile(coverUrl, newCoverPath, downloadConfig);
+                    await DownloadFileAsync(coverUrl, newCoverPath, downloadConfig);
                     if (Directory.Exists(p.aid) && Directory.GetFiles(p.aid).Length == 0) Directory.Delete(p.aid, true);
                     return;
                 }
