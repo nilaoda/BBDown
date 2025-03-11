@@ -1,0 +1,56 @@
+name: Docker Release
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      release:
+        description: "tag (e.g., 1.6.3)"
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  docker-release:
+    runs-on: ubuntu-latest
+    env:
+      WORKDIR: ${{ github.workspace }}
+      RELEASE: ${{ github.event.inputs.release || github.event.release.tag_name }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+
+      - uses: dsaltares/fetch-gh-release-asset@master
+        with:
+          # 指定tag下载已构建完成的制品
+          version: 'tags/${{ github.event.inputs.release || github.event.release.tag_name }}'
+          file: 'BBDown_.*_linux-.*.zip'
+          regex: true
+          target: 'artifact/'
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Show Artifact
+        run: pwd;ls -l ./artifact/
+
+      - name: Docker login
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567  # v3.3.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ github.workspace }}
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/bbdown:${{ github.event.inputs.release || github.event.release.tag_name }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/bbdown:latest

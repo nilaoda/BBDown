@@ -298,6 +298,8 @@ BBDown -p ALL "https://www.bilibili.com/bangumi/play/ss33073"
 <details>
 <summary>API服务器</summary>
 
+---
+
 启动服务器（自定义监听地址和端口）：
 
 ```shell
@@ -307,6 +309,41 @@ BBDown server -l http://0.0.0.0:12450
 API服务器不支持HTTPS配置，如果有需要请自行使用nginx等反向代理进行配置
 
 API详细请参考[json-api-doc.md](./json-api-doc.md)
+</details>
+
+<details>
+<summary>Docker运行</summary>
+
+启动服务器
+1. 拉取镜像
+    ```bash
+    docker pull nilaoda/bbdown:1.6.3
+    ```
+
+2. 运行
+    ```bash
+    docker run -dit \
+      --name bbdown-serve \
+      --restart=always \
+      -v ${PWD}/downloads:/downloads \
+      -p 23333:23333 \
+      nilaoda/bbdown:1.6.3
+   
+    # 带Cookie运行服务器
+    docker run -dit \
+      --name bbdown-serve \
+      --restart=always \
+      -v ${PWD}/BBDown.data:/BBDown.data \
+      -v ${PWD}/downloads:/downloads \
+      -p 23333:23333 \
+      nilaoda/bbdown:1.6.3
+    ```
+
+3. 查看日志
+    ```bash
+    docker logs -f --tail=200 bbdown-serve
+    ```
+   
 </details>
 
 # 演示
