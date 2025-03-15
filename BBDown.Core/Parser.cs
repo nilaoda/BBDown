@@ -162,7 +162,7 @@ public static partial class Parser
             return parsedResult;
         }
         // data节点一次性判断完
-        string nodeName = null;
+        string? nodeName = null;
         if (parsedResult.WebJsonString.Contains("\"result\":{"))
         {
             nodeName = "result";

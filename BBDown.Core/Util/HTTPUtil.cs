@@ -71,7 +71,7 @@ public static class HTTPUtil
         return location;
     }
 
-    public static async Task<byte[]> GetPostResponseAsync(string Url, byte[] postData, Dictionary<string, string> headers = null)
+    public static async Task<byte[]> GetPostResponseAsync(string Url, byte[] postData, Dictionary<string, string>? headers = null)
     {
         LogDebug("Post to: {0}, data: {1}", Url, Convert.ToBase64String(postData));
 
