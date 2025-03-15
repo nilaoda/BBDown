@@ -49,6 +49,7 @@ partial class Program
     }
 
     [JsonSerializable(typeof(MyOption))]
+    [JsonSerializable(typeof(ServeRequestOptions))]
     partial class MyOptionJsonContext : JsonSerializerContext { }
 
     private static void Console_CancelKeyPress(object? sender, ConsoleCancelEventArgs e)
@@ -417,7 +418,7 @@ partial class Program
                 }
                 if (!myOption.SkipCover && !myOption.SubOnly && !File.Exists(coverPath) && !myOption.DanmakuOnly && !myOption.CoverOnly)
                 {
-                    await DownloadFileAsync((pic == "" ? p.cover! : pic), coverPath, new DownloadConfig());
+                    await DownloadFileAsync(pic == "" ? p.cover! : pic, coverPath, new DownloadConfig());
                 }
 
                 if (!myOption.SkipSubtitle && !myOption.DanmakuOnly && !myOption.CoverOnly)
@@ -598,7 +599,7 @@ partial class Program
                     var newCoverPath = Path.ChangeExtension(savePath, Path.GetExtension(coverUrl));
                     await DownloadFileAsync(coverUrl, newCoverPath, downloadConfig);
                     if (Directory.Exists(p.aid) && Directory.GetFiles(p.aid).Length == 0) Directory.Delete(p.aid, true);
-                    return;
+                    relatedTask?.SavePaths.Add(newCoverPath);
                 }
 
                 Log($"已选择的流:");
@@ -616,6 +617,7 @@ partial class Program
                 if (!myOption.OnlyShowInfo && File.Exists(savePath) && new FileInfo(savePath).Length != 0)
                 {
                     Log($"{savePath}已存在, 跳过下载...");
+                    relatedTask?.SavePaths.Add(savePath);
                     File.Delete(coverPath);
                     if (Directory.Exists(p.aid) && Directory.GetFiles(p.aid).Length == 0)
                     {
@@ -735,6 +737,7 @@ partial class Program
                 if (File.Exists(savePath) && new FileInfo(savePath).Length != 0)
                 {
                     Log($"{savePath}已存在, 跳过下载...");
+                    relatedTask?.SavePaths.Add(savePath);
                     if (selectedPagesInfo.Count == 1 && Directory.Exists(p.aid))
                     {
                         Directory.Delete(p.aid, true);
@@ -788,6 +791,10 @@ partial class Program
                     LogError(parsedResult.WebJsonString);
                 }
                 LogDebug("{0}", parsedResult.WebJsonString);
+            }
+
+            if (!string.IsNullOrWhiteSpace(savePath)) {
+                relatedTask?.SavePaths.Add(savePath);
             }
         }
         catch (Exception ex)
