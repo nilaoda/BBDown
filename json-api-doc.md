@@ -135,10 +135,10 @@ curl -X POST -H 'Content-Type: application/json' -d '{ "Url": "BV1qt4y1X7TW" }' 
 
 Windows:
 ```shell
-curl -X POST -H 'Content-Type: application/json' -d { "Url": "BV1qt4y1X7TW", "FilePattern": "C:\\Downloads\\<videoTitle>[<dfn>]" }' http://localhost:58682/add-task
+curl -X POST -H 'Content-Type: application/json' -d '{ "Url": "BV1qt4y1X7TW", "FilePattern": "C:\\Downloads\\<videoTitle>[<dfn>]" }' http://localhost:58682/add-task
 ```
 
 Unix-Like:
 ```shell
-curl -X POST -H 'Content-Type: application/json' -d { "Url": "BV1qt4y1X7TW", "FilePattern": "/Downloads/<videoTitle>[<dfn>]" }' http://localhost:58682/add-task
+curl -X POST -H 'Content-Type: application/json' -d '{ "Url": "BV1qt4y1X7TW", "FilePattern": "/Downloads/<videoTitle>[<dfn>]" }' http://localhost:58682/add-task
 ```
