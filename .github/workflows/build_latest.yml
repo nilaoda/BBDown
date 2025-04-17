@@ -55,64 +55,11 @@ jobs:
           name: BBDown_win-arm64
           path: BBDown_${{ needs.set-date.outputs.date }}_win-arm64.zip
 
-  build-linux-x64-arm64:
+  build-linux-x64:
     runs-on: ubuntu-latest
     needs: set-date
 
     steps:
-      - name: setup deb822 repos
-        run: |
-          if [[ $ImageOS == "ubuntu24" ]]; then
-            cat <<EOF > deb822sources
-          Types: deb
-          URIs: http://archive.ubuntu.com/ubuntu/
-          Suites: noble
-          Components: main restricted universe
-          Architectures: amd64
-
-          Types: deb
-          URIs: http://security.ubuntu.com/ubuntu/
-          Suites: noble-security
-          Components: main restricted universe
-          Architectures: amd64
-
-          Types: deb
-          URIs: http://archive.ubuntu.com/ubuntu/
-          Suites: noble-updates
-          Components: main restricted universe
-          Architectures: amd64
-
-          Types: deb
-          URIs: http://azure.ports.ubuntu.com/ubuntu-ports/
-          Suites: noble
-          Components: main restricted multiverse universe
-          Architectures: arm64
-
-          Types: deb
-          URIs: http://azure.ports.ubuntu.com/ubuntu-ports/
-          Suites: noble-updates
-          Components: main restricted multiverse universe
-          Architectures: arm64
-          EOF
-
-            sudo mv deb822sources /etc/apt/sources.list.d/ubuntu.sources
-          else
-            sudo mv config/crosscomp-sources.list /etc/apt/sources.list
-          fi
-
-      # https://learn.microsoft.com/zh-cn/dotnet/core/deploying/native-aot/cross-compile
-      - run: |
-          sudo dpkg --add-architecture arm64
-          sudo bash -c 'cat > /etc/apt/sources.list.d/arm64.list <<EOF
-          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy main restricted
-          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy-updates main restricted
-          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy-backports main restricted universe multiverse
-          EOF'
-          sudo sed -i -e 's/deb http/deb [arch=amd64] http/g' /etc/apt/sources.list
-          sudo sed -i -e 's/deb mirror/deb [arch=amd64] mirror/g' /etc/apt/sources.list
-          sudo apt-get update
-          sudo apt-get install -y curl wget libicu-dev libcurl4-openssl-dev zlib1g-dev libkrb5-dev clang llvm binutils-aarch64-linux-gnu gcc-aarch64-linux-gnu zlib1g-dev:arm64
-
       - uses: actions/checkout@v1
 
       - name: Set up dotnet
@@ -120,23 +67,41 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_SDK_VERSION }}
 
-      - name: Publish [linux]
+      - name: Publish [linux-x64]
         run: |
           dotnet publish BBDown -r linux-x64 -c Release -o artifact
-          dotnet publish BBDown -r linux-arm64 -c Release -o artifact-arm64
 
-      - name: Package [linux]
+      - name: Package [linux-x64]
         run: |
           cd artifact
           zip ../BBDown_${{ needs.set-date.outputs.date }}_linux-x64.zip BBDown
-          cd ../artifact-arm64
-          zip ../BBDown_${{ needs.set-date.outputs.date }}_linux-arm64.zip BBDown
 
       - name: Upload Artifact [linux-x64]
         uses: actions/upload-artifact@v4
         with:
           name: BBDown_linux-x64
           path: BBDown_${{ needs.set-date.outputs.date }}_linux-x64.zip
+
+  build-linux-arm64:
+    runs-on: ubuntu-latest-arm64
+    needs: set-date
+
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: Set up dotnet
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: ${{ env.DOTNET_SDK_VERSION }}
+
+      - name: Publish [linux-arm64]
+        run: |
+          dotnet publish BBDown -r linux-arm64 -c Release -o artifact-arm64
+
+      - name: Package [linux-arm64]
+        run: |
+          cd artifact-arm64
+          zip ../BBDown_${{ needs.set-date.outputs.date }}_linux-arm64.zip BBDown
 
       - name: Upload Artifact[linux-arm64]
         uses: actions/upload-artifact@v4
