@@ -217,6 +217,7 @@ partial class Program
         Config.DEBUG_LOG = myOption.Debug;
         Config.HOST = myOption.Host;
         Config.EPHOST = myOption.EpHost;
+        Config.TVHOST = myOption.TvHost;
         Config.AREA = myOption.Area;
         Config.COOKIE = myOption.Cookie;
         Config.TOKEN = myOption.AccessToken.Replace("access_token=", "");
