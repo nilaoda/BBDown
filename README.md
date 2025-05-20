@@ -111,6 +111,7 @@ Options:
   --delay-per-page <delay-per-page>              设置下载合集分P之间的下载间隔时间(单位: 秒, 默认无间隔)
   --host <host>                                  指定BiliPlus host(使用BiliPlus需要access_token, 不需要cookie, 解析服务器能够获取你账号的大部分权限!)
   --ep-host <ep-host>                            指定BiliPlus EP host(用于代理api.bilibili.com/pgc/view/web/season, 大部分解析服务器不支持代理该接口)
+  --tv-host <tv-host>                            自定义tv端接口请求Host(用于代理api.snm0516.aisee.tv)
   --area <area>                                  (hk|tw|th) 使用BiliPlus时必选, 指定BiliPlus area
   --config-file <config-file>                    读取指定的BBDown本地配置文件(默认为: BBDown.config)
   --version                                      Show version information

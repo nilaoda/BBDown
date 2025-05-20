@@ -50,6 +50,7 @@ internal class MyOption
     public string DelayPerPage { get; set; } = "0";
     public string Host { get; set; } = "api.bilibili.com";
     public string EpHost { get; set; } = "api.bilibili.com";
+    public string TvHost { get; set; } = "api.snm0516.aisee.tv";
     public string Area { get; set; } = "";
     public string? ConfigFile { get; set; }
     //以下仅为兼容旧版本命令行，不建议使用

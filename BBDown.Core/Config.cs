@@ -12,6 +12,8 @@ public static class Config
     public static string HOST { get; set; } = "api.bilibili.com";
     //BiliPlus EP Host
     public static string EPHOST { get; set; } = "api.bilibili.com";
+    //Bili Tv Api Host
+    public static string TVHOST { get; set; } = "api.snm0516.aisee.tv";
     //BiliPlus Area
     public static string AREA { get; set; } = "";
 
