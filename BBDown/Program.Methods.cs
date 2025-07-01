@@ -80,12 +80,18 @@ internal partial class Program
         firstEncoding = "";
         if (myOption.EncodingPriority != null)
         {
-            var encodingPriorityTemp = myOption.EncodingPriority.Replace('，', ',').Split(',').Select(s => s.ToUpper().Trim()).Where(s => !string.IsNullOrEmpty(s)).ToList();
+            var encodingPriorityTemp = myOption.EncodingPriority
+                .ToUpper()
+                .Replace('，', ',')
+                .Replace("-", string.Empty)
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Where(s => !string.IsNullOrEmpty(s)).ToList();
             byte index = 0;
             firstEncoding = encodingPriorityTemp.First();
             foreach (string encoding in encodingPriorityTemp)
             {
-                if (encodingPriority.ContainsKey(encoding)) { continue; }
+                if (encodingPriority.ContainsKey(encoding))
+                    continue;
                 encodingPriority[encoding] = index;
                 index++;
             }

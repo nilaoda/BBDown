@@ -159,6 +159,9 @@ public static class Entity
         public required string codecs;
         public required long bandwith;
         public required int dur;
+        
+        // E-AC-3 => EAC3
+        public string shortCodecs => codecs.ToUpper().Replace("-", string.Empty);
 
         public override bool Equals(object? obj)
         {
