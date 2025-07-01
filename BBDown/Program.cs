@@ -30,11 +30,6 @@ partial class Program
 
     public static readonly string APP_DIR = Path.GetDirectoryName(Environment.ProcessPath)!;
 
-    private static int Compare(Audio r1, Audio r2)
-    {
-        return r1.bandwith - r2.bandwith > 0 ? -1 : 1;
-    }
-
     private static string FormatTimeStamp(long ts, string format)
     {
         try
@@ -508,20 +503,11 @@ partial class Program
 
                 //排序
                 parsedResult.VideoTracks = SortTracks(parsedResult.VideoTracks, dfnPriority, encodingPriority, myOption.VideoAscending);
-                parsedResult.AudioTracks.Sort(Compare);
-                parsedResult.BackgroundAudioTracks.Sort(Compare);
+                parsedResult.AudioTracks = SortTracks(parsedResult.AudioTracks, encodingPriority, myOption.AudioAscending);
+                parsedResult.BackgroundAudioTracks = SortTracks(parsedResult.BackgroundAudioTracks, encodingPriority, myOption.AudioAscending);
                 foreach (var role in parsedResult.RoleAudioList)
                 {
-                    role.audio.Sort(Compare);
-                }
-                if (myOption.AudioAscending)
-                {
-                    parsedResult.AudioTracks.Reverse();
-                    parsedResult.BackgroundAudioTracks.Reverse();
-                    foreach (var role in parsedResult.RoleAudioList)
-                    {
-                        role.audio.Reverse();
-                    }
+                    role.audio = SortTracks(role.audio, encodingPriority, myOption.AudioAscending);
                 }
 
                 //打印轨道信息
@@ -847,6 +833,15 @@ partial class Program
                 .ThenByDescending(v => Convert.ToInt32(v.id))
                 .ThenBy(v => videoAscending ? v.bandwith : -v.bandwith)
                 .ToList();
+    }
+    
+    private static List<Audio> SortTracks(List<Audio> audioTracks, Dictionary<string, byte> encodingPriority, bool audioAscending)
+    {
+        return audioTracks
+            .OrderBy(a => encodingPriority.GetValueOrDefault(a.shortCodecs, (byte)100))
+            .ThenByDescending(a => Convert.ToInt32(a.id))
+            .ThenBy(a => audioAscending ? a.bandwith : -a.bandwith)
+            .ToList();
     }
 
     private static string FormatSavePath(string savePathFormat, string title, Video? videoTrack, Audio? audioTrack, Page p, int pagesCount, string apiType, long pubTime)
