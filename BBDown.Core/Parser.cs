@@ -30,7 +30,7 @@ public static partial class Parser
         if (appApi) return await AppHelper.DoReqAsync(aid, cid, epId, qn, bangumi, encoding, Config.TOKEN);
 
         string prefix = tvApi ? bangumi ? $"{Config.TVHOST}/pgc/player/api/playurltv" : $"{Config.TVHOST}/x/tv/playurl"
-            : bangumi ? $"{Config.HOST}/pgc/player/web/v2/playurl" : "api.bilibili.com/x/player/wbi/playurl";
+            : bangumi ? $"{Config.HOST}/pgc/player/web/playurl" : "api.bilibili.com/x/player/wbi/playurl";
         prefix = $"https://{prefix}?";
 
         string api;
