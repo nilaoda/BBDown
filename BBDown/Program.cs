@@ -839,7 +839,6 @@ partial class Program
     {
         return audioTracks
             .OrderBy(a => encodingPriority.GetValueOrDefault(a.shortCodecs, (byte)100))
-            .ThenByDescending(a => Convert.ToInt32(a.id))
             .ThenBy(a => audioAscending ? a.bandwith : -a.bandwith)
             .ToList();
     }
