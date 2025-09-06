@@ -26,8 +26,14 @@ internal static class BBDownDownloadUtil
     private static async Task RangeDownloadToTmpAsync(int id, string url, string tmpName, long fromPosition, long? toPosition, Action<int, long, long> onProgress, bool failOnRangeNotSupported = false)
     {
         DateTimeOffset? lastTime = File.Exists(tmpName) ? new FileInfo(tmpName).LastWriteTimeUtc : null;
-        using var fileStream = new FileStream(tmpName, FileMode.Create);
+        using var fileStream = new FileStream(tmpName, FileMode.OpenOrCreate);
         fileStream.Seek(0, SeekOrigin.End);
+        if (toPosition > 0 && fileStream.Position == toPosition - fromPosition + 1)
+        {
+            // 已下载完成 直接汇报进度并跳过下载
+            onProgress(id, fileStream.Position, fileStream.Position);
+            return;
+        }
         var downloadedBytes = fromPosition + fileStream.Position;
 
         using var httpRequestMessage = new HttpRequestMessage();
