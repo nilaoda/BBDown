@@ -195,10 +195,17 @@ static partial class BBDownUtil
 
     public static string FormatTime(int time, bool absolute = false)
     {
-        TimeSpan ts = TimeSpan.FromSeconds(time);
-        return !absolute
-            ? (ts.Hours == 0 ? ts.ToString(@"mm\mss\s") : ts.ToString(@"hh\hmm\mss\s"))
-            : ts.ToString(@"hh\:mm\:ss");
+        var ts = TimeSpan.FromSeconds(time);
+        var totalHours = (int)ts.TotalHours;
+        var minutes = ts.Minutes;
+        var seconds = ts.Seconds;
+
+        if (absolute)
+        {
+            return $"{totalHours:D2}:{minutes:D2}:{seconds:D2}";
+        }
+
+        return totalHours == 0 ? $"{minutes:D2}m{seconds:D2}s" : $"{totalHours}h{minutes:D2}m{seconds:D2}s";
     }
 
     /// <summary>
