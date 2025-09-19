@@ -612,7 +612,7 @@ partial class Program
                     }
                     return;
                 }
-
+                BiliDRM biliDRM = new BiliDRM();
                 if (selectedVideo != null)
                 {
                     //杜比视界, 若ffmpeg版本小于5.0, 使用mp4box封装
@@ -623,12 +623,20 @@ partial class Program
                     }
                     Log($"开始下载P{p.index}视频...");
                     await DownloadTrackAsync(selectedVideo.baseUrl, videoPath, downloadConfig, video: true);
+                    if (selectedVideo.bilidrm != null)
+                    {
+                        await biliDRM.Decrypt(videoPath, selectedVideo.bilidrm);
+                    }
                 }
 
                 if (selectedAudio != null)
                 {
                     Log($"开始下载P{p.index}音频...");
                     await DownloadTrackAsync(selectedAudio.baseUrl, audioPath, downloadConfig, video: false);
+                    if (selectedAudio.bilidrm != null)
+                    {
+                        await biliDRM.Decrypt(audioPath, selectedAudio.bilidrm);
+                    }
                 }
 
                 if (selectedBackgroundAudio != null)

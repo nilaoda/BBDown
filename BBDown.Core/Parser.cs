@@ -58,7 +58,11 @@ public static partial class Parser
         }
 
         //课程接口
-        if (cheese) api = api.Replace("/pgc/", "/pugv/");
+        if (cheese)
+        {
+            api = api.Replace("/pgc/", "/pugv/");
+            api = api.Replace("/v2", "");
+        }
 
         //Console.WriteLine(api);
         string webJson = await GetWebSourceAsync(api);
@@ -129,7 +133,8 @@ public static partial class Parser
                             bandwith = Convert.ToInt64(dashVideo.GetProperty("bandwidth").ToString()) / 1000,
                             baseUrl = urlList.FirstOrDefault(i => !BaseUrlRegex().IsMatch(i), urlList.First()),
                             codecs = GetVideoCodec(dashVideo.GetProperty("codecid").ToString()),
-                            size = dashVideo.TryGetProperty("size", out var sizeNode) ? Convert.ToDouble(sizeNode.ToString()) : 0
+                            size = dashVideo.TryGetProperty("size", out var sizeNode) ? Convert.ToDouble(sizeNode.ToString()) : 0,
+                            bilidrm = dashVideo.TryGetProperty("bilidrm_uri", out var biliDrmNode)? biliDrmNode.ToString() : null
                         };
                         if (!parsedResult.VideoTracks.Contains(v)) parsedResult.VideoTracks.Add(v);
                     }
@@ -257,13 +262,15 @@ public static partial class Parser
                         bandwith = Convert.ToInt64(node.GetProperty("bandwidth").ToString()) / 1000,
                         baseUrl = urlList.FirstOrDefault(i => !BaseUrlRegex().IsMatch(i), urlList.First()),
                         codecs = GetVideoCodec(node.GetProperty("codecid").ToString()),
-                        size = node.TryGetProperty("size", out var sizeNode) ? Convert.ToDouble(sizeNode.ToString()) : 0
+                        size = node.TryGetProperty("size", out var sizeNode) ? Convert.ToDouble(sizeNode.ToString()) : 0,
+                        bilidrm = node.TryGetProperty("bilidrm_uri", out var biliDrmNode)? biliDrmNode.ToString() : null
                     };
                     if (!tvApi && !appApi)
                     {
                         v.res = node.GetProperty("width").ToString() + "x" + node.GetProperty("height").ToString();
                         v.fps = node.GetProperty("frame_rate").ToString();
                     }
+                    
                     if (!parsedResult.VideoTracks.Contains(v)) parsedResult.VideoTracks.Add(v);
                 }
             }
@@ -302,7 +309,9 @@ public static partial class Parser
                         dur = pDur,
                         bandwith = Convert.ToInt64(node.GetProperty("bandwidth").ToString()) / 1000,
                         baseUrl = urlList.FirstOrDefault(i => !BaseUrlRegex().IsMatch(i), urlList.First()),
-                        codecs = codecs
+                        codecs = codecs,
+                        bilidrm = node.TryGetProperty("bilidrm_uri", out var biliDrmNode)? biliDrmNode.ToString() : null
+
                     });
                 }
             }
@@ -321,7 +330,8 @@ public static partial class Parser
                         dur = pDur,
                         bandwith = Convert.ToInt64(node.GetProperty("bandwidth").ToString()) / 1000,
                         baseUrl = urlList.FirstOrDefault(i => !BaseUrlRegex().IsMatch(i), urlList.First()),
-                        codecs = node.GetProperty("codecs").ToString()
+                        codecs = node.GetProperty("codecs").ToString(),
+                        bilidrm = node.TryGetProperty("bilidrm_uri", out var biliDrmNode)? biliDrmNode.ToString() : null
                     });
                 }
 
@@ -340,7 +350,9 @@ public static partial class Parser
                             dur = pDur,
                             bandwith = Convert.ToInt64(node.GetProperty("bandwidth").ToString()) / 1000,
                             baseUrl = urlList.FirstOrDefault(i => !BaseUrlRegex().IsMatch(i), urlList.First()),
-                            codecs = node.GetProperty("codecs").ToString()
+                            codecs = node.GetProperty("codecs").ToString(),
+                            bilidrm = node.TryGetProperty("bilidrm_uri", out var biliDrmNode)? biliDrmNode.ToString() : null
+
                         });
                     }
                     parsedResult.RoleAudioList.Add(new AudioMaterialInfo()

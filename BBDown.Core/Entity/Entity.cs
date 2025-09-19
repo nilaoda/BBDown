@@ -132,6 +132,7 @@ public static class Entity
         public long bandwith;
         public int dur;
         public double size;
+        public string? bilidrm;
 
         public override bool Equals(object? obj)
         {
@@ -159,6 +160,7 @@ public static class Entity
         public required string codecs;
         public required long bandwith;
         public required int dur;
+        public string? bilidrm;
         
         // E-AC-3 => EAC3
         public string shortCodecs => codecs.ToUpper().Replace("-", string.Empty);
