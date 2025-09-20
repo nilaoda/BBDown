@@ -1,0 +1,45 @@
+syntax = "proto3";
+option csharp_namespace = "BBDown.Core.Protobuf";
+message PlayViewUniteReq {
+    // 请求资源VOD信息
+    UniteVideoVod vod = 1;
+    //
+    string spmid = 2;
+    //
+    string from_spmid = 3;
+    // 补充信息, 如ep_id等
+    map<string, string> extra_content = 4;
+    //
+    string bvid = 5;
+}
+// 播放页信息-请求: 音视频VOD
+message UniteVideoVod {
+    // 视频aid
+    int64 aid = 1;
+    // 视频cid
+    int64 cid = 2;
+    // 清晰度
+    uint64 qn = 3;
+    // 视频流版本
+    int32 fnver = 4;
+    // 视频流格式
+    int32 fnval = 5;
+    // 下载模式
+    // 0:播放 1:flv下载 2:dash下载
+    uint32 download = 6;
+    // 流url强制是用域名
+    // 0:允许使用ip 1:使用http 2:使用https
+    int32 force_host = 7;
+    // 是否4K
+    bool fourk = 8;
+    // 视频编码
+    enum CodeType {
+        NOCODE = 0; // 不指定
+        CODE264 = 1; // H264
+        CODE265 = 2; // H265
+        CODEAV1 = 3; // AV1
+    }
+    CodeType prefer_codec_type = 9;
+    // 响度均衡
+    uint64 voice_balance = 10;
+}

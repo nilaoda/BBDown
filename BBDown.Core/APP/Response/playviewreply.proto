@@ -1,4 +1,4 @@
-syntax = "proto2";
+syntax = "proto3";
 option csharp_namespace = "BBDown.Core.Protobuf";
 
 message VideoInfo {
@@ -11,6 +11,8 @@ message VideoInfo {
     //杜比伴音流
     optional DolbyItem dolby = 7;
     optional DolbyItem flac = 9;
+    // 是否支持投屏
+    bool support_project = 10;
 }
 
 //杜比音频信息
@@ -18,6 +20,7 @@ message DolbyItem {
 	optional int32 type = 1;
 	//音频流
 	optional DashItem audio = 2;
+    bool need_vip = 3;
 }
 
 message PlayAbilityConf {
@@ -69,13 +72,16 @@ message Shake {
 }
 
 message DashItem {
-    optional uint32 id = 1;
-    optional string baseUrl = 2;
-    repeated string backupUrl = 3;
-    optional uint32 bandwidth = 4;
-    optional uint32 codecid = 5;
-    optional string md5 = 6;
-    optional uint64 size = 7;
+    uint32 id = 1;
+    string base_url = 2;
+    repeated string backup_url = 3;
+    uint32 bandwidth = 4;
+    uint32 codecid = 5;
+    string md5 = 6;
+    uint64 size = 7;
+    string frame_rate = 8;
+    string widevine_pssh = 9;
+    string bilidrm_uri = 10;
 }
 
 message StreamItem {
@@ -107,6 +113,11 @@ message DashVideo {
     optional uint64 size = 6;
     optional uint32 audioId = 7;
     optional bool noRexcode = 8;
+    string frame_rate = 9;
+    int32 width = 10;
+    int32 height = 11;
+    string widevine_pssh = 12;
+    string bilidrm_uri = 13;
 }
 
 message SegmentVideo {
@@ -161,3 +172,5 @@ message PlayViewReply {
     optional Event event = 4;
     optional PlayExtInfo playExtInfo = 7;
 }
+
+
