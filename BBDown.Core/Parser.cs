@@ -16,7 +16,7 @@ public static partial class Parser
         return $"{api}&w_rid=" + string.Concat(MD5.HashData(Encoding.UTF8.GetBytes(api + Config.WBI)).Select(i => i.ToString("x2")).ToArray());
     }
 
-    private static async Task<string> GetPlayJsonAsync(string encoding, string aidOri, string aid, string cid, string epId, bool tvApi, bool intl, bool appApi, string qn = "0")
+    private static async Task<string> GetPlayJsonAsync(string encoding, string aidOri, string aid, string cid, string epId, bool tvApi, bool intl, bool appApi, string qn = "0",int fnval =12240)
     {
         LogDebug("aid={0},cid={1},epId={2},tvApi={3},IntlApi={4},appApi={5},qn={6}", aid, cid, epId, tvApi, intl, appApi, qn);
 
@@ -26,6 +26,7 @@ public static partial class Parser
         bool cheese = aidOri.StartsWith("cheese:");
         bool bangumi = cheese || aidOri.StartsWith("ep:");
         LogDebug("bangumi={0},cheese={1}", bangumi, cheese);
+        AppHelper.fnval = fnval;
 
         if (appApi) return await AppHelper.DoReqAsync(aid, cid, epId, qn, bangumi, encoding, Config.TOKEN);
 
@@ -40,7 +41,7 @@ public static partial class Parser
             if (Config.TOKEN != "") apiBuilder.Append($"access_key={Config.TOKEN}&");
             apiBuilder.Append($"appkey=4409e2ce8ffd12b8&build=106500&cid={cid}&device=android");
             if (bangumi) apiBuilder.Append($"&ep_id={epId}&expire=0");
-            apiBuilder.Append($"&fnval=4048&fnver=0&fourk=1&mid=0&mobi_app=android_tv_yst");
+            apiBuilder.Append($"&fnval={fnval}&fnver=0&fourk=1&mid=0&mobi_app=android_tv_yst");
             apiBuilder.Append($"&object_id={aid}&platform=android&playurl_type=1&qn={qn}&ts={GetTimeStamp(true)}");
             api = $"{prefix}{apiBuilder}&sign={GetSign(apiBuilder.ToString(), false)}";
         }
@@ -48,7 +49,7 @@ public static partial class Parser
         {
             // 尝试提高可读性
             StringBuilder apiBuilder = new();
-            apiBuilder.Append($"support_multi_audio=true&from_client=BROWSER&avid={aid}&cid={cid}&fnval=4048&fnver=0&fourk=1");
+            apiBuilder.Append($"support_multi_audio=true&from_client=BROWSER&avid={aid}&cid={cid}&fnval={fnval}&fnver=0&fourk=1");
             if (Config.AREA != "") apiBuilder.Append($"&access_key={Config.TOKEN}&area={Config.AREA}");
             apiBuilder.Append($"&otype=json&qn={qn}");
             if (bangumi) apiBuilder.Append($"&module=bangumi&ep_id={epId}&session=");
@@ -97,13 +98,15 @@ public static partial class Parser
         return webJson;
     }
 
-    public static async Task<ParsedResult> ExtractTracksAsync(string aidOri, string aid, string cid, string epId, bool tvApi, bool intlApi, bool appApi, string encoding, string qn = "0")
+    public static async Task<ParsedResult> ExtractTracksAsync(string aidOri, string aid, string cid, string epId, bool tvApi, bool intlApi, bool appApi, string encoding, string qn = "0",bool hdrVivid = false)
     {
         var intlCode = "0";
         ParsedResult parsedResult = new();
+        var fnval = 12240;
+        if (hdrVivid) fnval = 17568;
 
         //调用解析
-        parsedResult.WebJsonString = await GetPlayJsonAsync(encoding, aidOri, aid, cid, epId, tvApi, intlApi, appApi, qn);
+        parsedResult.WebJsonString = await GetPlayJsonAsync(encoding, aidOri, aid, cid, epId, tvApi, intlApi, appApi, qn,fnval);
 
         LogDebug(parsedResult.WebJsonString);
 

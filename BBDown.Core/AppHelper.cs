@@ -32,6 +32,7 @@ static class AppHelper
     private static readonly int appId = 1;
     private static readonly string region = "CN";
     private static readonly string language = "zh";
+    public static int fnval = 12240;
 
     private static PlayViewReq.Types.CodeType GetVideoCodeType(string code)
     {
@@ -213,7 +214,7 @@ static class AppHelper
             Cid = cid,
             //obj.Qn = qn;
             Qn = 127,
-            Fnval = 4048,
+            Fnval = fnval,
             Fourk = true,
             Spmid = "main.ugc-video-detail.0.0",
             FromSpmid = "main.my-history.0.0",

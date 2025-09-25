@@ -453,7 +453,7 @@ partial class Program
             }
 
             //调用解析
-            ParsedResult parsedResult = await ExtractTracksAsync(aidOri, p.aid, p.cid, p.epid, myOption.UseTvApi, myOption.UseIntlApi, myOption.UseAppApi, firstEncoding);
+            ParsedResult parsedResult = await ExtractTracksAsync(aidOri, p.aid, p.cid, p.epid, myOption.UseTvApi, myOption.UseIntlApi, myOption.UseAppApi, firstEncoding, hdrVivid:myOption.HdrVivid);
             List<AudioMaterial> audioMaterial = [];
             if (!p.points.Any())
             {
@@ -710,7 +710,7 @@ partial class Program
                     Console.ResetColor();
                     //重新解析
                     parsedResult.VideoTracks.Clear();
-                    parsedResult = await ExtractTracksAsync(aidOri, p.aid, p.cid, p.epid, myOption.UseTvApi, myOption.UseIntlApi, myOption.UseAppApi, firstEncoding, dfns[vIndex]);
+                    parsedResult = await ExtractTracksAsync(aidOri, p.aid, p.cid, p.epid, myOption.UseTvApi, myOption.UseIntlApi, myOption.UseAppApi, firstEncoding, dfns[vIndex],myOption.HdrVivid);
                     if (!p.points.Any()) p.points = parsedResult.ExtraPoints;
                     flag = true;
                     selected = true;

@@ -61,4 +61,5 @@ internal class MyOption
     public bool AddDfnSubfix { get; set; }
     public bool NoPaddingPageNum { get; set; }
     public bool BandwithAscending { get; set; }
+    public bool HdrVivid { get; set; } = false;
 }

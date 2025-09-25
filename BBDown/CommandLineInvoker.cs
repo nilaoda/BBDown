@@ -87,6 +87,8 @@ internal static class CommandLineInvoker
     private static readonly Option<bool> AddDfnSubfix = new(["--add-dfn-subfix"], "为文件加入清晰度后缀, 如XXX[1080P 高码率]") { IsHidden = true };
     private static readonly Option<bool> NoPaddingPageNum = new(["--no-padding-page-num"], "不给分P序号补零") { IsHidden = true };
     private static readonly Option<bool> BandwithAscending = new(["--bandwith-ascending"], "比特率升序(最小体积优先)") { IsHidden = true };
+    private static readonly Option<bool> HdrVivid = new(["--hdrvivid", "-hv"], "下载hdrvivid") { IsHidden = false };
+
 
 
     class MyOptionBinder : BinderBase<MyOption>
@@ -155,6 +157,8 @@ internal static class CommandLineInvoker
             if (bindingContext.ParseResult.HasOption(AddDfnSubfix)) option.AddDfnSubfix = bindingContext.ParseResult.GetValueForOption(AddDfnSubfix)!;
             if (bindingContext.ParseResult.HasOption(NoPaddingPageNum)) option.NoPaddingPageNum = bindingContext.ParseResult.GetValueForOption(NoPaddingPageNum)!;
             if (bindingContext.ParseResult.HasOption(BandwithAscending)) option.BandwithAscending = bindingContext.ParseResult.GetValueForOption(BandwithAscending)!;
+            if (bindingContext.ParseResult.HasOption(HdrVivid)) option.HdrVivid = bindingContext.ParseResult.GetValueForOption(HdrVivid)!;
+
             return option;
         }
     }
@@ -219,7 +223,8 @@ internal static class CommandLineInvoker
             OnlyAv1,
             AddDfnSubfix,
             NoPaddingPageNum,
-            BandwithAscending
+            BandwithAscending,
+            HdrVivid
         };
 
         rootCommand.SetHandler(async (myOption) => await action(myOption), new MyOptionBinder());
