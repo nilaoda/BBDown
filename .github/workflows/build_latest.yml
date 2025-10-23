@@ -3,7 +3,7 @@ name: Build Latest
 on: [push,workflow_dispatch]
 
 env:
-  DOTNET_SDK_VERSION: '9.0.*'
+  DOTNET_SDK_VERSION: "9.0.306"
   ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
 
 jobs:
@@ -60,70 +60,55 @@ jobs:
     needs: set-date
 
     steps:
-      - name: setup deb822 repos
-        run: |
-          if [[ $ImageOS == "ubuntu24" ]]; then
-            cat <<EOF > deb822sources
-          Types: deb
-          URIs: http://archive.ubuntu.com/ubuntu/
-          Suites: noble
-          Components: main restricted universe
-          Architectures: amd64
-
-          Types: deb
-          URIs: http://security.ubuntu.com/ubuntu/
-          Suites: noble-security
-          Components: main restricted universe
-          Architectures: amd64
-
-          Types: deb
-          URIs: http://archive.ubuntu.com/ubuntu/
-          Suites: noble-updates
-          Components: main restricted universe
-          Architectures: amd64
-
-          Types: deb
-          URIs: http://azure.ports.ubuntu.com/ubuntu-ports/
-          Suites: noble
-          Components: main restricted multiverse universe
-          Architectures: arm64
-
-          Types: deb
-          URIs: http://azure.ports.ubuntu.com/ubuntu-ports/
-          Suites: noble-updates
-          Components: main restricted multiverse universe
-          Architectures: arm64
-          EOF
-
-            sudo mv deb822sources /etc/apt/sources.list.d/ubuntu.sources
-          else
-            sudo mv config/crosscomp-sources.list /etc/apt/sources.list
-          fi
-
-      # https://learn.microsoft.com/zh-cn/dotnet/core/deploying/native-aot/cross-compile
-      - run: |
-          sudo dpkg --add-architecture arm64
-          sudo bash -c 'cat > /etc/apt/sources.list.d/arm64.list <<EOF
-          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy main restricted
-          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy-updates main restricted
-          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy-backports main restricted universe multiverse
-          EOF'
-          sudo sed -i -e 's/deb http/deb [arch=amd64] http/g' /etc/apt/sources.list
-          sudo sed -i -e 's/deb mirror/deb [arch=amd64] mirror/g' /etc/apt/sources.list
-          sudo apt-get update
-          sudo apt-get install -y curl wget libicu-dev libcurl4-openssl-dev zlib1g-dev libkrb5-dev clang llvm binutils-aarch64-linux-gnu gcc-aarch64-linux-gnu zlib1g-dev:arm64
-
       - uses: actions/checkout@v1
-
-      - name: Set up dotnet
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: ${{ env.DOTNET_SDK_VERSION }}
-
-      - name: Publish [linux]
+      
+      - name: Build x64 in Ubuntu 18.04 container (for glibc 2.27 compatibility)
         run: |
-          dotnet publish BBDown -r linux-x64 -c Release -o artifact
-          dotnet publish BBDown -r linux-arm64 -c Release -o artifact-arm64
+          # 在 Ubuntu 18.04 容器中执行完整构建流程
+          docker run --rm \
+            -v "$PWD:/workspace" \
+            -w /workspace \
+            ubuntu:18.04 \
+            bash -c "
+              set -e
+  
+              # 安装编译和运行依赖
+              apt-get update
+              DEBIAN_FRONTEND=noninteractive apt-get install -y wget build-essential clang libicu-dev zlib1g libcurl4-openssl-dev libkrb5-dev
+  
+              # 下载并安装 .NET SDK
+              DOTNET_SDK_VERSION='${{ env.DOTNET_SDK_VERSION }}'
+              DOTNET_SDK_URL=\"https://builds.dotnet.microsoft.com/dotnet/Sdk/\${DOTNET_SDK_VERSION}/dotnet-sdk-\${DOTNET_SDK_VERSION}-linux-x64.tar.gz\"
+              wget -nv \"\$DOTNET_SDK_URL\" -O dotnet-sdk.tar.gz
+              mkdir -p /opt/dotnet
+              tar -xzf dotnet-sdk.tar.gz -C /opt/dotnet
+              export PATH=\"/opt/dotnet:\$PATH\"
+  
+              # 编译 Native AOT 输出到挂载的 artifact 目录
+              dotnet publish BBDown -r linux-x64 -c Release -o /workspace/artifact
+            "
+      
+      - name: Build arm64 in Ubuntu 18.04 container (for glibc 2.27 compatibility)
+        run: |
+          # 在 Ubuntu 18.04 容器中执行完整构建流程
+          docker run --rm \
+            -v "$PWD:/workspace" \
+            -w /workspace \
+            mcr.microsoft.com/dotnet-buildtools/prereqs:ubuntu-18.04-cross-arm64-20220312201346-b2c2436 \
+            bash -c "
+              set -e
+  
+              # 下载并安装 .NET SDK
+              DOTNET_SDK_VERSION='${{ env.DOTNET_SDK_VERSION }}'
+              DOTNET_SDK_URL=\"https://builds.dotnet.microsoft.com/dotnet/Sdk/\${DOTNET_SDK_VERSION}/dotnet-sdk-\${DOTNET_SDK_VERSION}-linux-x64.tar.gz\"
+              wget -nv \"\$DOTNET_SDK_URL\" -O dotnet-sdk.tar.gz
+              mkdir -p /opt/dotnet
+              tar -xzf dotnet-sdk.tar.gz -C /opt/dotnet
+              export PATH=\"/opt/dotnet:\$PATH\"
+  
+              # 编译 Native AOT 输出到挂载的 artifact 目录
+              dotnet publish BBDown -r linux-arm64 -c Release -p:StripSymbols=true -p:CppCompilerAndLinker=clang-9 -p:SysRoot=/crossrootfs/arm64 -o /workspace/artifact-arm64
+            "
 
       - name: Package [linux]
         run: |
