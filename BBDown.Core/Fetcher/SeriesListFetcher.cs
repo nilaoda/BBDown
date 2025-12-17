@@ -37,6 +37,10 @@ public class SeriesListFetcher : IFetcher
             hasMore = data.GetProperty("has_more").GetBoolean();
             foreach (var m in data.GetProperty("media_list").EnumerateArray())
             {
+                // 只处理未失效的视频条目（与收藏夹解析逻辑保持一致）
+                if (m.TryGetProperty("attr", out var attrElem) && attrElem.GetInt32() != 0)
+                    continue;
+
                 var pageCount = m.GetProperty("page").GetInt32();
                 var desc = m.GetProperty("intro").GetString()!;
                 var ownerName = m.GetProperty("upper").GetProperty("name").ToString();

@@ -18,7 +18,27 @@ public class MediaListFetcher : IFetcher
         var api = $"https://api.bilibili.com/x/v1/medialist/info?type=8&biz_id={id}&tid=0";
         var json = await GetWebSourceAsync(api);
         using var infoJson = JsonDocument.Parse(json);
-        var data = infoJson.RootElement.GetProperty("data");
+        var root = infoJson.RootElement;
+        var data = root.GetProperty("data");
+        if (data.ValueKind != JsonValueKind.Object)
+        {
+            // 部分情况下（合集被删除、设为私密或无权访问）data 会是 null
+            // 也有可能是“系列”却被误识别为合集，这里优先尝试按系列解析
+            try
+            {
+                return await new SeriesListFetcher().FetchAsync($"seriesBizId:{id}");
+            }
+            catch
+            {
+                var code = root.TryGetProperty("code", out var codeElem) && codeElem.ValueKind == JsonValueKind.Number
+                    ? codeElem.GetInt32()
+                    : 0;
+                var message = root.TryGetProperty("message", out var msgElem) && msgElem.ValueKind == JsonValueKind.String
+                    ? msgElem.GetString()
+                    : "未知错误";
+                throw new Exception($"获取合集信息失败(code={code}): {message}");
+            }
+        }
         var listTitle = data.GetProperty("title").GetString()!;
         var intro = data.GetProperty("intro").GetString()!;
         long pubTime = data.GetProperty("ctime").GetInt64()!;
@@ -32,10 +52,25 @@ public class MediaListFetcher : IFetcher
             var listApi = $"https://api.bilibili.com/x/v2/medialist/resource/list?type=8&oid={oid}&otype=2&biz_id={id}&with_current=true&mobi_app=web&ps=20&direction=false&sort_field=1&tid=0&desc=false";
             json = await GetWebSourceAsync(listApi);
             using var listJson = JsonDocument.Parse(json);
-            data = listJson.RootElement.GetProperty("data");
+            var listRoot = listJson.RootElement;
+            data = listRoot.GetProperty("data");
+            if (data.ValueKind != JsonValueKind.Object)
+            {
+                var code = listRoot.TryGetProperty("code", out var codeElem) && codeElem.ValueKind == JsonValueKind.Number
+                    ? codeElem.GetInt32()
+                    : 0;
+                var message = listRoot.TryGetProperty("message", out var msgElem) && msgElem.ValueKind == JsonValueKind.String
+                    ? msgElem.GetString()
+                    : "未知错误";
+                throw new Exception($"获取合集视频列表失败(code={code}): {message}");
+            }
             hasMore = data.GetProperty("has_more").GetBoolean();
             foreach (var m in data.GetProperty("media_list").EnumerateArray())
             {
+                // 只处理未失效的视频条目（与收藏夹解析逻辑保持一致）
+                if (m.TryGetProperty("attr", out var attrElem) && attrElem.GetInt32() != 0)
+                    continue;
+
                 var pageCount = m.GetProperty("page").GetInt32();
                 var desc = m.GetProperty("intro").GetString()!;
                 var ownerName = m.GetProperty("upper").GetProperty("name").ToString();
