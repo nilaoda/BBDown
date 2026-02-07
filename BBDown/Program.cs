@@ -538,6 +538,8 @@ partial class Program
 
                 LogDebug("Format Before: " + savePathFormat);
                 savePath = FormatSavePath(savePathFormat, title, selectedVideo, selectedAudio, p, pagesCount, apiType, pubTime);
+                if (myOption.AudioOnly)
+                    savePath = savePath[..^4] + ".m4a";
                 LogDebug("Format After: " + savePath);
 
                 if (downloadDanmaku)
@@ -654,8 +656,6 @@ partial class Program
                 if (!parsedResult.AudioTracks.Any()) audioPath = "";
                 if (myOption.SkipMux) return;
                 Log($"开始合并音视频{(subtitleInfo.Any() ? "和字幕" : "")}...");
-                if (myOption.AudioOnly)
-                    savePath = savePath[..^4] + ".m4a";
 
                 var isHevc = selectedVideo?.codecs == "HEVC";
                 int code = BBDownMuxer.MuxAV(myOption.UseMP4box, p.bvid, videoPath, audioPath, audioMaterial, savePath,
