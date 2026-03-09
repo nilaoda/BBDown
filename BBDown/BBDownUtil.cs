@@ -55,7 +55,7 @@ static partial class BBDownUtil
             }
             else if (input.ToLower().Contains("video/bv"))
             {
-                avid = GetAidByBV(BVRegex().Match(input).Groups[1].Value);
+                avid = await GetAidByBvAsync(BVRegex().Match(input).Groups[1].Value);
             }
             else if (input.Contains("/cheese/"))
             {
@@ -164,7 +164,7 @@ static partial class BBDownUtil
         }
         else if (input.ToLower().StartsWith("bv"))
         {
-            avid = GetAidByBV(input[3..]);
+            avid = await GetAidByBvAsync(input[3..]);
         }
         else if (input.ToLower().StartsWith("av")) // av
         {
@@ -247,10 +247,28 @@ static partial class BBDownUtil
         return location.Contains("/ep") ? $"ep:{EpRegex().Match(location).Groups[1].Value}" : avid;
     }
 
-    private static string GetAidByBV(string bv)
+    private static async Task<string> GetAidByBvAsync(string bv)
     {
-        // 能在本地就在本地
-        return Core.Util.BilibiliBvConverter.Decode(bv).ToString();
+        try
+        {
+            // 能在本地就在本地
+            return Core.Util.BilibiliBvConverter.Decode(bv).ToString();
+        }
+        catch
+        {
+            // 本地解码失败（如大小写异常、长度不支持等），回退到 B 站 API 进行解析
+            try
+            {
+                string api = $"https://api.bilibili.com/x/web-interface/view?bvid=BV1{bv}";
+                string json = await GetWebSourceAsync(api);
+                using var infoJson = JsonDocument.Parse(json);
+                return infoJson.RootElement.GetProperty("data").GetProperty("aid").ToString();
+            }
+            catch
+            {
+                throw new Exception($"无法解析 BVID: BV1{bv}");
+            }
+        }
     }
 
     private static async Task<string> GetEpidBySSIdAsync(string ssid)
