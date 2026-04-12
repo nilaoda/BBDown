@@ -801,6 +801,21 @@ partial class Program
             var (encodingPriority, dfnPriority, firstEncoding, downloadDanmaku, downloadDanmakuFormats,
                 input, savePathFormat, lang, aidOri, delay) = SetUpWork(myOption);
             var (fetchedAid, vInfo, apiType) = await GetVideoInfoAsync(myOption, aidOri, input);
+
+            if (myOption.OnlyListInfo)
+            {
+                Log($"共计 {vInfo.PagesInfo.Count} 个视频:");
+                Console.WriteLine();
+                foreach (var p in vInfo.PagesInfo)
+                {
+                    Log($"  P{p.index}: av{p.aid} [{FormatTime(p.dur)}] {p.title}");
+                    if (!string.IsNullOrEmpty(p.ownerName))
+                        Log($"         UP主: {p.ownerName}");
+                    Log($"         链接: https://www.bilibili.com/video/av{p.aid}");
+                }
+                return;
+            }
+
             await DownloadPagesAsync(myOption, vInfo, encodingPriority, dfnPriority, firstEncoding, downloadDanmaku, downloadDanmakuFormats,
                 input, savePathFormat, lang, fetchedAid, delay, apiType);
         }

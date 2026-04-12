@@ -16,6 +16,7 @@ internal static class CommandLineInvoker
     private static readonly Option<string> EncodingPriority = new(["--encoding-priority", "-e"], "视频及音频编码的选择优先级, 用逗号分割 例: \"hevc,av1,avc,flac,eac3,m4a\"");
     private static readonly Option<string> DfnPriority = new(["--dfn-priority", "-q"], "画质优先级,用逗号分隔 例: \"8K 超高清, 1080P 高码率, HDR 真彩, 杜比视界\"");
     private static readonly Option<bool> OnlyShowInfo = new(["--only-show-info", "-info"], "仅解析而不进行下载");
+    private static readonly Option<bool> OnlyListInfo = new(["--only-list-info", "-listinfo"], "仅列出所有分P信息而不进行下载");
     private static readonly Option<bool> HideStreams = new(["--hide-streams", "-hs"], "不要显示所有可用音视频流");
     private static readonly Option<bool> Interactive = new(["--interactive", "-ia"], "交互式选择清晰度");
     private static readonly Option<bool> ShowAll = new(["--show-all"], "展示所有分P标题");
@@ -105,6 +106,7 @@ internal static class CommandLineInvoker
             if (bindingContext.ParseResult.HasOption(EncodingPriority)) option.EncodingPriority = bindingContext.ParseResult.GetValueForOption(EncodingPriority)!;
             if (bindingContext.ParseResult.HasOption(DfnPriority)) option.DfnPriority = bindingContext.ParseResult.GetValueForOption(DfnPriority)!;
             if (bindingContext.ParseResult.HasOption(OnlyShowInfo)) option.OnlyShowInfo = bindingContext.ParseResult.GetValueForOption(OnlyShowInfo)!;
+            if (bindingContext.ParseResult.HasOption(OnlyListInfo)) option.OnlyListInfo = bindingContext.ParseResult.GetValueForOption(OnlyListInfo)!;
             if (bindingContext.ParseResult.HasOption(ShowAll)) option.ShowAll = bindingContext.ParseResult.GetValueForOption(ShowAll)!;
             if (bindingContext.ParseResult.HasOption(UseAria2c)) option.UseAria2c = bindingContext.ParseResult.GetValueForOption(UseAria2c)!;
             if (bindingContext.ParseResult.HasOption(Interactive)) option.Interactive = bindingContext.ParseResult.GetValueForOption(Interactive)!;
@@ -171,6 +173,7 @@ internal static class CommandLineInvoker
             EncodingPriority,
             DfnPriority,
             OnlyShowInfo,
+            OnlyListInfo,
             ShowAll,
             UseAria2c,
             Interactive,
