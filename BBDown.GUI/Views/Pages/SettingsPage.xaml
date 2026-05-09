@@ -1,0 +1,208 @@
+<Page x:Class="BBDown.GUI.Views.Pages.SettingsPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      xmlns:vm="clr-namespace:BBDown.GUI.ViewModels"
+      Title="设置">
+
+    <Page.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+    </Page.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="32" MaxWidth="700">
+
+            <!-- ================================================================
+                 1. 常规设置
+                 ================================================================ -->
+            <ui:Card Margin="0,0,0,16">
+                <StackPanel Margin="16">
+                    <TextBlock Text="常规设置" FontWeight="Bold" FontSize="16" Margin="0,0,0,12"/>
+
+                    <TextBlock Text="下载源" FontSize="13" Margin="0,0,0,4"/>
+                    <ComboBox ItemsSource="{Binding Source={x:Static vm:SettingsViewModel.DownloadSourceOptions}}"
+                              SelectedIndex="{Binding DownloadSourceIndex}" Margin="0,0,0,12"/>
+
+                    <TextBlock Text="编码优先" FontSize="13" Margin="0,0,0,4"/>
+                    <ComboBox ItemsSource="{Binding Source={x:Static vm:SettingsViewModel.EncodingOptions}}"
+                              SelectedIndex="{Binding EncodingPriorityIndex}" Margin="0,0,0,12"/>
+
+                    <TextBlock Text="FFmpeg 路径" FontSize="13" Margin="0,0,0,4"/>
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <ui:TextBox Text="{Binding FfmpegPath}" PlaceholderText="ffmpeg 可执行文件路径" Grid.Column="0"/>
+                        <ui:Button Grid.Column="1" Content="浏览" Margin="8,0,0,0"
+                                   Command="{Binding BrowseFfmpegCommand}"/>
+                    </Grid>
+
+                    <TextBlock Text="工作目录" FontSize="13" Margin="0,0,0,4"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <ui:TextBox Text="{Binding WorkDir}" PlaceholderText="下载文件保存目录" Grid.Column="0"/>
+                        <ui:Button Grid.Column="1" Content="浏览" Margin="8,0,0,0"
+                                   Command="{Binding BrowseWorkDirCommand}"/>
+                    </Grid>
+                </StackPanel>
+            </ui:Card>
+
+            <!-- ================================================================
+                 2. 下载选项
+                 ================================================================ -->
+            <ui:Card Margin="0,0,0,16">
+                <StackPanel Margin="16">
+                    <TextBlock Text="下载选项" FontWeight="Bold" FontSize="16" Margin="0,0,0,8"/>
+                    <ui:ToggleSwitch Content="仅下载音频" IsChecked="{Binding AudioOnly}" Margin="0,0,0,4"/>
+                    <ui:ToggleSwitch Content="仅下载视频" IsChecked="{Binding VideoOnly}" Margin="0,0,0,4"/>
+                    <ui:ToggleSwitch Content="仅下载字幕" IsChecked="{Binding SubOnly}" Margin="0,0,0,4"/>
+                    <ui:ToggleSwitch Content="下载弹幕" IsChecked="{Binding DownloadDanmaku}"/>
+                </StackPanel>
+            </ui:Card>
+
+            <!-- ================================================================
+                 3. 交互选项
+                 ================================================================ -->
+            <ui:Card Margin="0,0,0,16">
+                <StackPanel Margin="16">
+                    <TextBlock Text="交互选项" FontWeight="Bold" FontSize="16" Margin="0,0,0,8"/>
+                    <ui:ToggleSwitch Content="交互模式" IsChecked="{Binding Interactive}" Margin="0,0,0,4"/>
+                    <ui:ToggleSwitch Content="仅显示信息" IsChecked="{Binding OnlyShowInfo}" Margin="0,0,0,4"/>
+                    <ui:ToggleSwitch Content="隐藏流列表" IsChecked="{Binding HideStreams}" Margin="0,0,0,4"/>
+                    <ui:ToggleSwitch Content="调试模式" IsChecked="{Binding Debug}"/>
+                </StackPanel>
+            </ui:Card>
+
+            <!-- ================================================================
+                 4. 跳过选项
+                 ================================================================ -->
+            <ui:Card Margin="0,0,0,16">
+                <StackPanel Margin="16">
+                    <TextBlock Text="跳过选项" FontWeight="Bold" FontSize="16" Margin="0,0,0,8"/>
+                    <ui:ToggleSwitch Content="跳过字幕" IsChecked="{Binding SkipSubtitle}" Margin="0,0,0,4"/>
+                    <ui:ToggleSwitch Content="跳过封面" IsChecked="{Binding SkipCover}" Margin="0,0,0,4"/>
+                    <ui:ToggleSwitch Content="跳过合并" IsChecked="{Binding SkipMux}" Margin="0,0,0,4"/>
+                    <ui:ToggleSwitch Content="跳过 AI 字幕" IsChecked="{Binding SkipAi}"/>
+                </StackPanel>
+            </ui:Card>
+
+            <!-- ================================================================
+                 5. MP4Box
+                 ================================================================ -->
+            <ui:Card Margin="0,0,0,16">
+                <StackPanel Margin="16">
+                    <TextBlock Text="MP4Box" FontWeight="Bold" FontSize="16" Margin="0,0,0,8"/>
+                    <ui:ToggleSwitch Content="使用 MP4Box" IsChecked="{Binding UseMp4box}" Margin="0,0,0,12"/>
+                    <TextBlock Text="MP4Box 路径" FontSize="13" Margin="0,0,0,4"/>
+                    <ui:TextBox Text="{Binding Mp4boxPath}" PlaceholderText="mp4box 可执行文件路径"/>
+                </StackPanel>
+            </ui:Card>
+
+            <!-- ================================================================
+                 6. 登录凭证
+                 ================================================================ -->
+            <ui:Card Margin="0,0,0,16">
+                <StackPanel Margin="16">
+                    <TextBlock Text="登录凭证" FontWeight="Bold" FontSize="16" Margin="0,0,0,8"/>
+                    <TextBlock Text="Access Token" FontSize="13" Margin="0,0,0,4"/>
+                    <ui:TextBox Text="{Binding AccessToken}" PlaceholderText="输入访问令牌" Margin="0,0,0,12"/>
+                    <TextBlock Text="Cookie" FontSize="13" Margin="0,0,0,4"/>
+                    <ui:TextBox Text="{Binding Cookie}" PlaceholderText="输入 Cookie"/>
+                </StackPanel>
+            </ui:Card>
+
+            <!-- ================================================================
+                 7. 文件名选项
+                 ================================================================ -->
+            <ui:Card Margin="0,0,0,16">
+                <StackPanel Margin="16">
+                    <TextBlock Text="文件名选项" FontWeight="Bold" FontSize="16" Margin="0,0,0,8"/>
+                    <TextBlock Text="文件名模板" FontSize="13" Margin="0,0,0,4"/>
+                    <ui:TextBox Text="{Binding FilePattern}" PlaceholderText="&lt;videoTitle&gt;" Margin="0,0,0,12"/>
+                    <TextBlock Text="多P文件名模板" FontSize="13" Margin="0,0,0,4"/>
+                    <ui:TextBox Text="{Binding MultiFilePattern}" PlaceholderText="多P下载时的文件名模板" Margin="0,0,0,12"/>
+                    <TextBlock Text="可用模板变量" FontSize="13" Margin="0,0,0,4"/>
+                    <TextBox Text="{Binding FilePatternReference, Mode=OneWay}"
+                             IsReadOnly="True" AcceptsReturn="True"
+                             TextWrapping="NoWrap"
+                             FontFamily="Consolas" FontSize="12"
+                             Height="220"
+                             BorderThickness="1"
+                             Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"/>
+                </StackPanel>
+            </ui:Card>
+
+            <!-- ================================================================
+                 8. 分P选项
+                 ================================================================ -->
+            <ui:Card Margin="0,0,0,16">
+                <StackPanel Margin="16">
+                    <TextBlock Text="分P选项" FontWeight="Bold" FontSize="16" Margin="0,0,0,8"/>
+                    <ui:ToggleSwitch Content="显示全部分P" IsChecked="{Binding ShowAll}" Margin="0,0,0,12"/>
+                    <TextBlock Text="选择分P" FontSize="13" Margin="0,0,0,4"/>
+                    <ui:TextBox Text="{Binding SelectPage}" PlaceholderText="指定需要下载的分P，如 1,2,3" Margin="0,0,0,12"/>
+                    <TextBlock Text="每P延迟（秒）" FontSize="13" Margin="0,0,0,4"/>
+                    <ui:TextBox Text="{Binding DelayPerPage}" PlaceholderText="0"/>
+                </StackPanel>
+            </ui:Card>
+
+            <!-- ================================================================
+                 9. aria2c
+                 ================================================================ -->
+            <ui:Card Margin="0,0,0,16">
+                <StackPanel Margin="16">
+                    <TextBlock Text="aria2c" FontWeight="Bold" FontSize="16" Margin="0,0,0,8"/>
+                    <ui:ToggleSwitch Content="使用 aria2c" IsChecked="{Binding UseAria2c}" Margin="0,0,0,12"/>
+                    <TextBlock Text="aria2c 路径" FontSize="13" Margin="0,0,0,4"/>
+                    <ui:TextBox Text="{Binding Aria2cPath}" PlaceholderText="aria2c 可执行文件路径" Margin="0,0,0,12"/>
+                    <TextBlock Text="aria2c 代理" FontSize="13" Margin="0,0,0,4"/>
+                    <ui:TextBox Text="{Binding Aria2cProxy}" PlaceholderText="aria2c 代理地址" Margin="0,0,0,12"/>
+                    <TextBlock Text="aria2c 参数" FontSize="13" Margin="0,0,0,4"/>
+                    <ui:TextBox Text="{Binding Aria2cArgs}" PlaceholderText="额外 aria2c 参数"/>
+                </StackPanel>
+            </ui:Card>
+
+            <!-- ================================================================
+                 10. 其他
+                 ================================================================ -->
+            <ui:Card Margin="0,0,0,16">
+                <StackPanel Margin="16">
+                    <TextBlock Text="其他" FontWeight="Bold" FontSize="16" Margin="0,0,0,8"/>
+                    <ui:ToggleSwitch Content="多线程下载" IsChecked="{Binding MultiThread}" Margin="0,0,0,4"/>
+                    <ui:ToggleSwitch Content="强制 HTTP" IsChecked="{Binding ForceHttp}" Margin="0,0,0,12"/>
+                    <TextBlock Text="语言" FontSize="13" Margin="0,0,0,4"/>
+                    <ui:TextBox Text="{Binding Language}" PlaceholderText="zh-CN" Margin="0,0,0,12"/>
+                    <TextBlock Text="User-Agent" FontSize="13" Margin="0,0,0,4"/>
+                    <ui:TextBox Text="{Binding UserAgent}" PlaceholderText="自定义 User-Agent"/>
+                </StackPanel>
+            </ui:Card>
+
+            <!-- ================================================================
+                 11. 代理
+                 ================================================================ -->
+            <ui:Card Margin="0,0,0,16">
+                <StackPanel Margin="16">
+                    <TextBlock Text="代理" FontWeight="Bold" FontSize="16" Margin="0,0,0,8"/>
+                    <ui:ToggleSwitch Content="启用代理" IsChecked="{Binding EnableProxy}" Margin="0,0,0,12"/>
+                    <TextBlock Text="Host" FontSize="13" Margin="0,0,0,4"/>
+                    <ui:TextBox Text="{Binding Host}" PlaceholderText="代理主机地址" Margin="0,0,0,12"/>
+                    <TextBlock Text="EpHost" FontSize="13" Margin="0,0,0,4"/>
+                    <ui:TextBox Text="{Binding EpHost}" PlaceholderText="EP 代理地址" Margin="0,0,0,12"/>
+                    <TextBlock Text="Area" FontSize="13" Margin="0,0,0,4"/>
+                    <ui:TextBox Text="{Binding Area}" PlaceholderText="地区代码"/>
+                </StackPanel>
+            </ui:Card>
+
+            <!-- 保存设置按钮 -->
+            <ui:Button Content="保存设置" Command="{Binding SaveCommand}"
+                       Icon="{ui:SymbolIcon Save24}"
+                       HorizontalAlignment="Right" Margin="0,16,0,32"
+                       Height="36" Width="120"/>
+
+        </StackPanel>
+    </ScrollViewer>
+</Page>

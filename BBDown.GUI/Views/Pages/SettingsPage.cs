@@ -1,14 +1,16 @@
 using System.Windows.Controls;
+using BBDown.GUI.ViewModels;
 
 namespace BBDown.GUI.Views.Pages;
 
 /// <summary>
-/// Stub — full implementation with XAML will be added in a future task.
+/// Interaction logic for SettingsPage.xaml
 /// </summary>
-public class SettingsPage : Page
+public partial class SettingsPage : Page
 {
     public SettingsPage()
     {
-        // TODO: InitializeComponent() — XAML to be added later.
+        InitializeComponent();
+        DataContext = new SettingsViewModel();
     }
 }
