@@ -1,14 +1,16 @@
 using System.Windows.Controls;
+using BBDown.GUI.ViewModels;
 
 namespace BBDown.GUI.Views.Pages;
 
 /// <summary>
-/// Stub — full implementation with XAML will be added in a future task.
+/// Interaction logic for LoginPage.xaml
 /// </summary>
-public class LoginPage : Page
+public partial class LoginPage : Page
 {
     public LoginPage()
     {
-        // TODO: InitializeComponent() — XAML to be added later.
+        InitializeComponent();
+        DataContext = new LoginViewModel();
     }
 }
