@@ -1,0 +1,69 @@
+<Page x:Class="BBDown.GUI.Views.Pages.DownloadsPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      Title="下载队列">
+
+    <Grid Margin="24">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" MinWidth="300"/>
+            <ColumnDefinition Width="5"/>
+            <ColumnDefinition Width="*" MinWidth="300"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Left: Task list -->
+        <Grid Grid.Column="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                <TextBlock Text="下载队列" FontSize="18" FontWeight="Bold"/>
+                <ui:Button Content="清除已完成" Command="{Binding ClearCompletedCommand}"
+                    Appearance="Secondary" HorizontalAlignment="Right" Margin="12,0,0,0"/>
+            </StackPanel>
+
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                <ItemsControl ItemsSource="{Binding Tasks}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <ui:Card Margin="0,0,0,8">
+                                <StackPanel Margin="12">
+                                    <TextBlock Text="{Binding Url}" TextTrimming="CharacterEllipsis"
+                                        FontSize="13" Margin="0,0,0,4"/>
+                                    <ProgressBar Value="{Binding Progress}"
+                                        Minimum="0" Maximum="100" Height="8" Margin="0,4"/>
+                                    <Grid Margin="0,4,0,0">
+                                        <TextBlock Text="{Binding StageText}" FontSize="12"
+                                            Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                                        <ui:Button Content="停止" FontSize="12"
+                                            Command="{Binding DataContext.StopCommand,
+                                                RelativeSource={RelativeSource AncestorType=Page}}"
+                                            CommandParameter="{Binding}"
+                                            HorizontalAlignment="Right" Padding="8,2"/>
+                                    </Grid>
+                                </StackPanel>
+                            </ui:Card>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Grid>
+
+        <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch"/>
+
+        <!-- Right: Output log -->
+        <Grid Grid.Column="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <TextBlock Text="输出日志" FontSize="18" FontWeight="Bold" Margin="0,0,0,12"/>
+            <TextBox Grid.Row="1" Text="{Binding OutputLog}" IsReadOnly="True"
+                FontFamily="Consolas" FontSize="12"
+                VerticalScrollBarVisibility="Auto" TextWrapping="Wrap"
+                Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"/>
+        </Grid>
+    </Grid>
+</Page>

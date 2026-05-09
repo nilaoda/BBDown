@@ -1,14 +1,16 @@
 using System.Windows.Controls;
+using BBDown.GUI.ViewModels;
 
 namespace BBDown.GUI.Views.Pages;
 
 /// <summary>
-/// Stub — full implementation with XAML will be added in a future task.
+/// Interaction logic for DownloadsPage.xaml
 /// </summary>
-public class DownloadsPage : Page
+public partial class DownloadsPage : Page
 {
     public DownloadsPage()
     {
-        // TODO: InitializeComponent() — XAML to be added later.
+        InitializeComponent();
+        DataContext = new DownloadsViewModel();
     }
 }
