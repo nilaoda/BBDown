@@ -68,6 +68,9 @@ public class SettingsViewModel : INotifyPropertyChanged
     private string _epHost = "";
     private string _area = "";
 
+    // ---- 弹幕 ----
+    private string _danmakuFormats = "";
+
     // ---- 常规设置属性 ----
     public int DownloadSourceIndex
     {
@@ -577,6 +580,20 @@ public class SettingsViewModel : INotifyPropertyChanged
         }
     }
 
+    // ---- 弹幕属性 ----
+    public string DanmakuFormats
+    {
+        get => _danmakuFormats;
+        set
+        {
+            if (_danmakuFormats != value)
+            {
+                _danmakuFormats = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
     // ---- 选项列表 ----
 
     /// <summary>
@@ -686,6 +703,8 @@ public class SettingsViewModel : INotifyPropertyChanged
         Host = cfg.Host;
         EpHost = cfg.EpHost;
         Area = cfg.Area;
+
+        DanmakuFormats = cfg.DanmakuFormats;
     }
 
     /// <summary>
@@ -759,18 +778,41 @@ public class SettingsViewModel : INotifyPropertyChanged
         cfg.EpHost = EpHost;
         cfg.Area = Area;
 
+        cfg.DanmakuFormats = DanmakuFormats;
+
         ConfigService.Instance.Save();
-        System.Diagnostics.Debug.WriteLine("设置已保存");
     }
 
     private void BrowseFfmpeg()
     {
-        System.Diagnostics.Debug.WriteLine("Browse FFmpeg");
+        var dialog = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = "选择 FFmpeg 可执行文件",
+            Filter = "可执行文件 (*.exe)|*.exe|所有文件 (*.*)|*.*",
+            CheckFileExists = true
+        };
+
+        if (dialog.ShowDialog() == true)
+        {
+            FfmpegPath = dialog.FileName;
+        }
     }
 
     private void BrowseWorkDir()
     {
-        System.Diagnostics.Debug.WriteLine("Browse WorkDir");
+        var dialog = new System.Windows.Forms.FolderBrowserDialog
+        {
+            Description = "选择下载文件保存目录",
+            UseDescriptionForTitle = true
+        };
+
+        if (!string.IsNullOrEmpty(WorkDir))
+            dialog.SelectedPath = WorkDir;
+
+        if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+        {
+            WorkDir = dialog.SelectedPath;
+        }
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;

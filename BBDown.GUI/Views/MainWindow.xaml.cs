@@ -1,13 +1,9 @@
 using System.ComponentModel;
-using System.Windows;
 using BBDown.GUI.ViewModels;
-using BBDown.GUI.Views.Pages;
-using Wpf.Ui.Appearance;
-using Wpf.Ui.Controls;
 
 namespace BBDown.GUI;
 
-public partial class MainWindow : FluentWindow
+public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
 {
     private readonly MainViewModel _viewModel;
 
@@ -20,18 +16,16 @@ public partial class MainWindow : FluentWindow
 
         _viewModel.PropertyChanged += OnViewModelPropertyChanged;
 
-        // Initialize with home page
-        _viewModel.CurrentPage = new HomePage();
+        // Defer initial navigation to when ViewModel fully loads
+        NavigateToPage(_viewModel.SelectedNavItem);
 
-        Loaded += (s, e) => SystemThemeWatcher.Watch(this, WindowBackdropType.Mica, true);
         Closing += (s, e) => _viewModel.SaveConfig();
     }
 
-    private void NavigationView_OnSelectionChanged(NavigationView sender, RoutedEventArgs args)
+    private void NavigationView_OnSelectionChanged(
+        Wpf.Ui.Controls.NavigationView sender, System.Windows.RoutedEventArgs args)
     {
-        // Retrieve the NavItem from the selected NavigationViewItem container's DataContext.
-        if (sender.SelectedItem is NavigationViewItem selectedItem
-            && selectedItem.DataContext is ViewModels.MainViewModel.NavItem navItem)
+        if (sender.SelectedItem is MainViewModel.NavItem navItem)
         {
             _viewModel.SelectedNavItem = navItem;
         }
@@ -41,18 +35,17 @@ public partial class MainWindow : FluentWindow
     {
         if (args.PropertyName == nameof(MainViewModel.SelectedNavItem))
         {
-            var navItem = _viewModel.SelectedNavItem;
-            if (navItem == null) return;
-
-            _viewModel.CurrentPage = navItem.Name switch
-            {
-                "首页" => new HomePage(),
-                "下载队列" => new DownloadsPage(),
-                "设置" => new SettingsPage(),
-                "登录" => new LoginPage(),
-                "关于" => new AboutPage(),
-                _ => null
-            };
+            NavigateToPage(_viewModel.SelectedNavItem);
         }
+    }
+
+    private void NavigateToPage(MainViewModel.NavItem? navItem)
+    {
+        if (navItem?.PageType == null) return;
+
+        if (Activator.CreateInstance(navItem.PageType) is not System.Windows.Controls.Page page)
+            return;
+
+        _viewModel.CurrentPage = page;
     }
 }

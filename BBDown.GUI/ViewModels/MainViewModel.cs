@@ -64,11 +64,11 @@ public class MainViewModel : INotifyPropertyChanged
     {
         NavigationItems =
         [
-            new NavItem("首页", SymbolRegular.Home24),
-            new NavItem("下载队列", SymbolRegular.ArrowDownload24),
-            new NavItem("设置", SymbolRegular.Settings24),
-            new NavItem("登录", SymbolRegular.Person24),
-            new NavItem("关于", SymbolRegular.Info24),
+            new NavItem("首页", SymbolRegular.Home24) { PageType = typeof(Views.Pages.HomePage) },
+            new NavItem("下载队列", SymbolRegular.ArrowDownload24) { PageType = typeof(Views.Pages.DownloadsPage) },
+            new NavItem("设置", SymbolRegular.Settings24) { PageType = typeof(Views.Pages.SettingsPage) },
+            new NavItem("登录", SymbolRegular.Person24) { PageType = typeof(Views.Pages.LoginPage) },
+            new NavItem("关于", SymbolRegular.Info24) { PageType = typeof(Views.Pages.AboutPage) },
         ];
 
         _selectedNavItem = NavigationItems[0];
@@ -123,5 +123,6 @@ public class MainViewModel : INotifyPropertyChanged
     {
         public string Name { get; } = name;
         public SymbolRegular Icon { get; } = icon;
+        public Type? PageType { get; init; }
     }
 }

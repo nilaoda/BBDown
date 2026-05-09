@@ -197,6 +197,17 @@
                 </StackPanel>
             </ui:Card>
 
+            <!-- ================================================================
+                 12. 弹幕
+                 ================================================================ -->
+            <ui:Card Margin="0,0,0,16">
+                <StackPanel Margin="16">
+                    <TextBlock Text="弹幕" FontWeight="Bold" FontSize="16" Margin="0,0,0,8"/>
+                    <TextBlock Text="弹幕格式" FontSize="13" Margin="0,0,0,4"/>
+                    <ui:TextBox Text="{Binding DanmakuFormats}" PlaceholderText="ass,xml,json"/>
+                </StackPanel>
+            </ui:Card>
+
             <!-- 保存设置按钮 -->
             <ui:Button Content="保存设置" Command="{Binding SaveCommand}"
                        Icon="{ui:SymbolIcon Save24}"

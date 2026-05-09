@@ -61,8 +61,8 @@ public class AppConfig
     public string EpHost { get; set; } = "";
     public string Area { get; set; } = "";
 
-    // BBDown程序位置
-    public string BBDownPath { get; set; } = "";
+    // 弹幕格式
+    public string DanmakuFormats { get; set; } = "";
 
     // 主题
     public string Theme { get; set; } = "System";

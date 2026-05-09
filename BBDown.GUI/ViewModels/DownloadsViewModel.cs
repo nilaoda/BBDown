@@ -62,16 +62,12 @@ public class DownloadsViewModel : INotifyPropertyChanged
     public DownloadsViewModel()
     {
         Tasks = DownloadService.Instance.Tasks;
-        StopCommand = new RelayCommand(_ => StopTask(), _ => SelectedTask != null);
-        ClearCompletedCommand = new RelayCommand(_ => ClearCompleted());
-    }
-
-    private void StopTask()
-    {
-        if (SelectedTask != null)
+        StopCommand = new RelayCommand(param =>
         {
-            DownloadService.Instance.StopTask(SelectedTask.Id);
-        }
+            if (param is DownloadTask task)
+                DownloadService.Instance.StopTask(task.Id);
+        });
+        ClearCompletedCommand = new RelayCommand(_ => ClearCompleted());
     }
 
     private void ClearCompleted()
