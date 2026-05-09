@@ -1,0 +1,70 @@
+<Page x:Class="BBDown.GUI.Views.Pages.HomePage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      xmlns:vm="clr-namespace:BBDown.GUI.ViewModels"
+      Title="首页">
+
+    <Page.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+    </Page.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="32" HorizontalAlignment="Center" MinWidth="400" MaxWidth="600">
+
+            <!-- 视频地址 -->
+            <ui:Card Margin="0,0,0,16">
+                <StackPanel Margin="16">
+                    <TextBlock Text="视频地址" FontWeight="Bold" Margin="0,0,0,8"/>
+                    <ui:TextBox x:Name="UrlBox" PlaceholderText="输入 av/bv/BV/ep/ss 或完整链接"
+                        Text="{Binding Url, UpdateSourceTrigger=PropertyChanged}" />
+                </StackPanel>
+            </ui:Card>
+
+            <!-- 画质选择 -->
+            <ui:Card Margin="0,0,0,16">
+                <StackPanel Margin="16">
+                    <TextBlock Text="画质" FontWeight="Bold" Margin="0,0,0,8"/>
+                    <ListBox ItemsSource="{Binding Source={x:Static vm:HomeViewModel.QuickQualities}}"
+                             SelectedIndex="{Binding SelectedQualityIndex}"
+                             BorderThickness="0"
+                             Background="Transparent"
+                             Margin="0,0,0,8">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding}" Margin="4,2"/>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                    <ComboBox ItemsSource="{Binding Source={x:Static vm:HomeViewModel.MoreQualities}}"
+                              SelectedIndex="{Binding SelectedMoreQualityIndex}"
+                              Visibility="{Binding IsMoreQualityVisible,
+                                  Converter={StaticResource BoolToVisibilityConverter}}" />
+                </StackPanel>
+            </ui:Card>
+
+            <!-- 分P选择 -->
+            <ui:Card Margin="0,0,0,16">
+                <StackPanel Margin="16">
+                    <TextBlock Text="分P" FontWeight="Bold" Margin="0,0,0,8"/>
+                    <RadioButton Content="当前分P" IsChecked="{Binding IsCurrentPart}" GroupName="Part" Margin="0,2"/>
+                    <RadioButton Content="全部分P" IsChecked="{Binding IsAllPart}" GroupName="Part" Margin="0,2"/>
+                    <RadioButton Content="最新分P" IsChecked="{Binding IsNewPart}" GroupName="Part" Margin="0,2"/>
+                </StackPanel>
+            </ui:Card>
+
+            <!-- 操作按钮 -->
+            <Grid Margin="0,8,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <ui:Button Content="下载" Command="{Binding DownloadCommand}"
+                    Icon="{ui:SymbolIcon ArrowDownload24}" Grid.Column="0" Height="40"/>
+                <ui:Button Content="设置" Command="{Binding NavigateToSettingsCommand}"
+                    Appearance="Secondary" Grid.Column="1" Height="40" Margin="8,0,0,0"/>
+            </Grid>
+
+        </StackPanel>
+    </ScrollViewer>
+</Page>

@@ -1,14 +1,16 @@
 using System.Windows.Controls;
+using BBDown.GUI.ViewModels;
 
 namespace BBDown.GUI.Views.Pages;
 
 /// <summary>
-/// Stub — full implementation with XAML will be added in a future task.
+/// Interaction logic for HomePage.xaml
 /// </summary>
-public class HomePage : Page
+public partial class HomePage : Page
 {
     public HomePage()
     {
-        // TODO: InitializeComponent() — XAML to be added later.
+        InitializeComponent();
+        DataContext = new HomeViewModel();
     }
 }
