@@ -1,0 +1,30 @@
+<Page x:Class="BBDown.GUI.Views.Pages.AboutPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      Title="关于">
+
+    <Grid>
+        <ui:Card HorizontalAlignment="Center" VerticalAlignment="Center"
+            Padding="48" MaxWidth="400">
+            <StackPanel HorizontalAlignment="Center">
+                <TextBlock Text="BBDown GUI" FontSize="28" FontWeight="Bold"
+                    HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                <TextBlock Text="v1.0.0" FontSize="14" HorizontalAlignment="Center"
+                    Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,0,16"/>
+                <TextBlock Text="基于 BBDown 的 WPF 图形界面" FontSize="13"
+                    HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                <TextBlock Text="提供简便的哔哩哔哩视频下载体验" FontSize="13"
+                    HorizontalAlignment="Center" Margin="0,0,0,24"/>
+
+                <TextBlock Text="开源项目" FontWeight="Bold" Margin="0,0,0,8"/>
+                <TextBlock Text="BBDown: github.com/nilaoda/BBDown" FontSize="12"/>
+                <TextBlock Text="WPF-UI: github.com/lepoco/wpfui" FontSize="12"
+                    Margin="0,0,0,16"/>
+
+                <TextBlock Text="License: MIT" FontSize="12" HorizontalAlignment="Center"
+                    Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+            </StackPanel>
+        </ui:Card>
+    </Grid>
+</Page>

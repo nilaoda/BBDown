@@ -1,0 +1,51 @@
+<ui:FluentWindow x:Class="BBDown.GUI.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:pages="clr-namespace:BBDown.GUI.Views.Pages"
+    Title="BBDown"
+    Height="700" Width="1100"
+    MinHeight="500" MinWidth="800"
+    ExtendsContentIntoTitleBar="True"
+    WindowBackdropType="Mica">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- TitleBar -->
+        <ui:TitleBar Title="BBDown"
+            Grid.Row="0" />
+
+        <!-- Main content area -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Left Navigation -->
+            <ui:NavigationView
+                x:Name="NavigationView"
+                MenuItemsSource="{Binding NavigationItems}"
+                SelectionChanged="NavigationView_OnSelectionChanged">
+
+                <ui:NavigationView.ItemTemplate>
+                    <DataTemplate>
+                        <ui:NavigationViewItem
+                            Content="{Binding Name}"
+                            Icon="{Binding Icon}" />
+                    </DataTemplate>
+                </ui:NavigationView.ItemTemplate>
+            </ui:NavigationView>
+
+            <!-- Right content frame -->
+            <Frame x:Name="ContentFrame"
+                Grid.Column="1"
+                Content="{Binding CurrentPage}"
+                NavigationUIVisibility="Hidden" />
+        </Grid>
+    </Grid>
+</ui:FluentWindow>

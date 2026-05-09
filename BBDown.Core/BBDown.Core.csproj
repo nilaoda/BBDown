@@ -9,13 +9,13 @@
 
   <ItemGroup>
     <PackageReference Include="Google.Protobuf" Version="3.28.3" />
-    <PackageReference Include="Grpc.Tools" Version="2.67.0">
+    <PackageReference Include="Grpc.Tools" Version="2.80.0" Condition="'$(SkipProtobuf)' != 'true'">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
   </ItemGroup>
 
-  <ItemGroup>
+  <ItemGroup Condition="'$(SkipProtobuf)' != 'true'">
     <Protobuf Include="APP\**\*.proto" GrpcServices="Client" />
   </ItemGroup>
 

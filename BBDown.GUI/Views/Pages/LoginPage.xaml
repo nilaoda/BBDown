@@ -1,0 +1,63 @@
+<Page x:Class="BBDown.GUI.Views.Pages.LoginPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      Title="登录">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="32" HorizontalAlignment="Center" MinWidth="400" MaxWidth="600">
+
+            <!-- 二维码登录 -->
+            <ui:Card Margin="0,0,0,16">
+                <StackPanel Margin="16">
+                    <TextBlock Text="扫码登录" FontWeight="Bold" FontSize="16" Margin="0,0,0,12"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <!-- Web QR -->
+                        <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                            <TextBlock Text="网页端" TextAlignment="Center" Margin="0,0,0,8"/>
+                            <Border Width="200" Height="200" Background="#FFEEEEEE">
+                                <TextBlock Text="二维码区域" HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"/>
+                            </Border>
+                            <ui:Button Content="刷新" Command="{Binding RefreshQrWebCommand}"
+                                Margin="0,8,0,0"/>
+                        </StackPanel>
+                        <!-- TV QR -->
+                        <StackPanel Grid.Column="1" Margin="8,0,0,0">
+                            <TextBlock Text="TV端" TextAlignment="Center" Margin="0,0,0,8"/>
+                            <Border Width="200" Height="200" Background="#FFEEEEEE">
+                                <TextBlock Text="二维码区域" HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"/>
+                            </Border>
+                            <ui:Button Content="刷新" Command="{Binding RefreshQrTvCommand}"
+                                Margin="0,8,0,0"/>
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </ui:Card>
+
+            <!-- 手动输入 -->
+            <ui:Card Margin="0,0,0,16">
+                <StackPanel Margin="16">
+                    <TextBlock Text="手动输入" FontWeight="Bold" FontSize="16" Margin="0,0,0,12"/>
+                    <TextBlock Text="access_token" Margin="0,0,0,4"/>
+                    <ui:TextBox Text="{Binding AccessToken}"
+                        PlaceholderText="用于TV/APP端会员内容"/>
+                    <TextBlock Text="cookie" Margin="0,12,0,4"/>
+                    <ui:TextBox Text="{Binding Cookie}"
+                        PlaceholderText="用于网页端会员内容"/>
+                    <ui:Button Content="保存" Command="{Binding SaveTokensCommand}"
+                        Icon="{ui:SymbolIcon Save24}" HorizontalAlignment="Right" Margin="0,12,0,0"/>
+                </StackPanel>
+            </ui:Card>
+
+            <!-- 状态 -->
+            <TextBlock Text="{Binding LoginStatus}" FontSize="12" Margin="0,4,0,0"/>
+
+        </StackPanel>
+    </ScrollViewer>
+</Page>
