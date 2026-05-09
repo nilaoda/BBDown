@@ -1,0 +1,16 @@
+<ui:FluentWindow x:Class="BBDown.GUI.MainWindow"
+                   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                   xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+                   Title="BBDown"
+                   Height="600"
+                   Width="900"
+                   ExtendsContentIntoTitleBar="True"
+                   WindowBackdropType="Mica">
+    <Grid>
+        <TextBlock Text="BBDown GUI - Placeholder"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center"
+                   FontSize="24" />
+    </Grid>
+</ui:FluentWindow>
